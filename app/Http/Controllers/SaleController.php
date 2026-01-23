@@ -13,6 +13,8 @@ use App\Models\StockMovement;
 
 class SaleController extends Controller
 {
+    protected $lastSaleId;
+
     public function create()
     {
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) {
@@ -28,26 +30,49 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
             'method' => 'required|in:cash,card,bank,mobile,other',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
         ]);
 
-        $product = Product::with('stocks')->findOrFail($data['product_id']);
-        $available = $product->stockOnHand();
-        if ($data['quantity'] > $available) {
-            return back()->withErrors(['quantity' => 'Not enough stock (available: ' . $available . ').'])->withInput();
+        // Check stock availability per product (summed quantities)
+        $grouped = [];
+        foreach ($data['items'] as $item) {
+            $grouped[$item['product_id']] = ($grouped[$item['product_id']] ?? 0) + $item['quantity'];
+        }
+
+        foreach ($grouped as $productId => $qty) {
+            $product = Product::with('stocks')->findOrFail($productId);
+            $available = $product->stockOnHand();
+            if ($qty > $available) {
+                return back()->withErrors(['items' => 'Not enough stock for ' . $product->name . ' (available: ' . $available . ').'])->withInput();
+            }
         }
 
         $saleNumber = 'S' . now()->format('YmdHis');
-        $unitPrice = $product->price;
-        $subtotal = $unitPrice * $data['quantity'];
+        $subtotal = 0;
+        $lineItems = [];
+
+        foreach ($data['items'] as $item) {
+            $product = Product::find($item['product_id']);
+            $unitPrice = $product->price;
+            $lineSubtotal = $unitPrice * $item['quantity'];
+            $subtotal += $lineSubtotal;
+            $lineItems[] = [
+                'product' => $product,
+                'quantity' => $item['quantity'],
+                'unit_price' => $unitPrice,
+                'subtotal' => $lineSubtotal,
+            ];
+        }
+
         $total = $subtotal;
 
-        DB::transaction(function () use ($data, $product, $saleNumber, $unitPrice, $subtotal, $total) {
+        DB::transaction(function () use ($data, $saleNumber, $subtotal, $total, $lineItems) {
             $sale = Sale::create([
                 'sale_number' => $saleNumber,
                 'customer_id' => null,
@@ -64,14 +89,31 @@ class SaleController extends Controller
                 'paid_at' => now(),
             ]);
 
-            SaleItem::create([
-                'sale_id' => $sale->id,
-                'product_id' => $product->id,
-                'quantity' => $data['quantity'],
-                'unit_price' => $unitPrice,
-                'discount' => 0,
-                'subtotal' => $subtotal,
-            ]);
+            foreach ($lineItems as $line) {
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $line['product']->id,
+                    'quantity' => $line['quantity'],
+                    'unit_price' => $line['unit_price'],
+                    'discount' => 0,
+                    'subtotal' => $line['subtotal'],
+                ]);
+
+                ProductStock::where('product_id', $line['product']->id)
+                    ->where('location', 'main')
+                    ->decrement('quantity', $line['quantity']);
+
+                StockMovement::create([
+                    'product_id' => $line['product']->id,
+                    'user_id' => auth()->id(),
+                    'location' => 'main',
+                    'type' => 'sale',
+                    'quantity_change' => -1 * $line['quantity'],
+                    'reference_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'note' => 'POS sale ' . $saleNumber,
+                ]);
+            }
 
             Payment::create([
                 'sale_id' => $sale->id,
@@ -79,21 +121,6 @@ class SaleController extends Controller
                 'amount' => $total,
                 'reference' => null,
                 'paid_at' => now(),
-            ]);
-
-            ProductStock::where('product_id', $product->id)
-                ->where('location', 'main')
-                ->decrement('quantity', $data['quantity']);
-
-            StockMovement::create([
-                'product_id' => $product->id,
-                'user_id' => auth()->id(),
-                'location' => 'main',
-                'type' => 'sale',
-                'quantity_change' => -1 * $data['quantity'],
-                'reference_type' => 'sale',
-                'reference_id' => $sale->id,
-                'note' => 'POS sale ' . $saleNumber,
             ]);
 
             $this->lastSaleId = $sale->id;

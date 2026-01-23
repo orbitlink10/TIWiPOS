@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\PageController;
@@ -12,11 +13,18 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\PostController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', LogoutController::class)->name('logout');
+Route::get('/register', [RegisterController::class, 'show'])->name('register');
+Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::get('/content', [PostController::class, 'index'])->name('content.index');
+Route::get('/content/create', [PostController::class, 'create'])->name('content.create');
+Route::post('/content', [PostController::class, 'store'])->name('content.store');
+Route::get('/content/{post:slug}', [PostController::class, 'show'])->name('content.show');
 
 // Password reset
 Route::get('/password/forgot', [ForgotPasswordController::class, 'show'])->name('password.request');

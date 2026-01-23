@@ -55,6 +55,10 @@ class HomeController extends Controller
             'today_profit' => $todayProfit,
         ];
 
-        return view('dashboard', compact('stats'));
+        if (auth()->check()) {
+            return view('dashboard', compact('stats'));
+        }
+
+        return view('index', compact('stats'));
     }
 }

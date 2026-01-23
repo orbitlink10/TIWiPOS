@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiwi POS | Sign in</title>
+    <title>Tiwi POS | Create Account</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
             padding: 18px;
         }
         .card {
-            width: min(440px, 100%);
+            width: min(480px, 100%);
             background: var(--card);
             border-radius: 16px;
             padding: 26px;
@@ -54,8 +54,7 @@
         p { margin: 0 0 18px; color: var(--muted); }
         label { display: block; margin-bottom: 6px; font-weight: 600; }
         .field { margin-bottom: 16px; }
-        input[type="email"],
-        input[type="password"] {
+        input[type=\"text\"], input[type=\"email\"], input[type=\"password\"] {
             width: 100%;
             padding: 13px 14px;
             border-radius: 12px;
@@ -67,7 +66,6 @@
             outline: 2px solid rgba(0,165,255,0.35);
             border-color: rgba(0,165,255,0.45);
         }
-        .actions { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
         .btn {
             width: 100%;
             padding: 13px;
@@ -81,10 +79,6 @@
             transition: transform 0.1s ease, box-shadow 0.2s ease;
         }
         .btn:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(0,165,255,0.4); }
-        .helper { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px; color: var(--muted); font-size: 14px; }
-        .link { color: #0f172a; text-decoration: none; font-weight: 600; }
-        .link:hover { color: var(--accent); }
-        .remember { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
         .note {
             font-size: 13px;
             color: var(--muted);
@@ -94,6 +88,8 @@
             border: 1px solid var(--border);
             margin-top: 14px;
         }
+        .link { color: #0f172a; text-decoration: none; font-weight: 600; }
+        .link:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -102,33 +98,35 @@
             <div class="logo-dot">TP</div>
             <span>Tiwi POS</span>
         </div>
-        <h1>Welcome back</h1>
-        <p>Sign in to manage sales, inventory, and reports.</p>
+        <h1>Create an account</h1>
+        <p>Set up your access to the Tiwi POS dashboard.</p>
 
-        <form method="POST" action="{{ route('login.store') }}">
+        <form method="POST" action="{{ route('register.store') }}">
             @csrf
             <div class="field">
+                <label for="name">Full name</label>
+                <input id="name" name="name" type="text" value="{{ old('name') }}" required>
+                @error('name') <small style=\"color:#d14343;\">{{ $message }}</small> @enderror
+            </div>
+            <div class="field">
                 <label for="email">Email</label>
-                <input id="email" name="email" type="email" placeholder="you@store.com" required>
+                <input id="email" name="email" type="email" value="{{ old('email') }}" required>
+                @error('email') <small style=\"color:#d14343;\">{{ $message }}</small> @enderror
             </div>
             <div class="field">
                 <label for="password">Password</label>
-                <input id="password" name="password" type="password" placeholder="••••••••" required>
+                <input id="password" name="password" type="password" required>
+                @error('password') <small style=\"color:#d14343;\">{{ $message }}</small> @enderror
             </div>
-            <div class="helper">
-                <label class="remember">
-                    <input type="checkbox" name="remember" style="accent-color: var(--accent);">
-                    Remember me
-                </label>
-                <a class="link" href="{{ route('password.request') }}">Forgot password?</a>
+            <div class="field">
+                <label for="password_confirmation">Confirm password</label>
+                <input id="password_confirmation" name="password_confirmation" type="password" required>
             </div>
-            <div class="actions">
-                <button class="btn" type="submit">Sign in</button>
-            </div>
+            <button class="btn" type="submit">Create account</button>
         </form>
 
         <div class="note">
-            New to Tiwi POS? <a class="link" href="{{ route('register') }}">Create an account</a>.
+            Already registered? <a class="link" href="{{ route('login') }}">Sign in</a>.
         </div>
     </div>
 </body>
