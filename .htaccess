@@ -1,9 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Redirect any request that explicitly hits /public back to the clean path.
-    RewriteCond %{REQUEST_URI} ^/public/?(.*)$
-    RewriteRule ^public/?(.*)$ /$1 [L,R=301]
+    # Redirect only browser requests that include /public in the URL (prevents rewrite loops).
+    RewriteCond %{THE_REQUEST} \s/public/?([^\s?]*) [NC]
+    RewriteRule ^public/?(.*)$ /%1 [L,R=301]
 
     # Internally serve everything from the public directory.
     RewriteCond %{REQUEST_URI} !^/public/
