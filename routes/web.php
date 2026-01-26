@@ -31,8 +31,6 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/content', [PostController::class, 'index'])->name('content.index');
-    Route::get('/content/create', [PostController::class, 'create'])->name('content.create');
-    Route::post('/content', [PostController::class, 'store'])->name('content.store');
     Route::get('/content/{post:slug}', [PostController::class, 'show'])->name('content.show');
 
     Route::get('/stock', [PageController::class, 'stock'])->name('stock');

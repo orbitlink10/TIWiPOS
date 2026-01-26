@@ -164,7 +164,6 @@
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale') ? 'active' : '' }}">Make a Sale</a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">Products</a>
                 <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}">Branches</a>
-                <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.index') || request()->routeIs('content.create') ? 'active' : '' }}">Content</a>
             </nav>
             @isset($currentBranch)
                 <div style="margin:12px 24px; padding:10px 12px; background:#f2f6fb; border-radius:10px; color:#0f172a;">
