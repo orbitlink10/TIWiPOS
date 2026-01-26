@@ -14,6 +14,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\BranchController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -28,7 +29,7 @@ Route::get('/password/reset/{token}', [ResetPasswordController::class, 'show'])-
 Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name('password.update');
 
 // Authenticated-only pages
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/content', [PostController::class, 'index'])->name('content.index');
     Route::get('/content/create', [PostController::class, 'create'])->name('content.create');
     Route::post('/content', [PostController::class, 'store'])->name('content.store');
@@ -53,4 +54,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->name('stock.adjust.store');
 
     Route::get('/summary', [PageController::class, 'summary'])->name('summary');
+
+    // Branch management
+    Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+    Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+    Route::post('/branches/switch', [BranchController::class, 'switch'])->name('branches.switch');
 });

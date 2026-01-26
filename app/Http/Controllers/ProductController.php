@@ -5,13 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Support\Tenant;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) {
+        $branchId = Tenant::branchId();
+
+        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
             $q->where('location', 'main');
+            if ($branchId) {
+                $q->where('branch_id', $branchId);
+            }
         }], 'quantity')->latest()->get();
 
         return view('pages.products', compact('products'));
@@ -43,6 +49,8 @@ class ProductController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
+        $branchId = Tenant::branchId();
+
         $product = Product::create([
             'name' => $data['name'],
             'sku' => $data['sku'],
@@ -60,8 +68,15 @@ class ProductController extends Controller
         $initialStock = $data['stock'] ?? 0;
         $stockLocation = $data['stock_location'] ?? 'main';
         ProductStock::updateOrCreate(
-            ['product_id' => $product->id, 'location' => $stockLocation],
-            ['quantity' => $initialStock]
+            [
+                'product_id' => $product->id,
+                'location' => $stockLocation,
+                'branch_id' => $branchId,
+            ],
+            [
+                'quantity' => $initialStock,
+                'business_id' => $product->business_id,
+            ]
         );
 
         return redirect()->route('products')->with('status', 'Product added successfully.');

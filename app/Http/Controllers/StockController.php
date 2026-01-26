@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
+use App\Support\Tenant;
 
 class StockController extends Controller
 {
@@ -26,11 +27,12 @@ class StockController extends Controller
         ]);
 
         $location = $data['location'] ?? 'main';
+        $branchId = Tenant::branchId();
 
-        DB::transaction(function () use ($data, $location) {
+        DB::transaction(function () use ($data, $location, $branchId) {
             $stock = ProductStock::firstOrCreate(
-                ['product_id' => $data['product_id'], 'location' => $location],
-                ['quantity' => 0]
+                ['product_id' => $data['product_id'], 'location' => $location, 'branch_id' => $branchId],
+                ['quantity' => 0, 'business_id' => auth()->user()->business_id]
             );
 
             $before = $stock->quantity;
@@ -38,6 +40,8 @@ class StockController extends Controller
             $stock->update(['quantity' => $after]);
 
             StockMovement::create([
+                'business_id' => auth()->user()->business_id,
+                'branch_id' => $branchId,
                 'product_id' => $data['product_id'],
                 'user_id' => auth()->id(),
                 'location' => $location,

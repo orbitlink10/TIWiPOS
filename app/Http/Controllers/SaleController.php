@@ -10,6 +10,7 @@ use App\Models\SaleItem;
 use App\Models\Payment;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
+use App\Support\Tenant;
 
 class SaleController extends Controller
 {
@@ -17,8 +18,13 @@ class SaleController extends Controller
 
     public function create()
     {
-        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) {
+        $branchId = Tenant::branchId();
+
+        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
             $q->where('location', 'main');
+            if ($branchId) {
+                $q->where('branch_id', $branchId);
+            }
         }], 'quantity')
             ->where('is_active', true)
             ->orderBy('name')
@@ -47,7 +53,7 @@ class SaleController extends Controller
 
         foreach ($grouped as $productId => $qty) {
             $product = Product::with('stocks')->findOrFail($productId);
-            $available = $product->stockOnHand();
+            $available = $product->stockOnHand('main', Tenant::branchId());
             if ($qty > $available) {
                 return back()->withErrors(['items' => 'Not enough stock for ' . $product->name . ' (available: ' . $available . ').'])->withInput();
             }
@@ -74,6 +80,7 @@ class SaleController extends Controller
 
         DB::transaction(function () use ($data, $saleNumber, $subtotal, $total, $lineItems) {
             $sale = Sale::create([
+                'branch_id' => Tenant::branchId(),
                 'sale_number' => $saleNumber,
                 'customer_id' => null,
                 'customer_name' => $data['customer_name'] ?? null,
@@ -91,6 +98,7 @@ class SaleController extends Controller
 
             foreach ($lineItems as $line) {
                 SaleItem::create([
+                    'business_id' => $sale->business_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],
@@ -101,9 +109,14 @@ class SaleController extends Controller
 
                 ProductStock::where('product_id', $line['product']->id)
                     ->where('location', 'main')
+                    ->when(Tenant::branchId(), function ($q, $branchId) {
+                        $q->where('branch_id', $branchId);
+                    })
                     ->decrement('quantity', $line['quantity']);
 
                 StockMovement::create([
+                    'business_id' => $sale->business_id,
+                    'branch_id' => Tenant::branchId(),
                     'product_id' => $line['product']->id,
                     'user_id' => auth()->id(),
                     'location' => 'main',
@@ -116,6 +129,8 @@ class SaleController extends Controller
             }
 
             Payment::create([
+                'business_id' => $sale->business_id,
+                'branch_id' => Tenant::branchId(),
                 'sale_id' => $sale->id,
                 'method' => $data['method'],
                 'amount' => $total,

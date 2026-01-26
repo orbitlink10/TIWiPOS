@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -14,6 +13,21 @@ class HomeController extends Controller
      */
     public function index()
     {
+        if (! auth()->check()) {
+            $stats = [
+                'month_name' => now()->format('F Y'),
+                'month_sales' => 0,
+                'out_of_stock' => 0,
+                'low_stock' => 0,
+                'this_month' => 0,
+                'this_week' => 0,
+                'today' => 0,
+                'today_profit' => 0,
+            ];
+
+            return view('index', compact('stats'));
+        }
+
         $today = now()->startOfDay();
         $weekStart = now()->startOfWeek();
         $monthStart = now()->startOfMonth();
@@ -55,10 +69,6 @@ class HomeController extends Controller
             'today_profit' => $todayProfit,
         ];
 
-        if (auth()->check()) {
-            return view('dashboard', compact('stats'));
-        }
-
-        return view('index', compact('stats'));
+        return view('dashboard', compact('stats'));
     }
 }

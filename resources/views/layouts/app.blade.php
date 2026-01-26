@@ -61,10 +61,7 @@
             border-radius: 10px;
             transition: background 0.15s ease, color 0.15s ease;
         }
-        .nav a.active {
-            background: var(--sidebar-active);
-            color: var(--text);
-        }
+        .nav a.active { background: var(--sidebar-active); color: var(--text); }
         .nav a:hover { background: #f2f6fb; }
         .spacer { flex: 1; }
         .logout {
@@ -138,9 +135,7 @@
         .green { background: #e4f7ec; color: #117a39; }
         .amber { background: #fff4e5; color: #b45b00; }
         .blue { background: #e8f5ff; color: #0b6fa4; }
-        @media (max-width: 1100px) {
-            .content { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1100px) { .content { grid-template-columns: 1fr; } }
         @media (max-width: 880px) {
             .layout { grid-template-columns: 1fr; }
             .sidebar {
@@ -164,16 +159,23 @@
         <aside class="sidebar">
             <a href="{{ route('home') }}" class="brand"><span class="icon">🛒</span> <span>POS SYSTEM</span></a>
             <nav class="nav">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">🏠 Home</a>
-                <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock') ? 'active' : '' }}">📦 Stock</a>
-                <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale') ? 'active' : '' }}">💰 Make a Sale</a>
-                <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">📦 Products</a>
-                <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.index') || request()->routeIs('content.create') ? 'active' : '' }}">📝 Content</a>
+                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
+                <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock') ? 'active' : '' }}">Stock</a>
+                <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale') ? 'active' : '' }}">Make a Sale</a>
+                <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">Products</a>
+                <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}">Branches</a>
+                <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.index') || request()->routeIs('content.create') ? 'active' : '' }}">Content</a>
             </nav>
+            @isset($currentBranch)
+                <div style="margin:12px 24px; padding:10px 12px; background:#f2f6fb; border-radius:10px; color:#0f172a;">
+                    <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.6px; color:#6b7280;">Active branch</div>
+                    <div style="font-weight:700;">{{ $currentBranch->name ?? 'Unknown' }}</div>
+                </div>
+            @endisset
             <div class="spacer"></div>
             <form method="POST" action="{{ route('logout') }}" style="margin:0 24px 0;">
                 @csrf
-                <button type="submit" class="logout">🔒 Logout</button>
+                <button type="submit" class="logout">Logout</button>
             </form>
         </aside>
         <main>

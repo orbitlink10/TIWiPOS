@@ -99,10 +99,24 @@
             <span>Tiwi POS</span>
         </div>
         <h1>Create an account</h1>
-        <p>Set up your access to the Tiwi POS dashboard.</p>
+        <p>Create your Tiwi POS workspace, business, and first branch.</p>
 
         <form method="POST" action="{{ route('register.store') }}">
             @csrf
+            <div class="field">
+                <label for="business_name">Business name</label>
+                <input id="business_name" name="business_name" type="text" value="{{ old('business_name') }}" required>
+                @error('business_name') <small style="color:#d14343;">{{ $message }}</small> @enderror
+            </div>
+            <div class="field">
+                <label for="branch_name">Branch name (optional)</label>
+                <input id="branch_name" name="branch_name" type="text" value="{{ old('branch_name') }}" placeholder="Main Branch">
+                @error('branch_name') <small style="color:#d14343;">{{ $message }}</small> @enderror
+            </div>
+            <div class="field">
+                <label for="industry">Industry (optional)</label>
+                <input id="industry" name="industry" type="text" value="{{ old('industry') }}" placeholder="Retail, electronics, etc.">
+            </div>
             <div class="field">
                 <label for="name">Full name</label>
                 <input id="name" name="name" type="text" value="{{ old('name') }}" required>
