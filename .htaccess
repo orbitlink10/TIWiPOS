@@ -1,11 +1,16 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /
 
-    # Redirect only browser requests that include /public in the URL (prevents rewrite loops).
-    RewriteCond %{THE_REQUEST} \s/public/?([^\s?]*) [NC]
-    RewriteRule ^public/?(.*)$ /%1 [L,R=301]
+    # Serve existing files/directories directly.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
 
-    # Internally serve everything from the public directory.
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L,QSA]
+    # Redirect visible /public paths back to a clean URL.
+    RewriteCond %{THE_REQUEST} \s/public/([^\s?]*) [NC]
+    RewriteRule ^public/(.*)$ /$1 [L,R=301]
+
+    # Send everything else to the Laravel front controller in public/.
+    RewriteRule ^(.*)$ public/index.php [L]
 </IfModule>
