@@ -5,7 +5,6 @@
 @section('header')
     <div class="header-row">
         <h1>Published Pages & Posts</h1>
-        <a class="btn" href="{{ route('content.create') }}">New Page/Post</a>
     </div>
 @endsection
 

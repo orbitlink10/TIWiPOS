@@ -43,7 +43,6 @@
             <div class="quick-actions" style="margin-top:10px;">
                 <a class="btn" href="{{ route('sale') }}">Open POS</a>
                 <a class="btn" href="{{ route('stock') }}">Stock</a>
-                <a class="btn" href="{{ route('content.create') }}">New Page/Post</a>
                 <a class="btn" href="{{ route('summary') }}">Today’s Summary</a>
             </div>
         </div>
