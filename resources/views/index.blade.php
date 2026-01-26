@@ -88,14 +88,24 @@
         </div>
         <nav>
             <a href="{{ route('home') }}">Features</a>
-            <a href="{{ route('products') }}">Products</a>
-            <a href="{{ route('sale') }}">POS</a>
-            <a href="{{ route('content.index') }}">Blog</a>
-            <a href="{{ route('summary') }}">Reports</a>
+            @auth
+                <a href="{{ route('products') }}">Products</a>
+                <a href="{{ route('sale') }}">POS</a>
+                <a href="{{ route('content.index') }}">Blog</a>
+                <a href="{{ route('summary') }}">Reports</a>
+            @endauth
         </nav>
         <div class="actions">
-            <a class="btn ghost" href="{{ route('login') }}">Sign in</a>
-            <a class="btn primary" href="{{ route('register') }}">Start free</a>
+            @guest
+                <a class="btn ghost" href="{{ route('login') }}">Sign in</a>
+                <a class="btn primary" href="{{ route('register') }}">Start free</a>
+            @else
+                <a class="btn primary" href="{{ route('sale') }}">Open POS</a>
+                <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn ghost">Log out</button>
+                </form>
+            @endguest
         </div>
     </header>
 
