@@ -12,6 +12,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'business_id',
+        'plan_id',
         'plan',
         'interval',
         'status',
@@ -19,6 +20,8 @@ class Subscription extends Model
         'currency',
         'period_start',
         'period_end',
+        'grace_until',
+        'last_payment_at',
         'canceled_at',
         'meta',
     ];
@@ -26,7 +29,14 @@ class Subscription extends Model
     protected $casts = [
         'period_start' => 'date',
         'period_end' => 'date',
+        'grace_until' => 'datetime',
+        'last_payment_at' => 'datetime',
         'canceled_at' => 'datetime',
         'meta' => 'array',
     ];
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
 }

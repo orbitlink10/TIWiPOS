@@ -11,14 +11,17 @@ trait BelongsToBusiness
     protected static function bootBelongsToBusiness(): void
     {
         static::creating(function ($model) {
-            if (empty($model->business_id) && ($businessId = Auth::user()?->business_id)) {
+            $user = Auth::user();
+            if (empty($model->business_id) && $user && !$user->is_super_admin && ($businessId = $user->business_id)) {
                 $model->business_id = $businessId;
             }
         });
 
         static::addGlobalScope('business', function (Builder $builder) {
-            $businessId = Auth::user()?->business_id;
-            if ($businessId) {
+            $user = Auth::user();
+            $businessId = $user?->business_id;
+            $isSuper = $user?->is_super_admin;
+            if ($businessId && !$isSuper) {
                 $builder->where($builder->getModel()->getTable() . '.business_id', $businessId);
             }
         });

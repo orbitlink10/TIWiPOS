@@ -16,6 +16,13 @@
     <div class="panel">
         <h2>All sales</h2>
         <p style="color: var(--muted); margin-top:6px;">Search, view, reprint, or edit past sales.</p>
+        @isset($currentBusiness)
+            @if($currentBusiness->subscription_status !== 'active')
+                <div style="margin-top:8px; padding:8px 10px; border-radius:10px; background:#fff1f2; color:#991b1b; font-weight:700;">
+                    Read-only mode: subscription inactive. Editing is disabled.
+                </div>
+            @endif
+        @endisset
 
         <form method="GET" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-top:10px;">
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Search sale number or customer" style="padding:10px; border-radius:10px; border:1px solid #e5e7eb;">
@@ -48,7 +55,7 @@
                             <td style="padding:10px;">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
                             <td style="padding:10px; text-align:right; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
                                 <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
-                                @if(auth()->user()->role === 'owner')
+                                @if(auth()->user()->role === 'owner' && optional($currentBusiness)->subscription_status === 'active')
                                     <a class="btn" style="padding:8px 12px; font-size:13px; background:#f59e0b;" href="{{ route('sales.edit', $sale) }}">Edit</a>
                                 @endif
                             </td>

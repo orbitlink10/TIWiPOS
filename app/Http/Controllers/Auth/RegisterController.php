@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\Plan;
 
 class RegisterController extends Controller
 {
@@ -41,6 +42,7 @@ class RegisterController extends Controller
             'slug' => Str::slug($data['business_name']) . '-' . Str::random(6),
             'industry' => $data['industry'] ?? null,
             'billing_email' => $data['email'],
+            'status' => 'active',
             'plan' => 'standard',
             'subscription_status' => 'active',
             'current_period_start' => now()->toDateString(),
@@ -57,6 +59,7 @@ class RegisterController extends Controller
 
         Subscription::create([
             'business_id' => $business->id,
+            'plan_id' => Plan::query()->value('id'),
             'plan' => 'standard',
             'interval' => 'monthly',
             'status' => 'active',
@@ -64,6 +67,7 @@ class RegisterController extends Controller
             'currency' => 'KES',
             'period_start' => now()->toDateString(),
             'period_end' => now()->addMonth()->toDateString(),
+            'grace_until' => now()->addDays(3),
         ]);
 
         $user = User::create([

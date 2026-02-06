@@ -16,6 +16,9 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Admin\TenantController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -23,6 +26,7 @@ Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::match(['get', 'post'], '/logout', LogoutController::class)->name('logout');
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('payments.webhook');
 // Password reset
 Route::get('/password/forgot', [ForgotPasswordController::class, 'show'])->name('password.request');
 Route::post('/password/email', [ForgotPasswordController::class, 'send'])->name('password.email');
@@ -30,9 +34,13 @@ Route::get('/password/reset/{token}', [ResetPasswordController::class, 'show'])-
 Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name('password.update');
 
 // Authenticated-only pages
-Route::middleware(['auth', 'subscription.active'])->group(function () {
+Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/content', [PostController::class, 'index'])->name('content.index');
     Route::get('/content/{post:slug}', [PostController::class, 'show'])->name('content.show');
+
+    Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
+    Route::post('/billing/pay', [BillingController::class, 'pay'])->name('billing.pay');
+    Route::post('/payments/record', [PaymentController::class, 'store'])->name('payments.store');
 
     Route::get('/stock', [PageController::class, 'stock'])->name('stock');
     Route::get('/sale', [PageController::class, 'sale'])->name('sale');
@@ -66,4 +74,11 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
     Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
     Route::post('/branches/switch', [BranchController::class, 'switch'])->name('branches.switch');
+});
+
+Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
+    Route::post('/tenants/{business}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
+    Route::post('/tenants/{business}/deactivate', [TenantController::class, 'deactivate'])->name('tenants.deactivate');
+    Route::post('/tenants/{business}/impersonate', [TenantController::class, 'impersonate'])->name('tenants.impersonate');
 });

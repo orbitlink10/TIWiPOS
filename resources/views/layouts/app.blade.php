@@ -165,8 +165,12 @@
                 <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}">Sales History</a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">Products</a>
                 <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}">Branches</a>
+                <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*') ? 'active' : '' }}">Billing</a>
                 @if(auth()->user()->role === 'owner')
                     <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">Staff</a>
+                @endif
+                @if(auth()->user()->is_super_admin)
+                    <a href="{{ route('admin.tenants.index') }}" class="{{ request()->routeIs('admin.tenants.*') ? 'active' : '' }}">Admin</a>
                 @endif
             </nav>
             @isset($currentBranch)

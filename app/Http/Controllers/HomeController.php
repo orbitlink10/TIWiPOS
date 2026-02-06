@@ -69,6 +69,8 @@ class HomeController extends Controller
             'today_profit' => $todayProfit,
         ];
 
-        return view('dashboard', compact('stats'));
+        $subscriptionActive = auth()->user()->business?->subscription_status === 'active';
+
+        return view('dashboard', compact('stats', 'subscriptionActive'));
     }
 }

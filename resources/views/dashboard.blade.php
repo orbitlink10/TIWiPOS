@@ -39,11 +39,18 @@
         <div>
             <div class="dash-chip">Live store snapshot</div>
             <h2>Welcome back</h2>
-            <p>Track sales performance, stock health, and today’s profit at a glance.</p>
+            <p>Track sales performance, stock health, and today's profit at a glance.</p>
+            @isset($subscriptionActive)
+                @if(!$subscriptionActive)
+                    <div style="margin-top:8px; padding:8px 10px; border-radius:10px; background:#fff1f2; color:#991b1b; font-weight:700;">
+                        Limited mode: subscription inactive. Use Billing to pay and restore access.
+                    </div>
+                @endif
+            @endisset
             <div class="quick-actions" style="margin-top:10px;">
                 <a class="btn" href="{{ route('sale') }}">Open POS</a>
                 <a class="btn" href="{{ route('stock') }}">Stock</a>
-                <a class="btn" href="{{ route('summary') }}">Today’s Summary</a>
+                <a class="btn" href="{{ route('summary') }}">Today's Summary</a>
             </div>
         </div>
         <div style="justify-self:end; text-align:right;">
@@ -68,12 +75,12 @@
                 <div class="badge-soft" style="background:#e4f7ec;color:#117a39;">Week to date</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Today’s Sales</div>
+                <div class="stat-label">Today's Sales</div>
                 <div class="stat-value">KES {{ number_format($stats['today'], 2) }}</div>
                 <div class="badge-soft">Daily run-rate</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Today’s Profit</div>
+                <div class="stat-label">Today's Profit</div>
                 <div class="stat-value">KES {{ number_format($stats['today_profit'], 2) }}</div>
                 <div class="badge-soft" style="background:#fff4e5;color:#b45b00;">After cost</div>
             </div>

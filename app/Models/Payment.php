@@ -15,14 +15,21 @@ class Payment extends Model
         'business_id',
         'branch_id',
         'sale_id',
+        'subscription_id',
         'method',
         'amount',
+        'currency',
         'reference',
+        'provider',
+        'provider_ref',
+        'status',
+        'raw_payload',
         'paid_at',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'raw_payload' => 'array',
     ];
 
     public function sale()

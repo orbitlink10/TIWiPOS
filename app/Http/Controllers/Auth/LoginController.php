@@ -30,6 +30,10 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+            if (!auth()->user()->is_active) {
+                Auth::logout();
+                return back()->withErrors(['email' => 'Account is inactive. Contact your admin.']);
+            }
             return redirect()->intended('/');
         }
 

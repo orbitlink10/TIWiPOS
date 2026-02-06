@@ -24,6 +24,8 @@ class User extends Authenticatable
         'business_id',
         'branch_id',
         'role',
+        'is_active',
+        'is_super_admin',
     ];
 
     /**

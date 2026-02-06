@@ -14,10 +14,13 @@ class Business extends Model
         'slug',
         'industry',
         'billing_email',
+        'phone',
+        'status',
         'plan',
         'subscription_status',
         'current_period_start',
         'current_period_end',
+        'last_payment_at',
         'trial_ends_at',
         'canceled_at',
     ];
@@ -25,6 +28,7 @@ class Business extends Model
     protected $casts = [
         'current_period_start' => 'date',
         'current_period_end' => 'date',
+        'last_payment_at' => 'datetime',
         'trial_ends_at' => 'datetime',
         'canceled_at' => 'datetime',
     ];
@@ -37,5 +41,10 @@ class Business extends Model
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
     }
 }

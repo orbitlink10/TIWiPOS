@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => \App\Http\Middleware\SetTenantContext::class,
             'subscription.active' => \App\Http\Middleware\EnsureSubscriptionActive::class,
+            'subscription.gate' => \App\Http\Middleware\FeatureGate::class,
+            'super.admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
 
         $middleware->appendToGroup('web', [
