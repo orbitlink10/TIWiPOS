@@ -15,6 +15,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\StaffController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -36,6 +37,9 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/stock', [PageController::class, 'stock'])->name('stock');
     Route::get('/sale', [PageController::class, 'sale'])->name('sale');
     Route::post('/sale', [SaleController::class, 'store'])->name('sale.store');
+    Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
+    Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit');
+    Route::put('/sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
     Route::get('/sale/receipt/{sale}', [SaleController::class, 'receipt'])->name('sale.receipt');
 
     Route::get('/products', [ProductController::class, 'index'])->name('products');
@@ -50,8 +54,13 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
 
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->name('stock.adjust');
     Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->name('stock.adjust.store');
+    Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->name('stock.edit');
+    Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->name('stock.update');
 
     Route::get('/summary', [PageController::class, 'summary'])->name('summary');
+
+    Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
 
     // Branch management
     Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');

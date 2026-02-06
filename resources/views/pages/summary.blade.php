@@ -4,15 +4,15 @@
 
 @section('header')
     <div class="header-row">
-        <h1>Today’s Sales Summary</h1>
-        <a class="btn" href="{{ route('home') }}">⬅ Back to Dashboard</a>
+        <h1>Today's Sales Summary</h1>
+        <a class="btn" href="{{ route('home') }}">Back to Dashboard</a>
     </div>
 @endsection
 
 @section('content')
     <div class="panel">
         <h2>Overview</h2>
-        <p style="color: var(--muted); margin-top:6px;">Snapshot of today’s performance.</p>
+        <p style="color: var(--muted); margin-top:6px;">Snapshot of today's performance.</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px;">
             <div class="kpi-card green">
                 <div style="font-size:22px;">KES {{ number_format($todaySalesTotal, 2) }}</div>
@@ -28,7 +28,7 @@
             </div>
             <div class="kpi-card" style="background:#0ea5e9;">
                 <div style="font-size:22px;">KES {{ number_format($todayProfit, 2) }}</div>
-                <span>Today’s Profit</span>
+                <span>Today's Profit</span>
             </div>
         </div>
 
@@ -49,8 +49,14 @@
                             </div>
                             <div style="margin-top:6px; color:var(--muted); font-size:13px;">
                                 @foreach($sale->items as $item)
-                                    {{ $item->product->name ?? 'Item' }} × {{ $item->quantity }}@if(!$loop->last), @endif
+                                    {{ $item->product->name ?? 'Item' }} x {{ $item->quantity }}@if(!$loop->last), @endif
                                 @endforeach
+                            </div>
+                            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                                <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
+                                @if(auth()->user()->role === 'owner')
+                                    <a class="btn" style="padding:8px 12px; font-size:13px; background:#f59e0b;" href="{{ route('sales.edit', $sale) }}">Edit</a>
+                                @endif
                             </div>
                         </div>
                     @endforeach

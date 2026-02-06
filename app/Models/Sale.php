@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\BelongsToBusiness;
 use App\Models\Concerns\BelongsToBranch;
+use App\Models\User;
 
 class Sale extends Model
 {
@@ -38,5 +39,10 @@ class Sale extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

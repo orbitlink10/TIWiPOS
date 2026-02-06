@@ -45,6 +45,10 @@
                     <input name="location" type="text" value="main" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                    Serial number (optional)
+                    <input name="serial_number" type="text" placeholder="Capture serial while adding stock" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                </label>
+                <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Quantity change (use negative to reduce)
                     <input name="quantity" type="number" value="1" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>

@@ -162,8 +162,12 @@
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
                 <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock') ? 'active' : '' }}">Stock</a>
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale') ? 'active' : '' }}">Make a Sale</a>
+                <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}">Sales History</a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products') ? 'active' : '' }}">Products</a>
                 <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}">Branches</a>
+                @if(auth()->user()->role === 'owner')
+                    <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">Staff</a>
+                @endif
             </nav>
             @isset($currentBranch)
                 <div style="margin:12px 24px; padding:10px 12px; background:#f2f6fb; border-radius:10px; color:#0f172a;">

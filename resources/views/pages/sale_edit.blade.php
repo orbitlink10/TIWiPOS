@@ -1,19 +1,18 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', 'Make a Sale')
+@section('title', 'Edit Sale')
 
 @section('header')
     <div class="header-row">
-        <h1>Make a Sale</h1>
-        <a class="btn" href="{{ route('summary') }}">🧾 View Sales Summary</a>
+        <h1>Edit Sale #{{ $sale->sale_number }}</h1>
+        <a class="btn" href="{{ route('sales.index') }}">Back to Sales</a>
     </div>
 @endsection
 
 @section('content')
     <div class="panel">
-        <h2>Quick register</h2>
-        <p style="color: var(--muted); margin-top:6px;">Select a product, enter quantity, and add items to the cart.</p>
-        <div style="color: var(--muted); font-size:13px; margin-top:4px;">Need to correct stock before selling? <a href="{{ route('stock') }}">Open stock list</a> and fix it, then return here.</div>
+        <h2>Update items and customer</h2>
+        <p style="color: var(--muted); margin-top:6px;">Adjust quantities or items. Stock will be restored and recalculated automatically.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -29,8 +28,9 @@
             </div>
         @endif
 
-        <form id="sale_form" method="POST" action="{{ route('sale.store') }}" style="margin-top:14px; display:grid; grid-template-columns:1fr 360px; gap:16px;">
+        <form id="sale_form" method="POST" action="{{ route('sales.update', $sale) }}" style="margin-top:14px; display:grid; grid-template-columns:1fr 360px; gap:16px;">
             @csrf
+            @method('PUT')
             <div class="panel" style="padding:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Search Product
@@ -85,29 +85,31 @@
                 </div>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600; margin-top:12px;">
                     Payment method
+                    @php $existingMethod = optional($sale->payments->first())->method ?? 'cash'; @endphp
                     <select name="method" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="mobile">Mobile</option>
-                        <option value="bank">Bank</option>
-                        <option value="other">Other</option>
+                        <option value="cash" {{ $existingMethod === 'cash' ? 'selected' : '' }}>Cash</option>
+                        <option value="card" {{ $existingMethod === 'card' ? 'selected' : '' }}>Card</option>
+                        <option value="mobile" {{ $existingMethod === 'mobile' ? 'selected' : '' }}>Mobile</option>
+                        <option value="bank" {{ $existingMethod === 'bank' ? 'selected' : '' }}>Bank</option>
+                        <option value="other" {{ $existingMethod === 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                 </label>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:12px;">
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Customer name
-                        <input name="customer_name" type="text" placeholder="Walk-in" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                        <input name="customer_name" type="text" placeholder="Walk-in" value="{{ old('customer_name', $sale->customer_name) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                     </label>
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Phone
-                        <input name="customer_phone" type="text" placeholder="+254..." style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                        <input name="customer_phone" type="text" placeholder="+254..." value="{{ old('customer_phone', $sale->customer_phone) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                     </label>
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Location
-                        <input name="customer_location" type="text" placeholder="City/Area" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                        <input name="customer_location" type="text" placeholder="City/Area" value="{{ old('customer_location', $sale->customer_location) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                     </label>
                 </div>
-                <button class="btn" type="submit" style="width:100%; justify-content:center; margin-top:14px;">💳 Complete Sale</button>
+                <div style="color:var(--muted); font-size:12px; margin-top:8px;">Changes will re-open stock, then deduct based on the updated cart.</div>
+                <button class="btn" type="submit" style="width:100%; justify-content:center; margin-top:14px;">Save Changes</button>
             </div>
         </form>
     </div>
@@ -126,11 +128,18 @@
     const barcodeInput = document.getElementById('barcode_search');
     let idx = 0;
 
+    const existingItems = @json($sale->items->map(fn($item) => [
+        'product_id' => $item->product_id,
+        'name' => $item->product->name ?? 'Product',
+        'quantity' => $item->quantity,
+        'unit_price' => $item->unit_price,
+        'serial' => $item->product->serial_number ?? 'N/A',
+    ]));
+
     function updateTotalsPreview() {
         const option = productSelect.options[productSelect.selectedIndex];
         const price = parseFloat(option?.dataset.price || 0);
         const stock = parseInt(option?.dataset.stock || 0);
-        const qty = parseInt(qtyInput.value || 0);
         unitInput.value = price ? price.toFixed(2) : '';
         const serial = option?.dataset.serial;
         stockInfo.textContent = option.value ? `${stock} in stock${serial ? ' | Serial: ' + serial : ''}` : 'Select a product to see availability.';
@@ -146,28 +155,8 @@
         totalText.textContent = 'KES ' + subtotal.toFixed(2);
     }
 
-    function addToCart() {
-        const option = productSelect.options[productSelect.selectedIndex];
-        const productId = option.value;
-        const name = option.dataset.name;
-        const price = parseFloat(option.dataset.price || 0);
-        const stock = parseInt(option.dataset.stock || 0);
-        const serial = option.dataset.serial || 'N/A';
-        const qty = parseInt(qtyInput.value || 0);
-        if (!productId) {
-            alert('Select a product first.');
-            return;
-        }
-        if (!qty || qty < 1) {
-            alert('Enter a valid quantity.');
-            return;
-        }
-        if (stock && qty > stock) {
-            alert('Quantity exceeds stock on hand.');
-            return;
-        }
+    function renderRow({ productId, name, qty, price, serial }) {
         const lineSubtotal = price * qty;
-
         const tr = document.createElement('tr');
         tr.dataset.subtotal = lineSubtotal;
         tr.innerHTML = `
@@ -193,6 +182,30 @@
         refreshCartTotals();
     }
 
+    function addToCart() {
+        const option = productSelect.options[productSelect.selectedIndex];
+        const productId = option.value;
+        const name = option.dataset.name;
+        const price = parseFloat(option.dataset.price || 0);
+        const stock = parseInt(option.dataset.stock || 0);
+        const serial = option.dataset.serial || 'N/A';
+        const qty = parseInt(qtyInput.value || 0);
+        if (!productId) {
+            alert('Select a product first.');
+            return;
+        }
+        if (!qty || qty < 1) {
+            alert('Enter a valid quantity.');
+            return;
+        }
+        if (stock && qty > stock) {
+            alert('Quantity exceeds stock on hand.');
+            return;
+        }
+
+        renderRow({ productId, name, qty, price, serial });
+    }
+
     addBtn.addEventListener('click', addToCart);
     form.addEventListener('submit', (e) => {
         if (cartBody.querySelectorAll('tr').length === 0) {
@@ -203,7 +216,7 @@
 
     productSelect.addEventListener('change', updateTotalsPreview);
     qtyInput.addEventListener('input', updateTotalsPreview);
-    // simple client-side filter for search
+
     function filterProducts(term) {
         term = term.toLowerCase();
         for (const opt of productSelect.options) {
@@ -211,7 +224,6 @@
             const text = opt.textContent.toLowerCase();
             opt.hidden = text.indexOf(term) === -1;
         }
-        // select first visible option if none selected
         const visible = Array.from(productSelect.options).find(o => !o.hidden && o.value);
         if (visible) {
             productSelect.value = visible.value;
@@ -231,6 +243,16 @@
             productSelect.value = match.value;
             updateTotalsPreview();
         }
+    });
+
+    existingItems.forEach(item => {
+        renderRow({
+            productId: item.product_id,
+            name: item.name,
+            qty: item.quantity,
+            price: parseFloat(item.unit_price),
+            serial: item.serial || 'N/A',
+        });
     });
 
     updateTotalsPreview();

@@ -9,7 +9,25 @@ class PageController extends Controller
 {
     public function stock()
     {
-        return view('pages.stock');
+        $branchId = Tenant::branchId();
+        $products = \App\Models\Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+            $q->where('location', 'main');
+            if ($branchId) {
+                $q->where('branch_id', $branchId);
+            }
+        }], 'quantity')
+            ->orderBy('name')
+            ->get();
+
+        $outOfStock = $products->filter(fn($p) => (int) ($p->stock_on_hand ?? 0) <= 0)->count();
+        $lowStock = $products->filter(function ($p) {
+            $stock = (int) ($p->stock_on_hand ?? 0);
+            $alert = (int) ($p->stock_alert ?? 0);
+            return $stock > 0 && $alert > 0 && $stock <= $alert;
+        })->count();
+        $totalItems = $products->sum(fn($p) => (int) ($p->stock_on_hand ?? 0));
+
+        return view('pages.stock', compact('products', 'outOfStock', 'lowStock', 'totalItems'));
     }
 
     public function sale()

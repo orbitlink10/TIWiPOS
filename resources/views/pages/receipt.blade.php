@@ -5,7 +5,7 @@
 @section('header')
     <div class="header-row">
         <h1>Receipt #{{ $sale->sale_number }}</h1>
-        <a class="btn" href="{{ route('sale') }}">⬅ New Sale</a>
+        <a class="btn" href="{{ route('sale') }}">New Sale</a>
     </div>
 @endsection
 
@@ -14,7 +14,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
                 <h2 style="margin:0;">Tiwi POS</h2>
-                <div style="color:var(--muted); font-size:13px;">127.0.0.1 | {{ now()->format('Y-m-d H:i') }}</div>
+                <div style="color:var(--muted); font-size:13px;">127.0.0.1 | {{ $sale->created_at->format('Y-m-d H:i') }}</div>
             </div>
             <div style="text-align:right;">
                 <div style="font-weight:700;">Receipt</div>
@@ -35,7 +35,12 @@
                 <tbody>
                     @foreach ($sale->items as $item)
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">{{ $item->product->name ?? 'Product' }}</td>
+                            <td style="padding:10px;">
+                                <div>{{ $item->product->name ?? 'Product' }}</div>
+                                @if($item->product && $item->product->serial_number)
+                                    <div style="color:var(--muted); font-size:12px;">Serial: {{ $item->product->serial_number }}</div>
+                                @endif
+                            </td>
                             <td style="padding:10px; text-align:right;">{{ $item->quantity }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($item->unit_price, 2) }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($item->subtotal, 2) }}</td>
@@ -66,6 +71,7 @@
     </div>
 
     <div style="margin-top:12px;">
-        <button class="btn" onclick="window.print()">🖨️ Print Receipt</button>
+        <button class="btn" onclick="window.print()">Print Receipt</button>
+        <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('sales.index') }}">View all sales</a>
     </div>
 @endsection
