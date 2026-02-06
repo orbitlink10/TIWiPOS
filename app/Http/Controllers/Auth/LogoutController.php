@@ -13,6 +13,6 @@ class LogoutController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/index.php');
+        return redirect()->away('https://tiwi.co.ke/');
     }
 }
