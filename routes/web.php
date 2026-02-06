@@ -20,7 +20,7 @@ use App\Http\Controllers\StaffController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
-Route::post('/logout', LogoutController::class)->name('logout');
+Route::match(['get', 'post'], '/logout', LogoutController::class)->name('logout');
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 // Password reset
