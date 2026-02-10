@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\Category;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -68,13 +69,19 @@ class CategoryCreationTest extends TestCase
         $responseTwo = $this->actingAs($userTwo)->post(route('categories.store'), $payload);
         $responseTwo->assertRedirect(route('products.create'));
 
-        $slugCount = Category::withoutGlobalScopes()->where('slug', 'starlink-kits')->count();
-        $this->assertSame(2, $slugCount);
+        $categories = Category::withoutGlobalScopes()
+            ->whereIn('business_id', [$businessOne->id, $businessTwo->id])
+            ->where('name', 'Starlink KITS')
+            ->orderBy('business_id')
+            ->get();
+
+        $this->assertCount(2, $categories);
+        $this->assertNotSame($categories[0]->slug, $categories[1]->slug);
     }
 
     private function createActiveBusiness(string $name, string $slug): Business
     {
-        return Business::create([
+        $business = Business::create([
             'name' => $name,
             'slug' => $slug,
             'billing_email' => $slug.'@example.com',
@@ -83,6 +90,20 @@ class CategoryCreationTest extends TestCase
             'current_period_start' => now()->toDateString(),
             'current_period_end' => now()->addMonth()->toDateString(),
         ]);
+
+        Subscription::create([
+            'business_id' => $business->id,
+            'plan' => 'standard',
+            'interval' => 'monthly',
+            'status' => 'active',
+            'amount' => 0,
+            'currency' => 'KES',
+            'period_start' => now()->toDateString(),
+            'period_end' => now()->addMonth()->toDateString(),
+            'grace_until' => now()->addDays(3),
+            'last_payment_at' => now(),
+        ]);
+
+        return $business;
     }
 }
-

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Support\Tenant;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
@@ -54,39 +53,26 @@ class CategoryController extends Controller
             $baseSlug = 'category';
         }
 
-        $slug = $baseSlug;
-        $index = 2;
-        while ($this->slugExistsForBusiness($slug, $businessId)) {
-            $slug = $baseSlug.'-'.$index++;
-        }
-
-        try {
-            Category::create([
-                'name' => $data['name'],
-                'slug' => $slug,
-                'description' => $data['description'] ?? null,
-                'parent_id' => $data['parent_id'] ?? null,
-                'is_active' => $request->boolean('is_active'),
-            ]);
-        } catch (UniqueConstraintViolationException $e) {
-            return back()
-                ->withInput()
-                ->withErrors(['name' => 'A category with this name already exists.']);
-        }
+        Category::create([
+            'name' => $data['name'],
+            'slug' => $this->nextAvailableSlug($baseSlug),
+            'description' => $data['description'] ?? null,
+            'parent_id' => $data['parent_id'] ?? null,
+            'is_active' => $request->boolean('is_active'),
+        ]);
 
         return redirect()->route('products.create')->with('status', 'Category added.');
     }
 
-    private function slugExistsForBusiness(string $slug, ?int $businessId): bool
+    private function nextAvailableSlug(string $baseSlug): string
     {
-        $query = Category::withoutGlobalScopes()->where('slug', $slug);
+        $slug = $baseSlug;
+        $index = 2;
 
-        if ($businessId) {
-            $query->where('business_id', $businessId);
-        } else {
-            $query->whereNull('business_id');
+        while (Category::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$index++;
         }
 
-        return $query->exists();
+        return $slug;
     }
 }

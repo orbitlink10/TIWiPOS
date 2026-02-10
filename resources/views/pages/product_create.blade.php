@@ -57,9 +57,15 @@
                     <select name="category_id" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                         <option value="">Select category</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>
                         @endforeach
                     </select>
+                    @if($categories->isEmpty())
+                        <small style="color:#b45309; font-weight:500;">
+                            No categories available for this business yet.
+                            <a href="{{ route('categories.create') }}" style="color:#0369a1; font-weight:600;">Add a category</a>
+                        </small>
+                    @endif
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Supplier
