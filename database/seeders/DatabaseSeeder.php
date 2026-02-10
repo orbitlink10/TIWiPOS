@@ -17,10 +17,11 @@ class DatabaseSeeder extends Seeder
     {
         $businessId = \DB::table('businesses')->value('id') ?? 1;
 
-        User::factory()->create([
+        User::updateOrCreate([
+            'email' => 'reisenseo@gmail.com',
+        ], [
             'name' => 'Super Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt('admin123'),
             'business_id' => $businessId,
             'role' => 'owner',
             'is_super_admin' => true,
