@@ -15,6 +15,8 @@ use App\Support\Tenant;
 
 class SaleController extends Controller
 {
+    private const TAX_RATE = 0.16;
+
     protected $lastSaleId;
 
     protected function ensureAdmin(): void
@@ -75,6 +77,7 @@ class SaleController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'method' => 'required|in:cash,card,bank,mobile,other',
+            'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
@@ -111,9 +114,12 @@ class SaleController extends Controller
             ];
         }
 
-        $total = $subtotal;
+        $tax = $request->boolean('apply_tax')
+            ? round($subtotal * self::TAX_RATE, 2)
+            : 0.0;
+        $total = $subtotal + $tax;
 
-        DB::transaction(function () use ($data, $saleNumber, $subtotal, $total, $lineItems) {
+        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $lineItems) {
             $sale = Sale::create([
                 'branch_id' => Tenant::branchId(),
                 'sale_number' => $saleNumber,
@@ -124,7 +130,7 @@ class SaleController extends Controller
                 'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount' => 0,
-                'tax' => 0,
+                'tax' => $tax,
                 'total' => $total,
                 'payment_status' => 'paid',
                 'status' => 'completed',
@@ -208,6 +214,7 @@ class SaleController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'method' => 'required|in:cash,card,bank,mobile,other',
+            'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
@@ -215,7 +222,7 @@ class SaleController extends Controller
 
         $branchId = $sale->branch_id ?? Tenant::branchId();
 
-        DB::transaction(function () use ($data, $sale, $branchId) {
+        DB::transaction(function () use ($data, $sale, $branchId, $request) {
             $sale->load('items');
 
             // Restock previous items before recalculating
@@ -261,7 +268,10 @@ class SaleController extends Controller
                 ];
             }
 
-            $total = $subtotal;
+            $tax = $request->boolean('apply_tax')
+                ? round($subtotal * self::TAX_RATE, 2)
+                : 0.0;
+            $total = $subtotal + $tax;
 
             foreach ($lineItems as $line) {
                 SaleItem::create([
@@ -306,7 +316,7 @@ class SaleController extends Controller
                 'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount' => 0,
-                'tax' => 0,
+                'tax' => $tax,
                 'total' => $total,
                 'payment_status' => 'paid',
                 'status' => 'completed',

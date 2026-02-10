@@ -70,7 +70,7 @@
                             <th style="text-align:right; padding:6px;">Qty</th>
                             <th style="text-align:right; padding:6px;">Price</th>
                             <th style="text-align:right; padding:6px;">Sub</th>
-                            <th style="padding:6px;"></th>
+                            <th style="text-align:right; padding:6px;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="cart_body"></tbody>
@@ -78,6 +78,15 @@
                 <div style="margin-top:14px; display:flex; justify-content:space-between; font-weight:700;">
                     <span>Subtotal</span>
                     <span id="subtotal_text">KES 0.00</span>
+                </div>
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600; margin-top:10px;">
+                    <input type="hidden" name="apply_tax" value="0">
+                    <input id="apply_tax" name="apply_tax" type="checkbox" value="1" @checked(old('apply_tax') == '1') style="width:16px; height:16px;">
+                    Apply 16% tax
+                </label>
+                <div style="margin-top:6px; display:flex; justify-content:space-between;">
+                    <span style="color:var(--muted);">Tax (16%)</span>
+                    <span id="tax_text">KES 0.00</span>
                 </div>
                 <div style="margin-top:6px; display:flex; justify-content:space-between;">
                     <span style="color:var(--muted);">Total</span>
@@ -117,7 +126,9 @@
     const qtyInput = document.getElementById('quantity');
     const unitInput = document.getElementById('unit_price');
     const subtotalText = document.getElementById('subtotal_text');
+    const taxText = document.getElementById('tax_text');
     const totalText = document.getElementById('total_text');
+    const applyTaxInput = document.getElementById('apply_tax');
     const stockInfo = document.getElementById('stock_info');
     const cartBody = document.getElementById('cart_body');
     const addBtn = document.getElementById('add_to_cart');
@@ -142,8 +153,11 @@
             const line = parseFloat(row.dataset.subtotal || 0);
             subtotal += line;
         });
+        const tax = applyTaxInput.checked ? (subtotal * 0.16) : 0;
+        const total = subtotal + tax;
         subtotalText.textContent = 'KES ' + subtotal.toFixed(2);
-        totalText.textContent = 'KES ' + subtotal.toFixed(2);
+        taxText.textContent = 'KES ' + tax.toFixed(2);
+        totalText.textContent = 'KES ' + total.toFixed(2);
     }
 
     function addToCart() {
@@ -179,7 +193,7 @@
             <td style="padding:6px; text-align:right;">${price.toFixed(2)}</td>
             <td style="padding:6px; text-align:right;">${lineSubtotal.toFixed(2)}</td>
             <td style="padding:6px; text-align:right;">
-                <button type="button" class="btn" style="padding:6px 10px; font-size:12px; background:#fee2e2; color:#991b1b; border:1px solid #fecdd3;">×</button>
+                <button type="button" class="btn" style="padding:6px 10px; font-size:12px; background:#fee2e2; color:#991b1b; border:1px solid #fecdd3;">Remove</button>
             </td>
             <input type="hidden" name="items[${idx}][product_id]" value="${productId}">
             <input type="hidden" name="items[${idx}][quantity]" value="${qty}">
@@ -203,6 +217,7 @@
 
     productSelect.addEventListener('change', updateTotalsPreview);
     qtyInput.addEventListener('input', updateTotalsPreview);
+    applyTaxInput.addEventListener('change', refreshCartTotals);
     // simple client-side filter for search
     function filterProducts(term) {
         term = term.toLowerCase();
