@@ -186,6 +186,40 @@
             line-height: 1.2;
         }
 
+        .branch-switch-form {
+            margin-top: 10px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .branch-switch-select {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(12, 32, 66, 0.55);
+            color: #fff;
+            padding: 9px 10px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .branch-switch-select:focus {
+            outline: 2px solid rgba(20,184,166,0.35);
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .branch-switch-btn {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         .logout {
             display: block;
             background: rgba(237, 71, 86, 0.14);
@@ -390,12 +424,26 @@
             </nav>
             <div class="spacer"></div>
             <div class="sidebar-footer">
-                @isset($currentBranch)
+                @if((isset($availableBranches) && $availableBranches->isNotEmpty()) || isset($currentBranch))
                     <div class="branch-chip">
                         <div class="branch-chip-label">Active Branch</div>
-                        <div class="branch-chip-name">{{ $currentBranch->name ?? 'Unknown' }}</div>
+                        <div class="branch-chip-name">{{ $currentBranch->name ?? ($availableBranches->first()->name ?? 'Unknown') }}</div>
+                        @if(isset($availableBranches) && $availableBranches->count() > 1)
+                            <form method="POST" action="{{ route('branches.switch') }}" class="branch-switch-form">
+                                @csrf
+                                <select name="branch_id" class="branch-switch-select" aria-label="Switch branch">
+                                    @php($selectedBranchId = (int) (session('branch_id') ?? auth()->user()->branch_id ?? 0))
+                                    @foreach($availableBranches as $branchOption)
+                                        <option value="{{ $branchOption->id }}" @selected($selectedBranchId === (int) $branchOption->id)>
+                                            {{ $branchOption->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="branch-switch-btn">Switch Branch</button>
+                            </form>
+                        @endif
                     </div>
-                @endisset
+                @endif
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="logout">Sign Out</button>

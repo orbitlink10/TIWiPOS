@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Branch;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,13 @@ class SetTenantContext
 
             view()->share('currentBusiness', $user->business);
             view()->share('currentBranch', $user->branch);
+            view()->share(
+                'availableBranches',
+                Branch::query()
+                    ->where('business_id', $user->business_id)
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+            );
         }
 
         return $next($request);
