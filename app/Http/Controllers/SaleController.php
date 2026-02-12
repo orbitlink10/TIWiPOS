@@ -117,6 +117,12 @@ class SaleController extends Controller
                     $q->where('branch_id', $branchId);
                 }
             }], 'quantity')
+            ->whereHas('stocks', function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+                $q->where('quantity', '>', 0);
+            })
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -207,6 +213,7 @@ class SaleController extends Controller
                     'business_id' => $sale->business_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
+                    'serial_number' => $line['product']->serial_number,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount' => 0,
@@ -363,6 +370,7 @@ class SaleController extends Controller
                     'business_id' => $sale->business_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
+                    'serial_number' => $line['product']->serial_number,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount' => 0,

@@ -27,6 +27,7 @@
                 <thead>
                     <tr style="background:#f7f7fb;">
                         <th style="text-align:left; padding:10px;">Item</th>
+                        <th style="text-align:left; padding:10px;">Serial Number</th>
                         <th style="text-align:right; padding:10px;">Qty</th>
                         <th style="text-align:right; padding:10px;">Price</th>
                         <th style="text-align:right; padding:10px;">Subtotal</th>
@@ -34,13 +35,10 @@
                 </thead>
                 <tbody>
                     @foreach ($sale->items as $item)
+                        @php($serial = $item->serial_number ?: ($item->product->serial_number ?? null))
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">
-                                <div>{{ $item->product->name ?? 'Product' }}</div>
-                                @if($item->product && $item->product->serial_number)
-                                    <div style="color:var(--muted); font-size:12px;">Serial: {{ $item->product->serial_number }}</div>
-                                @endif
-                            </td>
+                            <td style="padding:10px;">{{ $item->product->name ?? 'Product' }}</td>
+                            <td style="padding:10px;">{{ $serial ?: '-' }}</td>
                             <td style="padding:10px; text-align:right;">{{ $item->quantity }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($item->unit_price, 2) }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($item->subtotal, 2) }}</td>

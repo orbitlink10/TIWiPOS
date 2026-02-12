@@ -806,9 +806,10 @@
 
             const text = ((option.dataset.name || '') + ' ' + (option.textContent || '')).toLowerCase();
             const categoryId = option.dataset.categoryId || '';
+            const stock = parseInt(option.dataset.stock || '0', 10);
             const matchesCategory = activeCategory === 'all' || categoryId === activeCategory;
             const matchesTerm = term === '' || text.includes(term);
-            const visible = matchesCategory && matchesTerm;
+            const visible = matchesCategory && matchesTerm && stock > 0;
 
             option.hidden = !visible;
             if (visible && !firstVisibleValue) {
