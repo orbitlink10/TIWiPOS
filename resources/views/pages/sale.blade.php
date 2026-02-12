@@ -54,7 +54,7 @@
                     </label>
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Unit price (KES)
-                        <input id="unit_price" type="number" step="0.01" readonly style="padding:12px;border:1px solid #e5e7eb;border-radius:10px; background:#f8fafc;">
+                        <input id="unit_price" type="number" step="0.01" min="0" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                     </label>
                 </div>
                 <button type="button" id="add_to_cart" class="btn" style="margin-top:12px; width:fit-content;">Add to cart</button>
@@ -137,12 +137,13 @@
     const barcodeInput = document.getElementById('barcode_search');
     let idx = 0;
 
-    function updateTotalsPreview() {
+    function updateTotalsPreview(syncPrice = false) {
         const option = productSelect.options[productSelect.selectedIndex];
         const price = parseFloat(option?.dataset.price || 0);
         const stock = parseInt(option?.dataset.stock || 0);
-        const qty = parseInt(qtyInput.value || 0);
-        unitInput.value = price ? price.toFixed(2) : '';
+        if (syncPrice) {
+            unitInput.value = price ? price.toFixed(2) : '';
+        }
         const serial = option?.dataset.serial;
         stockInfo.textContent = option.value ? `${stock} in stock${serial ? ' | Serial: ' + serial : ''}` : 'Select a product to see availability.';
     }
@@ -164,7 +165,8 @@
         const option = productSelect.options[productSelect.selectedIndex];
         const productId = option.value;
         const name = option.dataset.name;
-        const price = parseFloat(option.dataset.price || 0);
+        const defaultPrice = parseFloat(option.dataset.price || 0);
+        const price = parseFloat(unitInput.value || defaultPrice || 0);
         const stock = parseInt(option.dataset.stock || 0);
         const serial = option.dataset.serial || 'N/A';
         const qty = parseInt(qtyInput.value || 0);
@@ -178,6 +180,10 @@
         }
         if (stock && qty > stock) {
             alert('Quantity exceeds stock on hand.');
+            return;
+        }
+        if (!Number.isFinite(price) || price < 0) {
+            alert('Enter a valid unit price.');
             return;
         }
         const lineSubtotal = price * qty;
@@ -197,6 +203,7 @@
             </td>
             <input type="hidden" name="items[${idx}][product_id]" value="${productId}">
             <input type="hidden" name="items[${idx}][quantity]" value="${qty}">
+            <input type="hidden" name="items[${idx}][unit_price]" value="${price.toFixed(2)}">
         `;
         idx++;
         tr.querySelector('button').addEventListener('click', () => {
@@ -215,9 +222,15 @@
         }
     });
 
-    productSelect.addEventListener('change', updateTotalsPreview);
-    qtyInput.addEventListener('input', updateTotalsPreview);
+    productSelect.addEventListener('change', () => updateTotalsPreview(true));
+    qtyInput.addEventListener('input', () => updateTotalsPreview(false));
     applyTaxInput.addEventListener('change', refreshCartTotals);
+    unitInput.addEventListener('blur', () => {
+        const value = parseFloat(unitInput.value);
+        if (Number.isFinite(value) && value >= 0) {
+            unitInput.value = value.toFixed(2);
+        }
+    });
     // simple client-side filter for search
     function filterProducts(term) {
         term = term.toLowerCase();
@@ -231,7 +244,7 @@
         if (visible) {
             productSelect.value = visible.value;
         }
-        updateTotalsPreview();
+        updateTotalsPreview(true);
     }
 
     searchInput.addEventListener('input', (e) => {
@@ -244,11 +257,11 @@
         const match = Array.from(productSelect.options).find(o => o.dataset.barcode === code);
         if (match) {
             productSelect.value = match.value;
-            updateTotalsPreview();
+            updateTotalsPreview(true);
         }
     });
 
-    updateTotalsPreview();
+    updateTotalsPreview(true);
 </script>
 @endpush
 @endsection

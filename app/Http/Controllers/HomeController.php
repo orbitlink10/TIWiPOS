@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Support\Tenant;
 
 class HomeController extends Controller
 {
@@ -28,28 +29,40 @@ class HomeController extends Controller
             return view('index', compact('stats'));
         }
 
-        $canViewProfit = auth()->user()->role === 'owner';
+        $canViewProfit = in_array(auth()->user()->role, ['owner', 'manager'], true);
+        $branchId = Tenant::branchId();
         $today = now()->startOfDay();
         $weekStart = now()->startOfWeek();
         $monthStart = now()->startOfMonth();
 
         $monthSales = Sale::where('status', 'completed')
             ->whereBetween('created_at', [$monthStart, now()])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->sum('total');
 
         $weekSales = Sale::where('status', 'completed')
             ->whereBetween('created_at', [$weekStart, now()])
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->sum('total');
 
         $todaySales = Sale::where('status', 'completed')
             ->whereDate('created_at', $today)
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->sum('total');
 
-        $outOfStock = Product::whereRaw('(select coalesce(sum(quantity),0) from product_stocks where product_id = products.id) <= 0')->count();
+        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+            $q->where('location', 'main');
+            if ($branchId) {
+                $q->where('branch_id', $branchId);
+            }
+        }], 'quantity')->get(['id', 'stock_alert']);
 
-        $lowStock = Product::whereRaw('(select coalesce(sum(quantity),0) from product_stocks where product_id = products.id) > 0')
-            ->whereRaw('(select coalesce(sum(quantity),0) from product_stocks where product_id = products.id) <= coalesce(stock_alert,0)')
-            ->count();
+        $outOfStock = $products->filter(fn($p) => (int) ($p->stock_on_hand ?? 0) <= 0)->count();
+        $lowStock = $products->filter(function ($p) {
+            $stock = (int) ($p->stock_on_hand ?? 0);
+            $alert = (int) ($p->stock_alert ?? 0);
+            return $stock > 0 && $alert > 0 && $stock <= $alert;
+        })->count();
 
         $todayProfit = $canViewProfit
             ? (SaleItem::query()
@@ -57,6 +70,7 @@ class HomeController extends Controller
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
+                ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
                 ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
                 ->value('profit') ?? 0)
             : null;

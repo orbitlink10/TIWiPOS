@@ -47,7 +47,7 @@ class PageController extends Controller
 
     public function summary()
     {
-        $canViewProfit = auth()->user()->role === 'owner';
+        $canViewProfit = in_array(auth()->user()->role, ['owner', 'manager'], true);
         $today = now()->toDateString();
         $branchId = Tenant::branchId();
 

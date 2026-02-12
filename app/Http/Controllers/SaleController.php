@@ -76,6 +76,7 @@ class SaleController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'nullable|numeric|min:0',
             'method' => 'required|in:cash,card,bank,mobile,other',
             'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
@@ -103,7 +104,10 @@ class SaleController extends Controller
 
         foreach ($data['items'] as $item) {
             $product = Product::find($item['product_id']);
-            $unitPrice = $product->price;
+            $unitPrice = array_key_exists('unit_price', $item)
+                ? (float) $item['unit_price']
+                : (float) $product->price;
+            $unitPrice = round($unitPrice, 2);
             $lineSubtotal = $unitPrice * $item['quantity'];
             $subtotal += $lineSubtotal;
             $lineItems[] = [
@@ -140,6 +144,7 @@ class SaleController extends Controller
             foreach ($lineItems as $line) {
                 SaleItem::create([
                     'business_id' => $sale->business_id,
+                    'branch_id' => $sale->branch_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],
@@ -276,6 +281,7 @@ class SaleController extends Controller
             foreach ($lineItems as $line) {
                 SaleItem::create([
                     'business_id' => $sale->business_id,
+                    'branch_id' => $branchId,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],

@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\BelongsToBusiness;
+use App\Models\Concerns\BelongsToBranch;
 
 class SaleItem extends Model
 {
-    use HasFactory, BelongsToBusiness;
+    use HasFactory, BelongsToBusiness, BelongsToBranch;
 
     protected $fillable = [
         'business_id',
+        'branch_id',
         'sale_id',
         'product_id',
         'quantity',

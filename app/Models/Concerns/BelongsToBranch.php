@@ -3,8 +3,8 @@
 namespace App\Models\Concerns;
 
 use App\Models\Branch;
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 trait BelongsToBranch
 {
@@ -27,7 +27,7 @@ trait BelongsToBranch
 
     protected static function currentBranchId(): ?int
     {
-        return session('branch_id') ?? Auth::user()?->branch_id;
+        return Tenant::branchId();
     }
 
     public function branch()
