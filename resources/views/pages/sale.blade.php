@@ -7,6 +7,9 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
     .sale-shell {
+        --sale-accent: #16a34a;
+        --sale-accent-strong: #15803d;
+        --sale-accent-soft: #ebf8ef;
         display: grid;
         gap: 14px;
         font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
@@ -29,8 +32,8 @@
     }
 
     .sale-summary-btn {
-        background: linear-gradient(135deg, #139b98 0%, #0f827f 100%);
-        box-shadow: 0 10px 22px rgba(16, 136, 133, 0.28);
+        background: linear-gradient(135deg, var(--sale-accent) 0%, var(--sale-accent-strong) 100%);
+        box-shadow: 0 10px 22px rgba(21, 128, 61, 0.26);
     }
 
     .sale-card h2,
@@ -56,7 +59,7 @@
     }
 
     .sale-lead a {
-        color: #148b88;
+        color: var(--sale-accent-strong);
         text-decoration: none;
         font-weight: 800;
     }
@@ -103,15 +106,15 @@
     }
 
     .category-pill:hover {
-        border-color: #19a2a0;
-        color: #166864;
+        border-color: var(--sale-accent);
+        color: #166534;
     }
 
     .category-pill.is-active {
-        background: #149a97;
-        border-color: #149a97;
+        background: var(--sale-accent);
+        border-color: var(--sale-accent);
         color: #fff;
-        box-shadow: 0 9px 18px rgba(20,154,151,0.25);
+        box-shadow: 0 9px 18px rgba(22,163,74,0.24);
     }
 
     .field-grid {
@@ -167,8 +170,8 @@
         align-items: center;
         height: 60px;
         border-radius: 14px;
-        border: 2px solid #0e2a39;
-        background: linear-gradient(180deg, #169895 0%, #0f8481 100%);
+        border: 2px solid #14532d;
+        background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
         color: #fff;
         font-size: 20px;
         font-weight: 800;
@@ -179,7 +182,7 @@
 
     .add-btn:hover {
         transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(15,132,129,0.24);
+        box-shadow: 0 10px 22px rgba(22,163,74,0.26);
     }
 
     .stock-info {
@@ -198,7 +201,7 @@
 
     .cart-count {
         border-radius: 999px;
-        background: #149a97;
+        background: var(--sale-accent);
         color: #fff;
         padding: 6px 12px;
         font-size: 13px;
@@ -373,7 +376,7 @@
     }
 
     .switch input:checked + .switch-slider {
-        background: #119997;
+        background: var(--sale-accent);
     }
 
     .switch input:checked + .switch-slider::before {
@@ -392,7 +395,7 @@
     }
 
     .total-line.total strong {
-        color: #138f8c;
+        color: var(--sale-accent-strong);
         font-size: 42px;
         font-weight: 800;
         letter-spacing: -0.01em;
@@ -442,10 +445,10 @@
     }
 
     .payment-chip input:checked + span {
-        border-color: #159997;
-        color: #137470;
-        background: #edf9f8;
-        box-shadow: 0 6px 16px rgba(20,154,151,0.18);
+        border-color: var(--sale-accent);
+        color: #166534;
+        background: var(--sale-accent-soft);
+        box-shadow: 0 6px 16px rgba(22,163,74,0.18);
     }
 
     .complete-btn {
@@ -454,13 +457,13 @@
         height: 56px;
         border: none;
         border-radius: 14px;
-        background: linear-gradient(135deg, #139b98 0%, #0f827f 100%);
+        background: linear-gradient(135deg, var(--sale-accent) 0%, var(--sale-accent-strong) 100%);
         color: #fff;
         font-size: 19px;
         font-weight: 800;
         letter-spacing: -0.01em;
         cursor: pointer;
-        box-shadow: 0 11px 22px rgba(16, 136, 133, 0.26);
+        box-shadow: 0 11px 22px rgba(21, 128, 61, 0.26);
         transition: transform 0.18s ease;
     }
 
@@ -566,7 +569,7 @@
                             <option
                                 value="{{ $product->id }}"
                                 data-name="{{ $product->name }}"
-                                data-price="{{ $product->price }}"
+                                data-price="{{ number_format((float) $product->price, 2, '.', '') }}"
                                 data-stock="{{ (int) ($product->stock_on_hand ?? 0) }}"
                                 data-barcode="{{ $product->barcode }}"
                                 data-serial="{{ $product->serial_number }}"
@@ -710,6 +713,12 @@
         return 'KES ' + amount.toFixed(2);
     }
 
+    function parseMoney(value) {
+        const normalized = String(value ?? '').replace(/[^0-9.-]/g, '');
+        const parsed = Number.parseFloat(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
     function escapeHtml(value) {
         return String(value)
             .replace(/&/g, '&amp;')
@@ -731,12 +740,12 @@
             return;
         }
 
-        const price = parseFloat(option.dataset.price || 0);
+        const price = parseMoney(option.dataset.price);
         const stock = parseInt(option.dataset.stock || 0, 10);
         const serial = (option.dataset.serial || '').trim();
 
         if (syncPrice) {
-            unitInput.value = Number.isFinite(price) && price > 0 ? price.toFixed(2) : '';
+            unitInput.value = Number.isFinite(price) ? price.toFixed(2) : '';
         }
 
         stockInfo.textContent = stock + ' in stock' + (serial ? ' | Serial: ' + serial : '');
@@ -778,8 +787,9 @@
         }
 
         const name = option.dataset.name || option.textContent || 'Product';
-        const defaultPrice = parseFloat(option.dataset.price || 0);
-        const price = parseFloat(unitInput.value || defaultPrice || 0);
+        const defaultPrice = parseMoney(option.dataset.price);
+        const hasManualPrice = unitInput.value !== null && unitInput.value.trim() !== '';
+        const price = hasManualPrice ? parseMoney(unitInput.value) : defaultPrice;
         const stock = parseInt(option.dataset.stock || 0, 10);
         const serial = option.dataset.serial || 'N/A';
         const qty = parseInt(qtyInput.value || 0, 10);
@@ -790,7 +800,7 @@
             return;
         }
 
-        if (!Number.isFinite(price) || price < 0) {
+        if (!Number.isFinite(price) || price <= 0) {
             alert('Enter a valid unit price.');
             return;
         }
@@ -846,9 +856,10 @@
             const text = ((option.dataset.name || '') + ' ' + (option.textContent || '')).toLowerCase();
             const categoryId = option.dataset.categoryId || '';
             const stock = parseInt(option.dataset.stock || '0', 10);
+            const price = parseMoney(option.dataset.price);
             const matchesCategory = activeCategory === 'all' || categoryId === activeCategory;
             const matchesTerm = term === '' || text.includes(term);
-            const visible = matchesCategory && matchesTerm && stock > 0;
+            const visible = matchesCategory && matchesTerm && stock > 0 && price > 0;
 
             option.hidden = !visible;
             if (visible && !firstVisibleValue) {

@@ -73,7 +73,19 @@ class StockController extends Controller
             ])->withInput();
         }
 
-        DB::transaction(function () use ($productsBySerial, $location, $branchId, $data, $serialNumbers, $category) {
+        $defaultCategoryPrice = (float) (Product::query()
+            ->where('category_id', $category->id)
+            ->where('price', '>', 0)
+            ->orderByDesc('id')
+            ->value('price') ?? 0);
+
+        $defaultCategoryCost = (float) (Product::query()
+            ->where('category_id', $category->id)
+            ->where('cost', '>', 0)
+            ->orderByDesc('id')
+            ->value('cost') ?? 0);
+
+        DB::transaction(function () use ($productsBySerial, $location, $branchId, $data, $serialNumbers, $category, $defaultCategoryPrice, $defaultCategoryCost) {
             foreach ($serialNumbers as $serialNumber) {
                 $product = $productsBySerial->get($serialNumber);
 
@@ -86,8 +98,8 @@ class StockController extends Controller
                         'serial_number' => $serialNumber,
                         'category_id' => $category->id,
                         'supplier_id' => null,
-                        'cost' => 0,
-                        'price' => 0,
+                        'cost' => $defaultCategoryCost,
+                        'price' => $defaultCategoryPrice,
                         'stock_alert' => 0,
                         'is_active' => true,
                         'description' => null,

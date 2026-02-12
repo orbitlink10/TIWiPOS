@@ -124,6 +124,7 @@ class SaleController extends Controller
                 $q->where('quantity', '>', 0);
             })
             ->where('is_active', true)
+            ->where('price', '>', 0)
             ->orderBy('name')
             ->get();
 
