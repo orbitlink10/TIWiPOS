@@ -30,6 +30,11 @@ class Product extends Model
         return $this->hasMany(ProductStock::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function stockOnHand(?string $location = null, ?int $branchId = null): int
     {
         $query = $this->stocks();
