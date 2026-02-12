@@ -10,12 +10,13 @@ class PageController extends Controller
     public function stock()
     {
         $branchId = Tenant::branchId();
-        $products = \App\Models\Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+        $products = \App\Models\Product::query()
+            ->select('id', 'category_id', 'stock_alert')
+            ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
         }], 'quantity')
-            ->select('id', 'category_id', 'stock_alert')
             ->get();
 
         $productsByCategory = $products

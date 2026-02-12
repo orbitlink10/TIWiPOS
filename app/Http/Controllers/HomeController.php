@@ -50,11 +50,14 @@ class HomeController extends Controller
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->sum('total');
 
-        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            if ($branchId) {
-                $q->where('branch_id', $branchId);
-            }
-        }], 'quantity')->get(['id', 'stock_alert']);
+        $products = Product::query()
+            ->select('id', 'stock_alert')
+            ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+            }], 'quantity')
+            ->get();
 
         $outOfStock = $products->filter(fn($p) => (int) ($p->stock_on_hand ?? 0) <= 0)->count();
         $lowStock = $products->filter(function ($p) {
