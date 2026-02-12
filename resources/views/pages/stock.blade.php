@@ -156,7 +156,7 @@
     <div class="panel stock-panel">
         <div>
             <h2>Inventory at a glance</h2>
-            <p class="stock-lead">Quick summary of current stock health across products.</p>
+            <p class="stock-lead">Quick summary of current stock health across categories.</p>
         </div>
 
         @if (session('status'))
@@ -165,11 +165,11 @@
 
         <div class="stock-metrics">
             <div class="metric-card">
-                <div class="metric-label">Out of stock items</div>
+                <div class="metric-label">Out of stock categories</div>
                 <div class="metric-value out">{{ $outOfStock }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Low stock items</div>
+                <div class="metric-label">Low stock categories</div>
                 <div class="metric-value low">{{ $lowStock }}</div>
             </div>
             <div class="metric-card">
@@ -182,42 +182,34 @@
             <table class="stock-table">
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Serial</th>
+                        <th>Category</th>
+                        <th class="align-right">Products</th>
                         <th class="align-right">On hand</th>
                         <th class="align-right">Reorder at</th>
                         <th class="align-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($products as $product)
+                    @forelse($categories as $category)
                         @php
-                            $onHand = (int) ($product->stock_on_hand ?? 0);
-                            $reorderAt = (int) ($product->stock_alert ?? 0);
+                            $onHand = (int) ($category['on_hand'] ?? 0);
+                            $reorderAt = (int) ($category['reorder_at'] ?? 0);
                             $qtyClass = $onHand <= 0
                                 ? 'qty-pill--out'
                                 : ($onHand <= $reorderAt ? 'qty-pill--low' : 'qty-pill--ok');
                         @endphp
                         <tr>
-                            <td>{{ $product->name }}</td>
-                            <td>{{ $product->sku }}</td>
-                            <td>
-                                @if($product->serial_number)
-                                    {{ $product->serial_number }}
-                                @else
-                                    <span class="serial-empty">Not set</span>
-                                @endif
-                            </td>
+                            <td>{{ $category['category_name'] }}</td>
+                            <td class="align-right">{{ $category['products_count'] }}</td>
                             <td class="align-right"><span class="qty-pill {{ $qtyClass }}">{{ $onHand }}</span></td>
                             <td class="align-right">{{ $reorderAt }}</td>
                             <td class="align-right">
-                                <a class="btn btn-inline" href="{{ route('stock.edit', $product) }}">Edit stock</a>
+                                <a class="btn btn-inline" href="{{ route('stock.adjust', ['category_id' => $category['category_id']]) }}">Update stock</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="stock-empty">No products recorded yet.</td>
+                            <td colspan="5" class="stock-empty">No categories recorded yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

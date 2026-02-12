@@ -16,18 +16,34 @@ class PageController extends Controller
                 $q->where('branch_id', $branchId);
             }
         }], 'quantity')
-            ->orderBy('name')
+            ->select('id', 'category_id', 'stock_alert')
             ->get();
 
-        $outOfStock = $products->filter(fn($p) => (int) ($p->stock_on_hand ?? 0) <= 0)->count();
-        $lowStock = $products->filter(function ($p) {
-            $stock = (int) ($p->stock_on_hand ?? 0);
-            $alert = (int) ($p->stock_alert ?? 0);
-            return $stock > 0 && $alert > 0 && $stock <= $alert;
-        })->count();
-        $totalItems = $products->sum(fn($p) => (int) ($p->stock_on_hand ?? 0));
+        $categoryIds = $products->pluck('category_id')->filter()->unique()->values();
+        $categoryNames = \App\Models\Category::whereIn('id', $categoryIds)->pluck('name', 'id');
 
-        return view('pages.stock', compact('products', 'outOfStock', 'lowStock', 'totalItems'));
+        $categories = $products
+            ->groupBy(fn($product) => $product->category_id ?? 0)
+            ->map(function ($rows, $categoryId) use ($categoryNames) {
+                $onHand = (int) $rows->sum(fn($p) => (int) ($p->stock_on_hand ?? 0));
+                $reorderAt = (int) $rows->sum(fn($p) => (int) ($p->stock_alert ?? 0));
+
+                return [
+                    'category_id' => (int) $categoryId ?: null,
+                    'category_name' => $categoryId ? ($categoryNames[(int) $categoryId] ?? 'Unknown Category') : 'Uncategorized',
+                    'products_count' => $rows->count(),
+                    'on_hand' => $onHand,
+                    'reorder_at' => $reorderAt,
+                ];
+            })
+            ->sortBy('category_name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        $outOfStock = $categories->filter(fn($row) => $row['on_hand'] <= 0)->count();
+        $lowStock = $categories->filter(fn($row) => $row['on_hand'] > 0 && $row['reorder_at'] > 0 && $row['on_hand'] <= $row['reorder_at'])->count();
+        $totalItems = $categories->sum('on_hand');
+
+        return view('pages.stock', compact('categories', 'outOfStock', 'lowStock', 'totalItems'));
     }
 
     public function sale()

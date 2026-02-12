@@ -144,7 +144,6 @@ class SaleController extends Controller
             foreach ($lineItems as $line) {
                 SaleItem::create([
                     'business_id' => $sale->business_id,
-                    'branch_id' => $sale->branch_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],
@@ -281,7 +280,6 @@ class SaleController extends Controller
             foreach ($lineItems as $line) {
                 SaleItem::create([
                     'business_id' => $sale->business_id,
-                    'branch_id' => $branchId,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
                     'quantity' => $line['quantity'],
