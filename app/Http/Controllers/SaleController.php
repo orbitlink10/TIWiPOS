@@ -110,16 +110,23 @@ class SaleController extends Controller
     {
         $branchId = Tenant::branchId();
 
-        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            if ($branchId) {
-                $q->where('branch_id', $branchId);
-            }
-        }], 'quantity')
+        $products = Product::query()
+            ->select('id', 'name', 'sku', 'barcode', 'serial_number', 'price', 'category_id')
+            ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
+            }], 'quantity')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
-        return view('pages.sale', compact('products'));
+        $categories = \App\Models\Category::query()
+            ->whereIn('id', $products->pluck('category_id')->filter()->unique()->values())
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('pages.sale', compact('products', 'categories'));
     }
 
     public function store(Request $request)
