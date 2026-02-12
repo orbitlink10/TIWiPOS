@@ -19,18 +19,21 @@ class PageController extends Controller
             ->select('id', 'category_id', 'stock_alert')
             ->get();
 
-        $categoryIds = $products->pluck('category_id')->filter()->unique()->values();
-        $categoryNames = \App\Models\Category::whereIn('id', $categoryIds)->pluck('name', 'id');
+        $productsByCategory = $products
+            ->filter(fn($product) => !empty($product->category_id))
+            ->groupBy('category_id');
 
-        $categories = $products
-            ->groupBy(fn($product) => $product->category_id ?? 0)
-            ->map(function ($rows, $categoryId) use ($categoryNames) {
+        $categories = \App\Models\Category::query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(function ($category) use ($productsByCategory) {
+                $rows = $productsByCategory->get($category->id, collect());
                 $onHand = (int) $rows->sum(fn($p) => (int) ($p->stock_on_hand ?? 0));
                 $reorderAt = (int) $rows->sum(fn($p) => (int) ($p->stock_alert ?? 0));
 
                 return [
-                    'category_id' => (int) $categoryId ?: null,
-                    'category_name' => $categoryId ? ($categoryNames[(int) $categoryId] ?? 'Unknown Category') : 'Uncategorized',
+                    'category_id' => (int) $category->id,
+                    'category_name' => $category->name,
                     'products_count' => $rows->count(),
                     'on_hand' => $onHand,
                     'reorder_at' => $reorderAt,
