@@ -208,30 +208,34 @@
     .cart-table-wrap {
         border: 1px solid #d8dfeb;
         border-radius: 12px;
-        overflow: hidden;
+        overflow: auto;
         background: #fff;
     }
 
     .cart-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 14px;
+        table-layout: fixed;
+        font-size: 13px;
     }
 
     .cart-table th {
         text-align: left;
-        padding: 10px 11px;
+        padding: 9px 10px;
         background: #edf2f8;
         color: #64748b;
         font-size: 11px;
         letter-spacing: 0.07em;
         text-transform: uppercase;
         font-weight: 700;
+        line-height: 1.15;
     }
 
     .cart-table td {
-        padding: 11px 11px;
+        padding: 9px 10px;
         border-top: 1px solid #edf2f8;
+        font-size: 13px;
+        line-height: 1.25;
     }
 
     .cart-table td.align-right,
@@ -239,27 +243,62 @@
         text-align: right;
     }
 
+    .cart-table th:nth-child(1),
+    .cart-table td:nth-child(1) {
+        width: 42%;
+    }
+
+    .cart-table th:nth-child(2),
+    .cart-table td:nth-child(2) {
+        width: 11%;
+        white-space: nowrap;
+    }
+
+    .cart-table th:nth-child(3),
+    .cart-table td:nth-child(3) {
+        width: 16%;
+        white-space: nowrap;
+    }
+
+    .cart-table th:nth-child(4),
+    .cart-table td:nth-child(4) {
+        width: 16%;
+        white-space: nowrap;
+    }
+
+    .cart-table th.action-col,
+    .cart-table td.action-col {
+        width: 15%;
+        text-align: center;
+        white-space: nowrap;
+    }
+
     .line-item-name {
         font-weight: 700;
         color: #162537;
-        font-size: 15px;
+        font-size: 13px;
     }
 
     .line-item-meta {
         margin-top: 2px;
         color: #6f7f95;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 500;
     }
 
     .remove-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 78px;
+        height: 30px;
         border: 1px solid #f1c0c8;
         background: #fff3f5;
         color: #b42318;
         border-radius: 9px;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
-        padding: 5px 9px;
+        padding: 0 10px;
         cursor: pointer;
     }
 
@@ -568,7 +607,7 @@
                                 <th class="align-right">Qty</th>
                                 <th class="align-right">Price</th>
                                 <th class="align-right">Sub</th>
-                                <th class="align-right">Action</th>
+                                <th class="action-col">Action</th>
                             </tr>
                         </thead>
                         <tbody id="cart_body"></tbody>
@@ -775,7 +814,7 @@
             <td class="align-right">${qty}</td>
             <td class="align-right">${price.toFixed(2)}</td>
             <td class="align-right">${lineSubtotal.toFixed(2)}</td>
-            <td class="align-right">
+            <td class="action-col">
                 <button type="button" class="remove-btn">Remove</button>
                 <input type="hidden" name="items[${idx}][product_id]" value="${productId}">
                 <input type="hidden" name="items[${idx}][quantity]" value="${qty}">
