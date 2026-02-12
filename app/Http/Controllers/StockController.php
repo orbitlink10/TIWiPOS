@@ -109,7 +109,7 @@ class StockController extends Controller
                     'product_id' => $product->id,
                     'user_id' => auth()->id(),
                     'location' => $location,
-                    'type' => 'correction',
+                    'type' => 'adjustment',
                     'quantity_change' => $change,
                     'quantity_before' => $before,
                     'quantity_after' => $after,

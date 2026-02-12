@@ -301,7 +301,7 @@ class SaleController extends Controller
                     'product_id' => $line['product']->id,
                     'user_id' => auth()->id(),
                     'location' => 'main',
-                    'type' => 'sale_edit',
+                    'type' => 'sale',
                     'quantity_change' => -1 * $line['quantity'],
                     'reference_type' => 'sale',
                     'reference_id' => $sale->id,
