@@ -9,12 +9,17 @@ use App\Support\Tenant;
 
 class ProductController extends Controller
 {
+    private function normalizeLocation(?string $location): string
+    {
+        $normalized = strtolower(trim((string) $location));
+        return $normalized !== '' ? $normalized : 'main';
+    }
+
     public function index()
     {
         $branchId = Tenant::branchId();
 
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            $q->where('location', 'main');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
@@ -67,7 +72,7 @@ class ProductController extends Controller
 
         // New serialized products should count as stock by default unless user sets a value.
         $initialStock = array_key_exists('stock', $data) ? (int) $data['stock'] : 1;
-        $stockLocation = $data['stock_location'] ?? 'main';
+        $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
         ProductStock::updateOrCreate(
             [
                 'product_id' => $product->id,

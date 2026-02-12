@@ -13,6 +13,12 @@ use App\Support\Tenant;
 
 class StockController extends Controller
 {
+    private function normalizeLocation(?string $location): string
+    {
+        $normalized = strtolower(trim((string) $location));
+        return $normalized !== '' ? $normalized : 'main';
+    }
+
     public function adjustForm()
     {
         $categories = Category::orderBy('name')->get();
@@ -29,7 +35,7 @@ class StockController extends Controller
             'note' => 'nullable|string|max:255',
         ]);
 
-        $location = $data['location'] ?? 'main';
+        $location = $this->normalizeLocation($data['location'] ?? null);
         $branchId = Tenant::branchId();
         $rawSerials = preg_split('/[\r\n,]+/', $data['serial_numbers']) ?: [];
         $serialNumbers = array_values(array_unique(array_filter(array_map('trim', $rawSerials))));
@@ -141,7 +147,7 @@ class StockController extends Controller
             'serial_number' => ['nullable', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
         ]);
 
-        $location = $data['location'] ?? 'main';
+        $location = $this->normalizeLocation($data['location'] ?? null);
         $branchId = Tenant::branchId();
 
         DB::transaction(function () use ($data, $product, $location, $branchId) {

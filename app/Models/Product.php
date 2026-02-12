@@ -30,9 +30,12 @@ class Product extends Model
         return $this->hasMany(ProductStock::class);
     }
 
-    public function stockOnHand(string $location = 'main', ?int $branchId = null): int
+    public function stockOnHand(?string $location = null, ?int $branchId = null): int
     {
-        $query = $this->stocks()->where('location', $location);
+        $query = $this->stocks();
+        if (!is_null($location)) {
+            $query->where('location', $location);
+        }
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }

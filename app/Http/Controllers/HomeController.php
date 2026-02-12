@@ -51,7 +51,6 @@ class HomeController extends Controller
             ->sum('total');
 
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            $q->where('location', 'main');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }

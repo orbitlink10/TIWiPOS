@@ -11,7 +11,6 @@ class PageController extends Controller
     {
         $branchId = Tenant::branchId();
         $products = \App\Models\Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            $q->where('location', 'main');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }

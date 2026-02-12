@@ -16,6 +16,7 @@ use App\Support\Tenant;
 class SaleController extends Controller
 {
     private const TAX_RATE = 0.16;
+    private const PRIMARY_LOCATION = 'main';
 
     protected $lastSaleId;
 
@@ -23,6 +24,58 @@ class SaleController extends Controller
     {
         if (auth()->user()->role !== 'owner') {
             abort(403, 'Only admins can perform this action.');
+        }
+    }
+
+    private function consumeStockForSale(Product $product, int $quantity, ?int $branchId, Sale $sale, string $note): void
+    {
+        $stocks = ProductStock::query()
+            ->where('product_id', $product->id)
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->orderByRaw("CASE WHEN location = '" . self::PRIMARY_LOCATION . "' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        $available = (int) $stocks->sum(fn($stock) => max(0, (int) $stock->quantity));
+        if ($available < $quantity) {
+            throw ValidationException::withMessages([
+                'items' => 'Not enough stock for ' . $product->name . ' (available: ' . $available . ').',
+            ]);
+        }
+
+        $remaining = $quantity;
+        foreach ($stocks as $stock) {
+            $onHand = (int) $stock->quantity;
+            if ($onHand <= 0) {
+                continue;
+            }
+
+            $take = min($remaining, $onHand);
+            $before = $onHand;
+            $after = $before - $take;
+
+            $stock->update(['quantity' => $after]);
+
+            StockMovement::create([
+                'business_id' => $sale->business_id,
+                'branch_id' => $branchId,
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'location' => $stock->location,
+                'type' => 'sale',
+                'quantity_change' => -1 * $take,
+                'quantity_before' => $before,
+                'quantity_after' => $after,
+                'reference_type' => 'sale',
+                'reference_id' => $sale->id,
+                'note' => $note,
+            ]);
+
+            $remaining -= $take;
+            if ($remaining <= 0) {
+                break;
+            }
         }
     }
 
@@ -58,7 +111,6 @@ class SaleController extends Controller
         $branchId = Tenant::branchId();
 
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            $q->where('location', 'main');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
@@ -84,7 +136,9 @@ class SaleController extends Controller
             'customer_location' => 'nullable|string|max:255',
         ]);
 
-        // Check stock availability per product (summed quantities)
+        $branchId = Tenant::branchId();
+
+        // Check stock availability per product.
         $grouped = [];
         foreach ($data['items'] as $item) {
             $grouped[$item['product_id']] = ($grouped[$item['product_id']] ?? 0) + $item['quantity'];
@@ -92,7 +146,7 @@ class SaleController extends Controller
 
         foreach ($grouped as $productId => $qty) {
             $product = Product::with('stocks')->findOrFail($productId);
-            $available = $product->stockOnHand('main', Tenant::branchId());
+            $available = $product->stockOnHand(null, $branchId);
             if ($qty > $available) {
                 return back()->withErrors(['items' => 'Not enough stock for ' . $product->name . ' (available: ' . $available . ').'])->withInput();
             }
@@ -123,9 +177,9 @@ class SaleController extends Controller
             : 0.0;
         $total = $subtotal + $tax;
 
-        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $lineItems) {
+        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $lineItems, $branchId) {
             $sale = Sale::create([
-                'branch_id' => Tenant::branchId(),
+                'branch_id' => $branchId,
                 'sale_number' => $saleNumber,
                 'customer_id' => null,
                 'customer_name' => $data['customer_name'] ?? null,
@@ -152,30 +206,18 @@ class SaleController extends Controller
                     'subtotal' => $line['subtotal'],
                 ]);
 
-                ProductStock::where('product_id', $line['product']->id)
-                    ->where('location', 'main')
-                    ->when(Tenant::branchId(), function ($q, $branchId) {
-                        $q->where('branch_id', $branchId);
-                    })
-                    ->decrement('quantity', $line['quantity']);
-
-                StockMovement::create([
-                    'business_id' => $sale->business_id,
-                    'branch_id' => Tenant::branchId(),
-                    'product_id' => $line['product']->id,
-                    'user_id' => auth()->id(),
-                    'location' => 'main',
-                    'type' => 'sale',
-                    'quantity_change' => -1 * $line['quantity'],
-                    'reference_type' => 'sale',
-                    'reference_id' => $sale->id,
-                    'note' => 'POS sale ' . $saleNumber,
-                ]);
+                $this->consumeStockForSale(
+                    $line['product'],
+                    (int) $line['quantity'],
+                    $branchId,
+                    $sale,
+                    'POS sale ' . $saleNumber
+                );
             }
 
             Payment::create([
                 'business_id' => $sale->business_id,
-                'branch_id' => Tenant::branchId(),
+                'branch_id' => $branchId,
                 'sale_id' => $sale->id,
                 'method' => $data['method'],
                 'amount' => $total,
@@ -195,7 +237,6 @@ class SaleController extends Controller
         $branchId = $sale->branch_id ?? Tenant::branchId();
 
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            $q->where('location', 'main');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
@@ -229,13 +270,46 @@ class SaleController extends Controller
         DB::transaction(function () use ($data, $sale, $branchId, $request) {
             $sale->load('items');
 
-            // Restock previous items before recalculating
-            foreach ($sale->items as $item) {
-                $stock = ProductStock::firstOrCreate(
-                    ['product_id' => $item->product_id, 'location' => 'main', 'branch_id' => $branchId],
-                    ['quantity' => 0, 'business_id' => auth()->user()->business_id]
-                );
-                $stock->increment('quantity', $item->quantity);
+            // Restock prior deducted quantities before recalculating.
+            $priorMovements = StockMovement::query()
+                ->where('reference_type', 'sale')
+                ->where('reference_id', $sale->id)
+                ->lockForUpdate()
+                ->get();
+
+            if ($priorMovements->isNotEmpty()) {
+                foreach ($priorMovements as $movement) {
+                    if ((int) $movement->quantity_change >= 0) {
+                        continue;
+                    }
+
+                    $qty = abs((int) $movement->quantity_change);
+                    if ($qty === 0) {
+                        continue;
+                    }
+
+                    $stock = ProductStock::firstOrCreate(
+                        [
+                            'product_id' => $movement->product_id,
+                            'location' => $movement->location ?: self::PRIMARY_LOCATION,
+                            'branch_id' => $branchId,
+                        ],
+                        ['quantity' => 0, 'business_id' => $sale->business_id]
+                    );
+                    $stock->increment('quantity', $qty);
+                }
+            } else {
+                foreach ($sale->items as $item) {
+                    $stock = ProductStock::firstOrCreate(
+                        [
+                            'product_id' => $item->product_id,
+                            'location' => self::PRIMARY_LOCATION,
+                            'branch_id' => $branchId,
+                        ],
+                        ['quantity' => 0, 'business_id' => $sale->business_id]
+                    );
+                    $stock->increment('quantity', $item->quantity);
+                }
             }
 
             // Validate availability with restored stock
@@ -246,7 +320,7 @@ class SaleController extends Controller
 
             foreach ($grouped as $productId => $qty) {
                 $product = Product::with('stocks')->findOrFail($productId);
-                $available = $product->stockOnHand('main', $branchId);
+                $available = $product->stockOnHand(null, $branchId);
                 if ($qty > $available) {
                     throw ValidationException::withMessages(['items' => 'Not enough stock for ' . $product->name . ' (available: ' . $available . ').']);
                 }
@@ -288,29 +362,13 @@ class SaleController extends Controller
                     'subtotal' => $line['subtotal'],
                 ]);
 
-                $stock = ProductStock::where('product_id', $line['product']->id)
-                    ->where('location', 'main')
-                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-                    ->first();
-
-                if (!$stock || $stock->quantity < $line['quantity']) {
-                    throw ValidationException::withMessages(['items' => 'Stock fell below required quantity while editing.']);
-                }
-
-                $stock->decrement('quantity', $line['quantity']);
-
-                StockMovement::create([
-                    'business_id' => $sale->business_id,
-                    'branch_id' => $branchId,
-                    'product_id' => $line['product']->id,
-                    'user_id' => auth()->id(),
-                    'location' => 'main',
-                    'type' => 'sale',
-                    'quantity_change' => -1 * $line['quantity'],
-                    'reference_type' => 'sale',
-                    'reference_id' => $sale->id,
-                    'note' => 'Sale #' . $sale->sale_number . ' edited',
-                ]);
+                $this->consumeStockForSale(
+                    $line['product'],
+                    (int) $line['quantity'],
+                    $branchId,
+                    $sale,
+                    'Sale #' . $sale->sale_number . ' edited'
+                );
             }
 
             $sale->update([
