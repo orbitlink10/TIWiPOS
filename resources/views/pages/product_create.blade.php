@@ -89,7 +89,7 @@
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Stock on hand
-                    <input name="stock" type="number" value="0" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="stock" type="number" value="{{ old('stock', 1) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Stock location

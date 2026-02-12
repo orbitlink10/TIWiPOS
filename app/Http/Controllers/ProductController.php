@@ -65,7 +65,8 @@ class ProductController extends Controller
             'description' => $data['description'] ?? null,
         ]);
 
-        $initialStock = $data['stock'] ?? 0;
+        // New serialized products should count as stock by default unless user sets a value.
+        $initialStock = array_key_exists('stock', $data) ? (int) $data['stock'] : 1;
         $stockLocation = $data['stock_location'] ?? 'main';
         ProductStock::updateOrCreate(
             [
