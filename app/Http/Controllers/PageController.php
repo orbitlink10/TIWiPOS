@@ -47,6 +47,7 @@ class PageController extends Controller
 
     public function summary()
     {
+        $canViewProfit = auth()->user()->role === 'owner';
         $today = now()->toDateString();
         $branchId = Tenant::branchId();
 
@@ -74,26 +75,31 @@ class PageController extends Controller
             ->limit(5)
             ->get();
 
-        $todayProfit = \App\Models\SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.status', 'completed')
-            ->whereDate('sales.created_at', $today)
-            ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-            ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
-            ->value('profit') ?? 0;
+        $todayProfit = null;
+        $profitByProduct = collect();
 
-        $profitByProduct = \App\Models\SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.status', 'completed')
-            ->whereDate('sales.created_at', $today)
-            ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-            ->groupBy('products.id', 'products.name', 'products.sku')
-            ->selectRaw('products.id, products.name, products.sku, SUM(sale_items.quantity) as qty, SUM(sale_items.subtotal) as sales_total, SUM(sale_items.subtotal - products.cost * sale_items.quantity) as profit_total')
-            ->orderByDesc('profit_total')
-            ->get();
+        if ($canViewProfit) {
+            $todayProfit = \App\Models\SaleItem::query()
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->where('sales.status', 'completed')
+                ->whereDate('sales.created_at', $today)
+                ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
+                ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
+                ->value('profit') ?? 0;
 
-        return view('pages.summary', compact('todaySalesTotal', 'todayOrders', 'todayCustomers', 'recentSales', 'todayProfit', 'profitByProduct'));
+            $profitByProduct = \App\Models\SaleItem::query()
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->where('sales.status', 'completed')
+                ->whereDate('sales.created_at', $today)
+                ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
+                ->groupBy('products.id', 'products.name', 'products.sku')
+                ->selectRaw('products.id, products.name, products.sku, SUM(sale_items.quantity) as qty, SUM(sale_items.subtotal) as sales_total, SUM(sale_items.subtotal - products.cost * sale_items.quantity) as profit_total')
+                ->orderByDesc('profit_total')
+                ->get();
+        }
+
+        return view('pages.summary', compact('todaySalesTotal', 'todayOrders', 'todayCustomers', 'recentSales', 'todayProfit', 'profitByProduct', 'canViewProfit'));
     }
 }

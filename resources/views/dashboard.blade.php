@@ -39,7 +39,13 @@
         <div>
             <div class="dash-chip">Live store snapshot</div>
             <h2>Welcome back</h2>
-            <p>Track sales performance, stock health, and today's profit at a glance.</p>
+            <p>
+                @if($canViewProfit ?? false)
+                    Track sales performance, stock health, and today's profit at a glance.
+                @else
+                    Track sales performance and stock health at a glance.
+                @endif
+            </p>
             @isset($subscriptionActive)
                 @if(!$subscriptionActive)
                     <div style="margin-top:8px; padding:8px 10px; border-radius:10px; background:#fff1f2; color:#991b1b; font-weight:700;">
@@ -79,11 +85,13 @@
                 <div class="stat-value">KES {{ number_format($stats['today'], 2) }}</div>
                 <div class="badge-soft">Daily run-rate</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Today's Profit</div>
-                <div class="stat-value">KES {{ number_format($stats['today_profit'], 2) }}</div>
-                <div class="badge-soft" style="background:#fff4e5;color:#b45b00;">After cost</div>
-            </div>
+            @if($canViewProfit ?? false)
+                <div class="stat-card">
+                    <div class="stat-label">Today's Profit</div>
+                    <div class="stat-value">KES {{ number_format($stats['today_profit'], 2) }}</div>
+                    <div class="badge-soft" style="background:#fff4e5;color:#b45b00;">After cost</div>
+                </div>
+            @endif
             <div class="stat-card">
                 <div class="stat-label">Low Stock</div>
                 <div class="stat-value">{{ $stats['low_stock'] }}</div>

@@ -28,6 +28,7 @@ class HomeController extends Controller
             return view('index', compact('stats'));
         }
 
+        $canViewProfit = auth()->user()->role === 'owner';
         $today = now()->startOfDay();
         $weekStart = now()->startOfWeek();
         $monthStart = now()->startOfMonth();
@@ -50,13 +51,15 @@ class HomeController extends Controller
             ->whereRaw('(select coalesce(sum(quantity),0) from product_stocks where product_id = products.id) <= coalesce(stock_alert,0)')
             ->count();
 
-        $todayProfit = SaleItem::query()
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->where('sales.status', 'completed')
-            ->whereDate('sales.created_at', $today)
-            ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
-            ->value('profit') ?? 0;
+        $todayProfit = $canViewProfit
+            ? (SaleItem::query()
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->where('sales.status', 'completed')
+                ->whereDate('sales.created_at', $today)
+                ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
+                ->value('profit') ?? 0)
+            : null;
 
         $stats = [
             'month_name' => now()->format('F Y'),
@@ -71,6 +74,6 @@ class HomeController extends Controller
 
         $subscriptionActive = auth()->user()->business?->subscription_status === 'active';
 
-        return view('dashboard', compact('stats', 'subscriptionActive'));
+        return view('dashboard', compact('stats', 'subscriptionActive', 'canViewProfit'));
     }
 }

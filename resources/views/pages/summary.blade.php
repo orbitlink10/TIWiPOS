@@ -26,10 +26,12 @@
                 <div style="font-size:22px;">{{ $todayCustomers }}</div>
                 <span>Customers</span>
             </div>
-            <div class="kpi-card" style="background:#0ea5e9;">
-                <div style="font-size:22px;">KES {{ number_format($todayProfit, 2) }}</div>
-                <span>Today's Profit</span>
-            </div>
+            @if($canViewProfit ?? false)
+                <div class="kpi-card" style="background:#0ea5e9;">
+                    <div style="font-size:22px;">KES {{ number_format($todayProfit, 2) }}</div>
+                    <span>Today's Profit</span>
+                </div>
+            @endif
         </div>
 
         <div style="margin-top:18px;">
@@ -64,34 +66,36 @@
             @endif
         </div>
 
-        <div style="margin-top:18px;">
-            <h3 style="margin:0 0 8px;">Profit by product (today)</h3>
-            @if($profitByProduct->isEmpty())
-                <div style="color:var(--muted); font-size:13px;">No product profits yet.</div>
-            @else
-                <div style="overflow:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:14px; min-width:500px;">
-                        <thead>
-                            <tr style="background:#f7f7fb;">
-                                <th style="text-align:left; padding:10px;">Product</th>
-                                <th style="text-align:right; padding:10px;">Qty</th>
-                                <th style="text-align:right; padding:10px;">Sales</th>
-                                <th style="text-align:right; padding:10px;">Profit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($profitByProduct as $row)
-                                <tr style="border-top:1px solid #e5e7eb;">
-                                    <td style="padding:10px;">{{ $row->name }} ({{ $row->sku }})</td>
-                                    <td style="padding:10px; text-align:right;">{{ $row->qty }}</td>
-                                    <td style="padding:10px; text-align:right;">KES {{ number_format($row->sales_total, 2) }}</td>
-                                    <td style="padding:10px; text-align:right; font-weight:700;">KES {{ number_format($row->profit_total, 2) }}</td>
+        @if($canViewProfit ?? false)
+            <div style="margin-top:18px;">
+                <h3 style="margin:0 0 8px;">Profit by product (today)</h3>
+                @if($profitByProduct->isEmpty())
+                    <div style="color:var(--muted); font-size:13px;">No product profits yet.</div>
+                @else
+                    <div style="overflow:auto;">
+                        <table style="width:100%; border-collapse:collapse; font-size:14px; min-width:500px;">
+                            <thead>
+                                <tr style="background:#f7f7fb;">
+                                    <th style="text-align:left; padding:10px;">Product</th>
+                                    <th style="text-align:right; padding:10px;">Qty</th>
+                                    <th style="text-align:right; padding:10px;">Sales</th>
+                                    <th style="text-align:right; padding:10px;">Profit</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
+                            </thead>
+                            <tbody>
+                                @foreach($profitByProduct as $row)
+                                    <tr style="border-top:1px solid #e5e7eb;">
+                                        <td style="padding:10px;">{{ $row->name }} ({{ $row->sku }})</td>
+                                        <td style="padding:10px; text-align:right;">{{ $row->qty }}</td>
+                                        <td style="padding:10px; text-align:right;">KES {{ number_format($row->sales_total, 2) }}</td>
+                                        <td style="padding:10px; text-align:right; font-weight:700;">KES {{ number_format($row->profit_total, 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+        @endif
     </div>
 @endsection

@@ -10,6 +10,18 @@
 @endsection
 
 @section('content')
+    @php
+        $existingItemsForJs = $sale->items->map(function ($item) {
+            return [
+                'product_id' => $item->product_id,
+                'name' => $item->product->name ?? 'Product',
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'serial' => $item->product->serial_number ?? 'N/A',
+            ];
+        })->values();
+    @endphp
+
     <div class="panel">
         <h2>Update items and customer</h2>
         <p style="color: var(--muted); margin-top:6px;">Adjust quantities or items. Stock will be restored and recalculated automatically.</p>
@@ -143,13 +155,7 @@
     const barcodeInput = document.getElementById('barcode_search');
     let idx = 0;
 
-    const existingItems = @json($sale->items->map(fn($item) => [
-        'product_id' => $item->product_id,
-        'name' => $item->product->name ?? 'Product',
-        'quantity' => $item->quantity,
-        'unit_price' => $item->unit_price,
-        'serial' => $item->product->serial_number ?? 'N/A',
-    ]));
+    const existingItems = @json($existingItemsForJs);
 
     function updateTotalsPreview() {
         const option = productSelect.options[productSelect.selectedIndex];
