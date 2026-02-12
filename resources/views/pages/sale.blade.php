@@ -4,15 +4,19 @@
 
 @push('styles')
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
     .sale-shell {
         display: grid;
         gap: 14px;
+        font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
+        line-height: 1.4;
     }
 
     .sale-layout {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 380px;
-        gap: 16px;
+        gap: 18px;
         align-items: start;
     }
 
@@ -20,7 +24,7 @@
         background: #f7f9fc;
         border: 1px solid #d7deea;
         border-radius: 22px;
-        padding: 20px;
+        padding: 22px;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
     }
 
@@ -32,21 +36,23 @@
     .sale-card h2,
     .sale-card h3 {
         margin: 0;
-        font-size: 22px;
+        font-size: 28px;
         font-weight: 800;
         letter-spacing: -0.02em;
+        line-height: 1.15;
     }
 
     .quick-register h2,
     .checkout h3 {
-        font-size: 22px;
+        font-size: 28px;
     }
 
     .sale-lead {
         margin: 8px 0 0;
         color: #607086;
         font-size: 15px;
-        font-weight: 600;
+        font-weight: 500;
+        line-height: 1.5;
     }
 
     .sale-lead a {
@@ -60,6 +66,8 @@
         border-radius: 12px;
         border: 1px solid;
         font-weight: 700;
+        font-size: 14px;
+        line-height: 1.4;
     }
 
     .sale-alert.error {
@@ -86,9 +94,10 @@
         background: #fff;
         color: #6a778b;
         border-radius: 999px;
-        padding: 9px 18px;
-        font-size: 15px;
-        font-weight: 800;
+        padding: 9px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
         cursor: pointer;
         transition: all 0.18s ease;
     }
@@ -120,8 +129,8 @@
         flex-direction: column;
         gap: 7px;
         font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         color: #5e6d82;
     }
@@ -132,14 +141,22 @@
         border-radius: 14px;
         background: #fff;
         color: #122033;
-        font-size: 16px;
+        font-size: 17px;
         font-weight: 600;
         letter-spacing: 0;
         text-transform: none;
+        font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
+        padding: 0 14px;
+        line-height: 1.2;
     }
 
     .field .control::placeholder {
         color: #a8b1bf;
+    }
+
+    #quantity.control {
+        text-align: center;
+        font-weight: 700;
     }
 
     .add-btn {
@@ -153,8 +170,9 @@
         border: 2px solid #0e2a39;
         background: linear-gradient(180deg, #169895 0%, #0f8481 100%);
         color: #fff;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 800;
+        letter-spacing: -0.02em;
         cursor: pointer;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
@@ -167,8 +185,8 @@
     .stock-info {
         margin-top: 10px;
         color: #5d6d83;
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 14px;
+        font-weight: 500;
     }
 
     .checkout-head {
@@ -182,9 +200,9 @@
         border-radius: 999px;
         background: #149a97;
         color: #fff;
-        padding: 5px 12px;
+        padding: 6px 12px;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 700;
     }
 
     .cart-table-wrap {
@@ -205,13 +223,14 @@
         padding: 10px 11px;
         background: #edf2f8;
         color: #64748b;
-        font-size: 12px;
-        letter-spacing: 0.08em;
+        font-size: 11px;
+        letter-spacing: 0.07em;
         text-transform: uppercase;
+        font-weight: 700;
     }
 
     .cart-table td {
-        padding: 10px 11px;
+        padding: 11px 11px;
         border-top: 1px solid #edf2f8;
     }
 
@@ -223,13 +242,14 @@
     .line-item-name {
         font-weight: 700;
         color: #162537;
+        font-size: 15px;
     }
 
     .line-item-meta {
         margin-top: 2px;
         color: #6f7f95;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .remove-btn {
@@ -258,13 +278,14 @@
         align-items: center;
         gap: 12px;
         color: #2a384d;
-        font-weight: 700;
-        font-size: 16px;
+        font-weight: 600;
+        font-size: 15px;
     }
 
     .total-line strong {
-        font-size: 18px;
+        font-size: 20px;
         letter-spacing: 0.01em;
+        font-weight: 700;
     }
 
     .vat-line {
@@ -327,23 +348,23 @@
 
     .total-line.total {
         color: #17263b;
-        font-size: 18px;
+        font-size: 29px;
         font-weight: 800;
     }
 
     .total-line.total strong {
         color: #138f8c;
-        font-size: 35px;
+        font-size: 42px;
         font-weight: 800;
-        letter-spacing: 0;
+        letter-spacing: -0.01em;
     }
 
     .checkout-label {
         margin-top: 14px;
         color: #5d6d82;
-        font-size: 16px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
         text-transform: uppercase;
     }
 
@@ -374,7 +395,9 @@
         border: 2px solid #cfd6e2;
         background: #fff;
         color: #57677e;
-        font-weight: 800;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: -0.01em;
         cursor: pointer;
         transition: all 0.18s ease;
     }
@@ -394,8 +417,9 @@
         border-radius: 14px;
         background: linear-gradient(135deg, #139b98 0%, #0f827f 100%);
         color: #fff;
-        font-size: 18px;
+        font-size: 19px;
         font-weight: 800;
+        letter-spacing: -0.01em;
         cursor: pointer;
         box-shadow: 0 11px 22px rgba(16, 136, 133, 0.26);
         transition: transform 0.18s ease;
@@ -424,12 +448,21 @@
             padding: 14px;
         }
 
+        .sale-card h2,
+        .sale-card h3 {
+            font-size: 24px;
+        }
+
         .total-line.total {
-            font-size: 28px;
+            font-size: 24px;
         }
 
         .total-line.total strong {
-            font-size: 30px;
+            font-size: 34px;
+        }
+
+        .add-btn {
+            font-size: 20px;
         }
     }
 </style>
