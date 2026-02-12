@@ -2,66 +2,222 @@
 
 @section('title', 'Stock')
 
+@push('styles')
+<style>
+    .stock-panel {
+        display: grid;
+        gap: 18px;
+    }
+
+    .stock-lead {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .stock-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+    }
+
+    .metric-card {
+        border-radius: 14px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    }
+
+    .metric-label {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+    }
+
+    .metric-value {
+        margin-top: 6px;
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: -0.02em;
+    }
+
+    .metric-value.out { color: #b42318; }
+    .metric-value.low { color: #b54708; }
+    .metric-value.total { color: #175cd3; }
+
+    .stock-status {
+        padding: 11px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(15,157,111,0.3);
+        background: rgba(15,157,111,0.09);
+        color: #0b6b4e;
+        font-weight: 700;
+    }
+
+    .stock-table-wrap {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: auto;
+    }
+
+    .stock-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 860px;
+        font-size: 14px;
+    }
+
+    .stock-table th {
+        background: #eef3fb;
+        color: #2d3f5f;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 11px;
+        font-weight: 800;
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .stock-table th.align-right,
+    .stock-table td.align-right {
+        text-align: right;
+    }
+
+    .stock-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #ecf1f7;
+        vertical-align: middle;
+    }
+
+    .stock-table tr:last-child td { border-bottom: none; }
+
+    .stock-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    .serial-empty { color: #99a4b5; }
+
+    .qty-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 12px;
+    }
+
+    .qty-pill--ok {
+        background: rgba(15,157,111,0.12);
+        color: #067647;
+    }
+
+    .qty-pill--low {
+        background: rgba(245,158,11,0.17);
+        color: #9a4a00;
+    }
+
+    .qty-pill--out {
+        background: rgba(220,53,69,0.14);
+        color: #b42318;
+    }
+
+    .stock-empty {
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .btn-inline {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 9px;
+    }
+</style>
+@endpush
+
 @section('header')
     <div class="header-row">
-        <h1>Stock</h1>
+        <div>
+            <h1>Stock</h1>
+            <p class="stock-lead">Monitor levels and correct quantities before checkout.</p>
+        </div>
         <a class="btn" href="{{ route('products') }}">Manage Products</a>
     </div>
 @endsection
 
 @section('content')
-    <div class="panel">
-        <h2>Inventory at a glance</h2>
-        <p style="color: var(--muted); margin-top:6px;">Quick summary of your current stock levels.</p>
+    <div class="panel stock-panel">
+        <div>
+            <h2>Inventory at a glance</h2>
+            <p class="stock-lead">Quick summary of current stock health across products.</p>
+        </div>
 
         @if (session('status'))
-            <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
-                {{ session('status') }}
-            </div>
+            <div class="stock-status">{{ session('status') }}</div>
         @endif
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;">
-            <div class="kpi-card purple">
-                <div style="font-size:22px;">{{ $outOfStock }}</div>
-                <span>Out of stock</span>
+        <div class="stock-metrics">
+            <div class="metric-card">
+                <div class="metric-label">Out of stock items</div>
+                <div class="metric-value out">{{ $outOfStock }}</div>
             </div>
-            <div class="kpi-card green">
-                <div style="font-size:22px;">{{ $lowStock }}</div>
-                <span>Low stock</span>
+            <div class="metric-card">
+                <div class="metric-label">Low stock items</div>
+                <div class="metric-value low">{{ $lowStock }}</div>
             </div>
-            <div class="kpi-card amber">
-                <div style="font-size:22px;">{{ $totalItems }}</div>
-                <span>Total units on hand</span>
+            <div class="metric-card">
+                <div class="metric-label">Total units on hand</div>
+                <div class="metric-value total">{{ $totalItems }}</div>
             </div>
         </div>
 
-        <div style="margin-top:18px;">
-            <table style="width:100%; border-collapse:collapse; border-spacing:0; font-size:14px;">
+        <div class="stock-table-wrap">
+            <table class="stock-table">
                 <thead>
-                    <tr style="background:#f7f7fb;">
-                        <th style="text-align:left; padding:10px;">Product</th>
-                        <th style="text-align:left; padding:10px;">SKU</th>
-                        <th style="text-align:left; padding:10px;">Serial</th>
-                        <th style="text-align:right; padding:10px;">On hand</th>
-                        <th style="text-align:right; padding:10px;">Reorder at</th>
-                        <th style="text-align:right; padding:10px;">Actions</th>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Serial</th>
+                        <th class="align-right">On hand</th>
+                        <th class="align-right">Reorder at</th>
+                        <th class="align-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($products as $product)
-                        <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">{{ $product->name }}</td>
-                            <td style="padding:10px;">{{ $product->sku }}</td>
-                            <td style="padding:10px;">{{ $product->serial_number ?? 'N/A' }}</td>
-                            <td style="padding:10px; text-align:right;">{{ $product->stock_on_hand ?? 0 }}</td>
-                            <td style="padding:10px; text-align:right;">{{ $product->stock_alert ?? 0 }}</td>
-                            <td style="padding:10px; text-align:right;">
-                                <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('stock.edit', $product) }}">Edit stock</a>
+                        @php
+                            $onHand = (int) ($product->stock_on_hand ?? 0);
+                            $reorderAt = (int) ($product->stock_alert ?? 0);
+                            $qtyClass = $onHand <= 0
+                                ? 'qty-pill--out'
+                                : ($onHand <= $reorderAt ? 'qty-pill--low' : 'qty-pill--ok');
+                        @endphp
+                        <tr>
+                            <td>{{ $product->name }}</td>
+                            <td>{{ $product->sku }}</td>
+                            <td>
+                                @if($product->serial_number)
+                                    {{ $product->serial_number }}
+                                @else
+                                    <span class="serial-empty">Not set</span>
+                                @endif
+                            </td>
+                            <td class="align-right"><span class="qty-pill {{ $qtyClass }}">{{ $onHand }}</span></td>
+                            <td class="align-right">{{ $reorderAt }}</td>
+                            <td class="align-right">
+                                <a class="btn btn-inline" href="{{ route('stock.edit', $product) }}">Edit stock</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="padding:12px; text-align:center; color:var(--muted);">No products recorded yet.</td>
+                            <td colspan="6" class="stock-empty">No products recorded yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
