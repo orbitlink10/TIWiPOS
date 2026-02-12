@@ -38,7 +38,7 @@ class ProductController extends Controller
             'sku' => 'required|string|max:255',
             'serial_number' => 'required|string|max:255|unique:products,serial_number',
             'barcode' => 'nullable|string|max:255',
-            'category_id' => 'nullable|integer',
+            'category_id' => 'required|integer|exists:categories,id',
             'supplier_id' => 'nullable|integer',
             'cost' => 'nullable|numeric|min:0',
             'price' => 'required|numeric|min:0',

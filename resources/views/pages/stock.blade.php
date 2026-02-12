@@ -156,7 +156,7 @@
     <div class="panel stock-panel">
         <div>
             <h2>Inventory at a glance</h2>
-            <p class="stock-lead">Category listing with current stock quantity per category.</p>
+            <p class="stock-lead">Category listing with the number of products in each category.</p>
         </div>
 
         @if (session('status'))
@@ -190,7 +190,7 @@
                     @forelse($categories as $category)
                         <tr>
                             <td>{{ $category['category_name'] }}</td>
-                            <td class="align-right">{{ $category['on_hand'] }}</td>
+                            <td class="align-right">{{ $category['products_count'] }}</td>
                         </tr>
                     @empty
                         <tr>
