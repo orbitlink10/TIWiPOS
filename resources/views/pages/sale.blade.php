@@ -196,15 +196,15 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .cart-count {
         border-radius: 999px;
         background: var(--sale-accent);
         color: #fff;
-        padding: 6px 12px;
-        font-size: 13px;
+        padding: 5px 11px;
+        font-size: 12px;
         font-weight: 700;
     }
 
@@ -213,21 +213,22 @@
         border-radius: 12px;
         overflow: auto;
         background: #fff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
     }
 
     .cart-table {
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .cart-table th {
         text-align: left;
-        padding: 9px 10px;
+        padding: 8px 9px;
         background: #edf2f8;
         color: #64748b;
-        font-size: 11px;
+        font-size: 10px;
         letter-spacing: 0.07em;
         text-transform: uppercase;
         font-weight: 700;
@@ -235,9 +236,9 @@
     }
 
     .cart-table td {
-        padding: 9px 10px;
+        padding: 8px 9px;
         border-top: 1px solid #edf2f8;
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.25;
     }
 
@@ -279,13 +280,13 @@
     .line-item-name {
         font-weight: 700;
         color: #162537;
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .line-item-meta {
         margin-top: 2px;
         color: #6f7f95;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 500;
     }
 
@@ -293,25 +294,25 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: 78px;
-        height: 30px;
+        min-width: 68px;
+        height: 28px;
         border: 1px solid #f1c0c8;
         background: #fff3f5;
         color: #b42318;
         border-radius: 9px;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
-        padding: 0 10px;
+        padding: 0 9px;
         cursor: pointer;
     }
 
     .checkout-totals {
-        margin-top: 14px;
+        margin-top: 12px;
         border-top: 1px solid #dfe5ef;
         border-bottom: 1px solid #dfe5ef;
-        padding: 12px 0;
+        padding: 10px 0;
         display: grid;
-        gap: 12px;
+        gap: 10px;
     }
 
     .total-line {
@@ -321,11 +322,11 @@
         gap: 12px;
         color: #2a384d;
         font-weight: 600;
-        font-size: 15px;
+        font-size: 13px;
     }
 
     .total-line strong {
-        font-size: 20px;
+        font-size: 15px;
         letter-spacing: 0.01em;
         font-weight: 700;
     }
@@ -390,21 +391,22 @@
 
     .total-line.total {
         color: #17263b;
-        font-size: 29px;
+        font-size: 21px;
         font-weight: 800;
     }
 
     .total-line.total strong {
         color: var(--sale-accent-strong);
-        font-size: 42px;
+        font-size: 27px;
         font-weight: 800;
-        letter-spacing: -0.01em;
+        letter-spacing: 0;
+        white-space: nowrap;
     }
 
     .checkout-label {
         margin-top: 14px;
         color: #5d6d82;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.09em;
         text-transform: uppercase;
@@ -414,7 +416,7 @@
         margin-top: 8px;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
+        gap: 8px;
     }
 
     .payment-chip {
@@ -432,13 +434,13 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        min-height: 52px;
-        border-radius: 14px;
+        min-height: 46px;
+        border-radius: 12px;
         border: 2px solid #cfd6e2;
         background: #fff;
         color: #57677e;
         font-weight: 700;
-        font-size: 15px;
+        font-size: 13px;
         letter-spacing: -0.01em;
         cursor: pointer;
         transition: all 0.18s ease;
@@ -453,13 +455,13 @@
 
     .complete-btn {
         width: 100%;
-        margin-top: 16px;
-        height: 56px;
+        margin-top: 14px;
+        height: 50px;
         border: none;
-        border-radius: 14px;
+        border-radius: 12px;
         background: linear-gradient(135deg, var(--sale-accent) 0%, var(--sale-accent-strong) 100%);
         color: #fff;
-        font-size: 19px;
+        font-size: 16px;
         font-weight: 800;
         letter-spacing: -0.01em;
         cursor: pointer;
@@ -492,19 +494,19 @@
 
         .sale-card h2,
         .sale-card h3 {
-            font-size: 24px;
+            font-size: 22px;
         }
 
         .total-line.total {
-            font-size: 24px;
+            font-size: 18px;
         }
 
         .total-line.total strong {
-            font-size: 34px;
+            font-size: 24px;
         }
 
         .add-btn {
-            font-size: 20px;
+            font-size: 18px;
         }
     }
 </style>
