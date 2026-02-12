@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use App\Models\Product;
 use App\Models\Sale;
@@ -17,6 +18,7 @@ class SaleController extends Controller
 {
     private const TAX_RATE = 0.16;
     private const PRIMARY_LOCATION = 'main';
+    private static ?bool $saleItemsHasSerialNumber = null;
 
     protected $lastSaleId;
 
@@ -25,6 +27,15 @@ class SaleController extends Controller
         if (auth()->user()->role !== 'owner') {
             abort(403, 'Only admins can perform this action.');
         }
+    }
+
+    private function saleItemsHasSerialNumberColumn(): bool
+    {
+        if (self::$saleItemsHasSerialNumber !== null) {
+            return self::$saleItemsHasSerialNumber;
+        }
+
+        return self::$saleItemsHasSerialNumber = Schema::hasColumn('sale_items', 'serial_number');
     }
 
     private function consumeStockForSale(Product $product, int $quantity, ?int $branchId, Sale $sale, string $note): void
@@ -210,16 +221,21 @@ class SaleController extends Controller
             ]);
 
             foreach ($lineItems as $line) {
-                SaleItem::create([
+                $payload = [
                     'business_id' => $sale->business_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
-                    'serial_number' => $line['product']->serial_number,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount' => 0,
                     'subtotal' => $line['subtotal'],
-                ]);
+                ];
+
+                if ($this->saleItemsHasSerialNumberColumn()) {
+                    $payload['serial_number'] = $line['product']->serial_number;
+                }
+
+                SaleItem::create($payload);
 
                 $this->consumeStockForSale(
                     $line['product'],
@@ -367,16 +383,21 @@ class SaleController extends Controller
             $total = $subtotal + $tax;
 
             foreach ($lineItems as $line) {
-                SaleItem::create([
+                $payload = [
                     'business_id' => $sale->business_id,
                     'sale_id' => $sale->id,
                     'product_id' => $line['product']->id,
-                    'serial_number' => $line['product']->serial_number,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount' => 0,
                     'subtotal' => $line['subtotal'],
-                ]);
+                ];
+
+                if ($this->saleItemsHasSerialNumberColumn()) {
+                    $payload['serial_number'] = $line['product']->serial_number;
+                }
+
+                SaleItem::create($payload);
 
                 $this->consumeStockForSale(
                     $line['product'],
