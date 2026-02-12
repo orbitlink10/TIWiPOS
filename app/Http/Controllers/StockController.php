@@ -9,7 +9,6 @@ use App\Models\ProductStock;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use App\Support\Tenant;
 
 class StockController extends Controller
@@ -35,60 +34,55 @@ class StockController extends Controller
         $rawSerials = preg_split('/[\r\n,]+/', $data['serial_numbers']) ?: [];
         $serialNumbers = array_values(array_unique(array_filter(array_map('trim', $rawSerials))));
 
-        if (empty($serialNumbers)) {
-            throw ValidationException::withMessages([
-                'serial_numbers' => 'Enter at least one valid serial number.',
-            ]);
+        $serialCount = count($serialNumbers);
+        if ($serialCount === 0) {
+            return back()->withErrors([
+                'serial_numbers' => 'Enter at least one serial number.',
+            ])->withInput();
         }
 
-        $productsBySerial = Product::query()
+        $product = Product::query()
             ->where('category_id', $data['category_id'])
-            ->whereIn('serial_number', $serialNumbers)
-            ->get()
-            ->keyBy('serial_number');
+            ->orderBy('id')
+            ->first();
 
-        $missingSerials = array_values(array_diff($serialNumbers, $productsBySerial->keys()->all()));
-        if (!empty($missingSerials)) {
-            throw ValidationException::withMessages([
-                'serial_numbers' => 'These serial numbers were not found under the selected category: ' . implode(', ', $missingSerials),
-            ]);
+        if (!$product) {
+            return back()->withErrors([
+                'category_id' => 'No products are configured under this category yet.',
+            ])->withInput();
         }
 
-        DB::transaction(function () use ($serialNumbers, $productsBySerial, $location, $branchId, $data) {
-            foreach ($serialNumbers as $serialNumber) {
-                $product = $productsBySerial->get($serialNumber);
-                if (!$product) {
-                    continue;
-                }
+        DB::transaction(function () use ($product, $location, $branchId, $data, $serialCount, $serialNumbers) {
+            $stock = ProductStock::firstOrCreate(
+                ['product_id' => $product->id, 'location' => $location, 'branch_id' => $branchId],
+                ['quantity' => 0, 'business_id' => auth()->user()->business_id]
+            );
 
-                $stock = ProductStock::firstOrCreate(
-                    ['product_id' => $product->id, 'location' => $location, 'branch_id' => $branchId],
-                    ['quantity' => 0, 'business_id' => auth()->user()->business_id]
-                );
+            $before = $stock->quantity;
+            $after = $before + $serialCount;
+            $stock->update(['quantity' => $after]);
 
-                $before = $stock->quantity;
-                $after = $before + 1;
-                $stock->update(['quantity' => $after]);
+            $serialNote = 'Serials: ' . implode(', ', $serialNumbers);
+            $note = trim(($data['note'] ?? '') . ' ' . $serialNote);
 
-                StockMovement::create([
-                    'business_id' => auth()->user()->business_id,
-                    'branch_id' => $branchId,
-                    'product_id' => $product->id,
-                    'user_id' => auth()->id(),
-                    'location' => $location,
-                    'type' => 'adjustment',
-                    'quantity_change' => 1,
-                    'quantity_before' => $before,
-                    'quantity_after' => $after,
-                    'reference_type' => 'manual_adjustment',
-                    'reference_id' => null,
-                    'note' => trim(($data['note'] ?? '') . ' Serial: ' . $serialNumber),
-                ]);
-            }
+            StockMovement::create([
+                'business_id' => auth()->user()->business_id,
+                'branch_id' => $branchId,
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'location' => $location,
+                'type' => 'adjustment',
+                'quantity_change' => $serialCount,
+                'quantity_before' => $before,
+                'quantity_after' => $after,
+                'reference_type' => 'manual_adjustment',
+                'reference_id' => null,
+                'note' => $note,
+            ]);
         });
 
         $categoryName = Category::whereKey($data['category_id'])->value('name') ?? 'category';
-        return redirect()->route('stock')->with('status', 'Stock updated. Added ' . count($serialNumbers) . ' serial number(s) to ' . $categoryName . '.');
+        return redirect()->route('stock')->with('status', 'Stock updated. Added ' . $serialCount . ' serial number(s) to ' . $categoryName . '.');
     }
 
     public function edit(Product $product)

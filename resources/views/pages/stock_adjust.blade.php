@@ -12,7 +12,7 @@
 @section('content')
     <div class="panel">
         <h2>Update stock by category + serial numbers</h2>
-        <p style="color: var(--muted); margin-top:6px;">Select a category and enter serial numbers. Stock increases by the number of valid serial numbers entered.</p>
+        <p style="color: var(--muted); margin-top:6px;">Select a category and enter product serial numbers. Stock increases by the number of serial numbers entered.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
