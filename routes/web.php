@@ -18,6 +18,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Admin\TenantController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -53,9 +54,11 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
@@ -69,6 +72,9 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{user}/status', [StaffController::class, 'status'])->name('staff.status');
+
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 
     // Branch management
     Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');

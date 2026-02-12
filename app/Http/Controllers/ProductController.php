@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Support\Tenant;
+use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
 {
@@ -86,5 +87,22 @@ class ProductController extends Controller
         );
 
         return redirect()->route('products')->with('status', 'Product added successfully.');
+    }
+
+    public function destroy(Request $request, Product $product)
+    {
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'products';
+
+        try {
+            $product->delete();
+        } catch (QueryException $exception) {
+            if ((string) $exception->getCode() === '23000') {
+                return redirect()->route($redirectTo)->with('error', 'Cannot delete product because it is linked to existing sales records.');
+            }
+
+            throw $exception;
+        }
+
+        return redirect()->route($redirectTo)->with('status', 'Product deleted successfully.');
     }
 }

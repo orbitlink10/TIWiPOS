@@ -416,7 +416,7 @@
                 <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
                 <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*') || request()->routeIs('payments.*') ? 'active' : '' }}"><span class="nav-icon">BL</span><span>Billing</span></a>
                 @if(auth()->user()->role === 'owner')
-                    <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">SF</span><span>Staff</span></a>
+                    <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') || request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">SE</span><span>Settings</span></a>
                 @endif
                 @if(auth()->user()->is_super_admin)
                     <a href="{{ route('admin.tenants.index') }}" class="{{ request()->routeIs('admin.*') ? 'active' : '' }}"><span class="nav-icon">AD</span><span>Admin</span></a>

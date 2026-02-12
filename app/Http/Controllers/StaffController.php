@@ -55,8 +55,37 @@ class StaffController extends Controller
             'business_id' => $businessId,
             'branch_id' => $branchId,
             'role' => $data['role'] ?? 'staff',
+            'is_active' => true,
         ]);
 
-        return redirect()->route('staff.index')->with('status', 'Staff profile created.');
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
+
+        return redirect()->route($redirectTo)->with('status', 'Staff profile created.');
+    }
+
+    public function status(Request $request, User $user)
+    {
+        $this->ensureOwner();
+
+        $businessId = Tenant::businessId();
+        if ((int) $user->business_id !== (int) $businessId || $user->role === 'owner') {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ((int) $user->id === (int) auth()->id() && !$data['is_active']) {
+            return back()->with('error', 'You cannot deactivate your own account.');
+        }
+
+        $user->is_active = (bool) $data['is_active'];
+        $user->save();
+
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
+        $statusText = $user->is_active ? 'activated' : 'deactivated';
+
+        return redirect()->route($redirectTo)->with('status', "Staff account {$statusText}.");
     }
 }
