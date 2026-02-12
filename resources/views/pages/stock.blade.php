@@ -156,7 +156,7 @@
     <div class="panel stock-panel">
         <div>
             <h2>Inventory at a glance</h2>
-            <p class="stock-lead">Quick summary of current stock health across categories.</p>
+            <p class="stock-lead">Category listing with the number of products in each category.</p>
         </div>
 
         @if (session('status'))
@@ -183,33 +183,18 @@
                 <thead>
                     <tr>
                         <th>Category</th>
-                        <th class="align-right">Products</th>
-                        <th class="align-right">On hand</th>
-                        <th class="align-right">Reorder at</th>
-                        <th class="align-right">Action</th>
+                        <th class="align-right">Quantity</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($categories as $category)
-                        @php
-                            $onHand = (int) ($category['on_hand'] ?? 0);
-                            $reorderAt = (int) ($category['reorder_at'] ?? 0);
-                            $qtyClass = $onHand <= 0
-                                ? 'qty-pill--out'
-                                : ($onHand <= $reorderAt ? 'qty-pill--low' : 'qty-pill--ok');
-                        @endphp
                         <tr>
                             <td>{{ $category['category_name'] }}</td>
                             <td class="align-right">{{ $category['products_count'] }}</td>
-                            <td class="align-right"><span class="qty-pill {{ $qtyClass }}">{{ $onHand }}</span></td>
-                            <td class="align-right">{{ $reorderAt }}</td>
-                            <td class="align-right">
-                                <a class="btn btn-inline" href="{{ route('stock.adjust', ['category_id' => $category['category_id']]) }}">Update stock</a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="stock-empty">No categories recorded yet.</td>
+                            <td colspan="2" class="stock-empty">No categories recorded yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
