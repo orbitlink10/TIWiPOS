@@ -10,6 +10,13 @@ use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
 {
+    private function ensureOwner(): void
+    {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Only admins can manage product status.');
+        }
+    }
+
     private function normalizeLocation(?string $location): string
     {
         $normalized = strtolower(trim((string) $location));
@@ -97,12 +104,31 @@ class ProductController extends Controller
             $product->delete();
         } catch (QueryException $exception) {
             if ((string) $exception->getCode() === '23000') {
-                return redirect()->route($redirectTo)->with('error', 'Cannot delete product because it is linked to existing sales records.');
+                return redirect()->route($redirectTo)->with('error', 'Cannot delete product because it is linked to existing sales records. Archive it instead.');
             }
 
             throw $exception;
         }
 
         return redirect()->route($redirectTo)->with('status', 'Product deleted successfully.');
+    }
+
+    public function status(Request $request, Product $product)
+    {
+        $this->ensureOwner();
+
+        $data = $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $product->is_active = (bool) $data['is_active'];
+        $product->save();
+
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'products';
+
+        return redirect()->route($redirectTo)->with(
+            'status',
+            $product->is_active ? 'Product activated successfully.' : 'Product archived successfully.'
+        );
     }
 }

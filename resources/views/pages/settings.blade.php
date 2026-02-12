@@ -111,6 +111,12 @@
             color: #b91c1c;
         }
 
+        .btn-success {
+            border-color: #a7f3d0;
+            background: #ecfdf5;
+            color: #047857;
+        }
+
         .btn-muted {
             border-color: #d1d5db;
             background: #f8fafc;
@@ -327,9 +333,10 @@
                         <tr>
                             <th>Product</th>
                             <th>Category</th>
+                            <th>Status</th>
                             <th>Price</th>
                             <th>Stock</th>
-                            <th style="text-align:center;">Action</th>
+                            <th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -337,20 +344,42 @@
                             <tr>
                                 <td>{{ $product->name }}</td>
                                 <td>{{ $product->category->name ?? 'Uncategorized' }}</td>
+                                <td>
+                                    <span class="status-pill {{ $product->is_active ? 'active' : 'inactive' }}">
+                                        {{ $product->is_active ? 'Active' : 'Archived' }}
+                                    </span>
+                                </td>
                                 <td>KES {{ number_format((float) $product->price, 2) }}</td>
                                 <td>{{ (int) ($product->stock_on_hand ?? 0) }}</td>
                                 <td style="text-align:center;">
-                                    <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <input type="hidden" name="redirect_to" value="settings.index">
-                                        <button type="submit" class="btn-inline btn-danger">Delete</button>
-                                    </form>
+                                    <div style="display:inline-flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+                                        <form method="POST" action="{{ route('products.status', $product) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="is_active" value="{{ $product->is_active ? 0 : 1 }}">
+                                            <input type="hidden" name="redirect_to" value="settings.index">
+                                            <button type="submit" class="btn-inline {{ $product->is_active ? 'btn-muted' : 'btn-success' }}">
+                                                {{ $product->is_active ? 'Archive' : 'Activate' }}
+                                            </button>
+                                        </form>
+                                        @if($product->has_sales)
+                                            <button type="button" class="btn-inline btn-danger" style="opacity:0.55; cursor:not-allowed;" title="Product has sales history, so it cannot be deleted.">
+                                                Delete
+                                            </button>
+                                        @else
+                                            <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <input type="hidden" name="redirect_to" value="settings.index">
+                                                <button type="submit" class="btn-inline btn-danger">Delete</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" style="text-align:center; color:var(--muted);">No products yet.</td>
+                                <td colspan="6" style="text-align:center; color:var(--muted);">No products yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

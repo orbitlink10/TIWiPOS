@@ -54,6 +54,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::patch('/products/{product}/status', [ProductController::class, 'status'])->name('products.status');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');

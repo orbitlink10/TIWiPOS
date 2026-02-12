@@ -33,6 +33,9 @@ class SettingsController extends Controller
         $branches = Branch::where('business_id', $businessId)->orderBy('name')->get();
 
         $products = Product::with('category')
+            ->withExists(['saleItems as has_sales' => function ($query) {
+                $query->withoutGlobalScope('branch');
+            }])
             ->withSum(['stocks as stock_on_hand' => function ($query) use ($branchId) {
                 if ($branchId) {
                     $query->where('branch_id', $branchId);
