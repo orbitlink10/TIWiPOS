@@ -11,8 +11,8 @@
 
 @section('content')
     <div class="panel">
-        <h2>Update stock by category</h2>
-        <p style="color: var(--muted); margin-top:6px;">Select a category and enter quantity to add.</p>
+        <h2>Update stock by category + serial numbers</h2>
+        <p style="color: var(--muted); margin-top:6px;">Select a category and enter serial numbers. Stock increases by the number of valid serial numbers entered.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -41,8 +41,9 @@
             </label>
 
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                Quantity to add
-                <input name="quantity" type="number" min="1" value="{{ old('quantity', 1) }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                Serial numbers
+                <textarea name="serial_numbers" rows="6" required placeholder="Enter one serial number per line" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px; resize:vertical;">{{ old('serial_numbers') }}</textarea>
+                <span style="color:var(--muted); font-size:12px;">One serial per line. Comma-separated values are also accepted.</span>
             </label>
 
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
