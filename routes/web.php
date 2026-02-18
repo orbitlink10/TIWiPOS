@@ -29,6 +29,9 @@ Route::match(['get', 'post'], '/logout', LogoutController::class)->name('logout'
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('payments.webhook');
+Route::get('/blog', [PostController::class, 'blogIndex'])->name('blog.index');
+Route::get('/post-image/{post}', [PostController::class, 'image'])->name('post.image');
+Route::get('/sitemap.xml', [PostController::class, 'sitemap'])->name('sitemap');
 // Password reset
 Route::get('/password/forgot', [ForgotPasswordController::class, 'show'])->name('password.request');
 Route::post('/password/email', [ForgotPasswordController::class, 'send'])->name('password.email');

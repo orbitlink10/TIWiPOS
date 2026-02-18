@@ -190,7 +190,7 @@
                         <label for="image">Upload Image</label>
                         <input class="file-input" id="image" name="image" type="file" accept="image/*">
                         @if($post->image_path)
-                            <img class="preview-img" src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->image_alt_text ?: 'Post image' }}">
+                            <img class="preview-img" src="{{ route('post.image', ['post' => $post]) }}" alt="{{ $post->image_alt_text ?: 'Post image' }}" loading="lazy" decoding="async" width="180" height="120">
                         @endif
                     </div>
                     <div class="actions">

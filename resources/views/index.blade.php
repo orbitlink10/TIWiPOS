@@ -241,7 +241,7 @@
                 <a class="nav-link" href="#about">About</a>
                 <a class="nav-link" href="#features">Features</a>
                 <a class="nav-link" href="#accounting">Accounting</a>
-                <a class="nav-link" href="{{ auth()->check() ? route('content.index') : '#blog' }}">Blog</a>
+                <a class="nav-link" href="{{ route('blog.index') }}">Blog</a>
                 <a class="nav-link" href="#contact">Contact</a>
             </nav>
             <div class="actions">

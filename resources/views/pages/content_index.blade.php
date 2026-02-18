@@ -250,7 +250,7 @@
                                     <td>
                                         @if($post->image_path)
                                             <div style="position:relative; width:180px;">
-                                                <img class="thumb" src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->image_alt_text ?: $displayTitle }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                                                <img class="thumb" src="{{ route('post.image', ['post' => $post]) }}" alt="{{ $post->image_alt_text ?: $displayTitle }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" loading="lazy" decoding="async" width="180" height="120">
                                                 <div class="thumb-fallback" style="display:none;">No image</div>
                                             </div>
                                         @else
