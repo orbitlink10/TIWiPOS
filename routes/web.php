@@ -37,6 +37,12 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/content', [PostController::class, 'index'])->name('content.index');
+    Route::get('/content/create', [PostController::class, 'create'])->name('content.create');
+    Route::post('/content', [PostController::class, 'store'])->name('content.store');
+    Route::post('/content/bulk-action', [PostController::class, 'bulkAction'])->name('content.bulk');
+    Route::get('/content/{post}/edit', [PostController::class, 'edit'])->name('content.edit');
+    Route::put('/content/{post}', [PostController::class, 'update'])->name('content.update');
+    Route::delete('/content/{post}', [PostController::class, 'destroy'])->name('content.destroy');
     Route::get('/content/{post:slug}', [PostController::class, 'show'])->name('content.show');
 
     Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
