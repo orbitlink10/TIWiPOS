@@ -10,12 +10,24 @@ use Illuminate\Validation\Rule;
 
 class PostController extends Controller
 {
-    private function buildUniqueSlug(?string $pageTitle, ?string $metaTitle, ?int $ignorePostId = null): string
+    private function buildUniqueSlug(
+        ?string $customSlug = null,
+        ?string $pageTitle = null,
+        ?string $metaTitle = null,
+        ?string $headingTwo = null,
+        ?int $ignorePostId = null,
+        ?int $fallbackPostId = null
+    ): string
     {
-        $slugSource = $pageTitle ?: ($metaTitle ?: Str::random(6));
-        $slug = Str::slug(Str::limit($slugSource, 60, ''));
+        $slugSource = $customSlug
+            ?: ($pageTitle
+                ?: ($metaTitle
+                    ?: ($headingTwo
+                        ?: ($fallbackPostId ? ('post-' . $fallbackPostId) : 'post'))));
+
+        $slug = Str::slug(Str::limit($slugSource, 80, ''));
         if ($slug === '') {
-            $slug = Str::random(8);
+            $slug = $fallbackPostId ? ('post-' . $fallbackPostId) : ('post-' . Str::lower(Str::random(6)));
         }
 
         $originalSlug = $slug;
@@ -54,17 +66,18 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        if (($post->page_title || $post->meta_title)) {
-            $canonicalSlug = $this->buildUniqueSlug(
-                $post->page_title,
-                $post->meta_title,
-                $post->id
-            );
+        $canonicalSlug = $this->buildUniqueSlug(
+            null,
+            $post->page_title,
+            $post->meta_title,
+            $post->heading_two,
+            $post->id,
+            $post->id
+        );
 
-            if ($canonicalSlug !== $post->slug) {
-                $post->update(['slug' => $canonicalSlug]);
-                return redirect()->route('post.show', ['post' => $canonicalSlug], 301);
-            }
+        if ($canonicalSlug !== $post->slug) {
+            $post->update(['slug' => $canonicalSlug]);
+            return redirect()->route('post.show', ['post' => $canonicalSlug], 301);
         }
 
         $readMinutes = max(1, (int) ceil(str_word_count(strip_tags($post->body ?? '')) / 200));
@@ -78,6 +91,7 @@ class PostController extends Controller
     {
         $data = $request->validate([
             'type' => ['required', 'in:post,page'],
+            'slug' => ['nullable', 'string', 'max:120', 'regex:/^[A-Za-z0-9-]+$/'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
             'page_title' => ['required', 'string', 'max:255'],
@@ -87,7 +101,12 @@ class PostController extends Controller
             'image' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        $slug = $this->buildUniqueSlug($data['page_title'] ?? null, $data['meta_title'] ?? null);
+        $slug = $this->buildUniqueSlug(
+            $data['slug'] ?? null,
+            $data['page_title'] ?? null,
+            $data['meta_title'] ?? null,
+            $data['heading_two'] ?? null
+        );
 
         $imagePath = null;
         if ($request->hasFile('image')) {
@@ -125,6 +144,7 @@ class PostController extends Controller
     {
         $data = $request->validate([
             'type' => ['required', 'in:post,page'],
+            'slug' => ['nullable', 'string', 'max:120', 'regex:/^[A-Za-z0-9-]+$/'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
             'page_title' => ['required', 'string', 'max:255'],
@@ -143,8 +163,11 @@ class PostController extends Controller
         }
 
         $slug = $this->buildUniqueSlug(
+            $data['slug'] ?? null,
             $data['page_title'] ?? null,
             $data['meta_title'] ?? null,
+            $data['heading_two'] ?? null,
+            $post->id,
             $post->id
         );
 

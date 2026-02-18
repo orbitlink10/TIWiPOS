@@ -36,6 +36,7 @@
             justify-content: space-between;
             gap: 10px;
             font-weight: 700;
+            font-size: 14px;
         }
 
         .top-promo .btn {
@@ -57,6 +58,7 @@
             gap: 18px;
             flex-wrap: wrap;
             font-weight: 600;
+            font-size: 14px;
         }
 
         .main-nav {
@@ -75,7 +77,7 @@
             align-items: center;
             gap: 10px;
             font-weight: 800;
-            font-size: 32px;
+            font-size: 24px;
             color: #111827;
         }
 
@@ -99,6 +101,7 @@
             flex-wrap: wrap;
             color: #1f2937;
             font-weight: 700;
+            font-size: 15px;
         }
 
         .cta {
@@ -113,7 +116,7 @@
         .hero {
             background: var(--hero);
             color: #fff;
-            padding: 62px 18px 54px;
+            padding: 44px 18px 40px;
         }
 
         .hero-inner {
@@ -123,7 +126,7 @@
 
         .crumbs {
             color: rgba(255,255,255,0.9);
-            font-size: 32px;
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -132,15 +135,15 @@
         }
 
         h1 {
-            margin: 20px 0 16px;
-            font-size: clamp(38px, 6vw, 90px);
-            line-height: 1.05;
+            margin: 14px 0 12px;
+            font-size: clamp(30px, 4.2vw, 56px);
+            line-height: 1.1;
             letter-spacing: -0.03em;
-            max-width: 1040px;
+            max-width: 980px;
         }
 
         .meta {
-            font-size: 32px;
+            font-size: 15px;
             font-weight: 600;
             display: flex;
             flex-wrap: wrap;
@@ -172,8 +175,8 @@
 
         .article {
             padding: 20px;
-            font-size: 28px;
-            line-height: 1.7;
+            font-size: 18px;
+            line-height: 1.65;
             color: #1e293b;
         }
 
@@ -226,16 +229,16 @@
                 padding: 14px;
             }
             .brand {
-                font-size: 22px;
+                font-size: 20px;
             }
             .hero {
                 padding: 34px 14px 30px;
             }
             .crumbs {
-                font-size: 15px;
+                font-size: 13px;
             }
             .meta {
-                font-size: 15px;
+                font-size: 13px;
             }
             .article {
                 font-size: 16px;

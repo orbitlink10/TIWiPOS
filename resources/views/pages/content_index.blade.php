@@ -22,8 +22,8 @@
         text-transform: uppercase;
         color: rgba(255,255,255,0.9);
     }
-    .pages-title { margin: 8px 0 0; font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
-    .pages-subtitle { margin: 4px 0 0; color: rgba(255,255,255,0.88); font-size: 15px; max-width: 780px; }
+    .pages-title { margin: 8px 0 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+    .pages-subtitle { margin: 4px 0 0; color: rgba(255,255,255,0.88); font-size: 14px; max-width: 780px; }
     .pages-card {
         background: #fff;
         border: 1px solid var(--border);
@@ -38,7 +38,7 @@
         border-bottom: 1px solid var(--border);
         gap: 10px;
     }
-    .pages-card-head h2 { margin: 0; font-size: 24px; color: #0f172a; }
+    .pages-card-head h2 { margin: 0; font-size: 21px; color: #0f172a; }
     .add-page-btn {
         display: inline-flex;
         align-items: center;
@@ -110,12 +110,12 @@
         background: #eef2f9;
     }
     .title-cell {
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 700;
         color: #102b4d;
         line-height: 1.35;
     }
-    .alt-cell { color: #2f4668; font-size: 16px; }
+    .alt-cell { color: #2f4668; font-size: 14px; }
     .type-pill {
         display: inline-flex;
         align-items: center;
@@ -167,8 +167,20 @@
         font-weight: 600;
         text-align: center;
     }
+    .thumb-fallback {
+        width: 180px;
+        height: 120px;
+        border-radius: 6px;
+        border: 1px solid #d7e1f2;
+        background: #eef2f9;
+        color: #67809f;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+    }
     @media (max-width: 980px) {
-        .pages-title { font-size: 30px; }
+        .pages-title { font-size: 24px; }
         .pages-subtitle { font-size: 14px; }
     }
 </style>
@@ -226,6 +238,10 @@
                         </thead>
                         <tbody>
                             @forelse($posts as $post)
+                                @php
+                                    $derivedSlugTitle = \Illuminate\Support\Str::of((string) $post->slug)->replace('-', ' ')->title();
+                                    $displayTitle = $post->page_title ?: ($post->meta_title ?: ($post->heading_two ?: ($derivedSlugTitle ?: 'Untitled')));
+                                @endphp
                                 <tr>
                                     <td>
                                         <input type="checkbox" class="row-check" name="selected[]" value="{{ $post->id }}">
@@ -233,12 +249,15 @@
                                     <td class="page-number">{{ ($posts->firstItem() ?? 1) + $loop->index }}</td>
                                     <td>
                                         @if($post->image_path)
-                                            <img class="thumb" src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->image_alt_text ?: 'Post image' }}">
+                                            <div style="position:relative; width:180px;">
+                                                <img class="thumb" src="{{ asset('storage/' . $post->image_path) }}" alt="{{ $post->image_alt_text ?: $displayTitle }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                                                <div class="thumb-fallback" style="display:none;">No image</div>
+                                            </div>
                                         @else
-                                            <div class="thumb" style="display:grid; place-items:center; color:#67809f; font-weight:700;">No image</div>
+                                            <div class="thumb-fallback">No image</div>
                                         @endif
                                     </td>
-                                    <td class="title-cell">{{ $post->page_title ?: ($post->meta_title ?: 'Untitled') }}</td>
+                                    <td class="title-cell">{{ $displayTitle }}</td>
                                     <td class="alt-cell">{{ $post->image_alt_text ?: '-' }}</td>
                                     <td><span class="type-pill">{{ $post->type }}</span></td>
                                     <td>

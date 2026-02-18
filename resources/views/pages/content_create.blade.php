@@ -25,7 +25,7 @@
     }
     .theme-hero h1 {
         margin: 8px 0 2px;
-        font-size: 32px;
+        font-size: 26px;
         color: #fff;
         letter-spacing: -0.02em;
     }
@@ -43,7 +43,7 @@
     .manage-card-head {
         background: #121826;
         color: #fff;
-        font-size: 22px;
+        font-size: 19px;
         font-weight: 800;
         padding: 14px 20px;
     }
@@ -161,6 +161,11 @@
                     <div class="field">
                         <label for="page_title">Page Title</label>
                         <input class="input" id="page_title" name="page_title" type="text" value="{{ old('page_title') }}" placeholder="Enter Keyword Title" required>
+                    </div>
+                    <div class="field">
+                        <label for="slug">URL Slug (optional)</label>
+                        <input class="input" id="slug" name="slug" type="text" value="{{ old('slug') }}" placeholder="e.g. google-ai-mode-guide">
+                        <div class="hint">Use letters, numbers, and hyphens only. Leave empty to auto-generate from Page Title.</div>
                     </div>
                     <div class="field">
                         <label for="image_alt_text">Image Alt Text</label>
