@@ -290,6 +290,18 @@
         font-weight: 500;
     }
 
+    .line-edit {
+        width: 100%;
+        border: 1px solid #d2d9e4;
+        border-radius: 8px;
+        height: 30px;
+        padding: 0 8px;
+        font-size: 12px;
+        text-align: right;
+        background: #fff;
+        color: #0f172a;
+    }
+
     .remove-btn {
         display: inline-flex;
         align-items: center;
@@ -770,13 +782,67 @@
         cartCount.textContent = rows.length + (rows.length === 1 ? ' item' : ' items');
     }
 
-    function quantityAlreadyInCart(productId) {
+    function quantityAlreadyInCart(productId, excludeRow = null) {
         return Array.from(cartBody.querySelectorAll('tr')).reduce((sum, row) => {
+            if (excludeRow && row === excludeRow) {
+                return sum;
+            }
             if (row.dataset.productId === String(productId)) {
                 return sum + parseInt(row.dataset.qty || 0, 10);
             }
             return sum;
         }, 0);
+    }
+
+    function updateCartRow(tr) {
+        const qtyInput = tr.querySelector('.line-qty-input');
+        const priceInput = tr.querySelector('.line-price-input');
+        const subtotalCell = tr.querySelector('.line-subtotal');
+        const quantityHidden = tr.querySelector('.line-qty-hidden');
+        const unitPriceHidden = tr.querySelector('.line-price-hidden');
+
+        const currentQty = parseInt(tr.dataset.qty || '1', 10);
+        const currentPrice = parseMoney(unitPriceHidden?.value || tr.dataset.unitPrice || 0);
+        let nextQty = parseInt(qtyInput?.value || currentQty, 10);
+        let nextPrice = parseMoney(priceInput?.value || currentPrice);
+
+        if (!Number.isInteger(nextQty) || nextQty < 1) {
+            nextQty = currentQty;
+        }
+        if (!Number.isFinite(nextPrice) || nextPrice < 0) {
+            nextPrice = currentPrice;
+        }
+
+        const rowStock = parseInt(tr.dataset.stock || '0', 10);
+        const inCartQtyWithoutThisRow = quantityAlreadyInCart(tr.dataset.productId, tr);
+        if (rowStock >= 0 && (nextQty + inCartQtyWithoutThisRow) > rowStock) {
+            alert('Quantity exceeds stock on hand.');
+            nextQty = currentQty;
+        }
+
+        const lineSubtotal = nextQty * nextPrice;
+
+        tr.dataset.qty = String(nextQty);
+        tr.dataset.subtotal = String(lineSubtotal);
+        tr.dataset.unitPrice = String(nextPrice.toFixed(2));
+
+        if (qtyInput) {
+            qtyInput.value = String(nextQty);
+        }
+        if (priceInput) {
+            priceInput.value = nextPrice.toFixed(2);
+        }
+        if (quantityHidden) {
+            quantityHidden.value = String(nextQty);
+        }
+        if (unitPriceHidden) {
+            unitPriceHidden.value = nextPrice.toFixed(2);
+        }
+        if (subtotalCell) {
+            subtotalCell.textContent = lineSubtotal.toFixed(2);
+        }
+
+        refreshCartTotals();
     }
 
     function addToCart() {
@@ -817,20 +883,26 @@
         tr.dataset.subtotal = String(lineSubtotal);
         tr.dataset.productId = String(productId);
         tr.dataset.qty = String(qty);
+        tr.dataset.stock = String(stock);
+        tr.dataset.unitPrice = String(price.toFixed(2));
 
         tr.innerHTML = `
             <td>
                 <div class="line-item-name">${escapeHtml(name)}</div>
                 <div class="line-item-meta">Serial: ${escapeHtml(serial)}</div>
             </td>
-            <td class="align-right">${qty}</td>
-            <td class="align-right">${price.toFixed(2)}</td>
-            <td class="align-right">${lineSubtotal.toFixed(2)}</td>
+            <td class="align-right">
+                <input type="number" min="1" class="line-edit line-qty-input" value="${qty}">
+            </td>
+            <td class="align-right">
+                <input type="number" min="0" step="0.01" class="line-edit line-price-input" value="${price.toFixed(2)}">
+            </td>
+            <td class="align-right line-subtotal">${lineSubtotal.toFixed(2)}</td>
             <td class="action-col">
                 <button type="button" class="remove-btn">Remove</button>
                 <input type="hidden" name="items[${idx}][product_id]" value="${productId}">
-                <input type="hidden" name="items[${idx}][quantity]" value="${qty}">
-                <input type="hidden" name="items[${idx}][unit_price]" value="${price.toFixed(2)}">
+                <input type="hidden" name="items[${idx}][quantity]" value="${qty}" class="line-qty-hidden">
+                <input type="hidden" name="items[${idx}][unit_price]" value="${price.toFixed(2)}" class="line-price-hidden">
             </td>
         `;
 
@@ -840,6 +912,9 @@
             tr.remove();
             refreshCartTotals();
         });
+        tr.querySelector('.line-qty-input').addEventListener('change', () => updateCartRow(tr));
+        tr.querySelector('.line-price-input').addEventListener('change', () => updateCartRow(tr));
+        tr.querySelector('.line-price-input').addEventListener('blur', () => updateCartRow(tr));
 
         cartBody.appendChild(tr);
         refreshCartTotals();

@@ -38,6 +38,10 @@
                     Serial number (optional)
                     <input name="serial_number" type="text" value="{{ old('serial_number', $product->serial_number) }}" placeholder="Serial number" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
+                <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                    Stock date
+                    <input name="stock_date" type="date" value="{{ old('stock_date', now()->toDateString()) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                </label>
             </div>
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                 Note

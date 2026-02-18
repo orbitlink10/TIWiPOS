@@ -1,75 +1,181 @@
-@extends('layouts.app')
-
-@section('title', 'Receipt')
-
-@section('header')
-    <div class="header-row">
-        <h1>Receipt #{{ $sale->sale_number }}</h1>
-        <a class="btn" href="{{ route('sale') }}">New Sale</a>
-    </div>
-@endsection
-
-@section('content')
-    <div class="panel" id="print-area">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-            <div>
-                <h2 style="margin:0;">Tiwi POS</h2>
-                <div style="color:var(--muted); font-size:13px;">127.0.0.1 | {{ $sale->created_at->format('Y-m-d H:i') }}</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-weight:700;">Receipt</div>
-                <div style="color:var(--muted); font-size:13px;">Sale #{{ $sale->sale_number }}</div>
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ $sale->sale_number }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Manrope", "Segoe UI", sans-serif;
+            background: #f4f6fb;
+            color: #0f172a;
+        }
+        .receipt-wrap {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border: 1px solid #d7deea;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            background: #fff;
+            color: #0f172a;
+            cursor: pointer;
+        }
+        .receipt {
+            background: #fff;
+            border: 1px solid #d7deea;
+            border-radius: 14px;
+            padding: 18px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .muted {
+            color: #64748b;
+            font-size: 13px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .right {
+            text-align: right;
+        }
+        .totals {
+            margin-top: 14px;
+            margin-left: auto;
+            width: 300px;
+        }
+        .totals td {
+            border-bottom: 0;
+            padding: 6px 0;
+        }
+        .total-final {
+            font-weight: 800;
+            font-size: 16px;
+        }
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .actions {
+                display: none;
+            }
+            .receipt {
+                border: 0;
+                border-radius: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    @php($payment = $sale->payments->first())
+    <div class="receipt-wrap">
+        <div class="actions">
+            <button type="button" class="btn" onclick="window.print()">Print Receipt</button>
+            <a href="{{ route('sale') }}" class="btn">New Sale</a>
+            <a href="{{ route('sales.index') }}" class="btn">Sales History</a>
         </div>
 
-        <div style="margin-top:14px;">
-            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        <div class="receipt">
+            <div class="row">
+                <div>
+                    <h1 style="margin:0; font-size:24px;">Sale Receipt</h1>
+                    <div class="muted">Sale #{{ $sale->sale_number }}</div>
+                    <div class="muted">{{ $sale->created_at->format('Y-m-d H:i') }}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="muted">Payment method</div>
+                    <div style="font-weight:700;">{{ strtoupper($payment->method ?? 'N/A') }}</div>
+                </div>
+            </div>
+
+            @if($sale->customer_name || $sale->customer_phone || $sale->customer_location)
+                <div style="margin-top:10px; padding:10px; border-radius:10px; border:1px solid #e2e8f0; background:#f8fafc;">
+                    <div style="font-weight:700; font-size:13px;">Customer</div>
+                    <div class="muted">{{ $sale->customer_name ?: 'Walk-in' }}</div>
+                    @if($sale->customer_phone)
+                        <div class="muted">{{ $sale->customer_phone }}</div>
+                    @endif
+                    @if($sale->customer_location)
+                        <div class="muted">{{ $sale->customer_location }}</div>
+                    @endif
+                </div>
+            @endif
+
+            <table>
                 <thead>
-                    <tr style="background:#f7f7fb;">
-                        <th style="text-align:left; padding:10px;">Item</th>
-                        <th style="text-align:left; padding:10px;">Serial Number</th>
-                        <th style="text-align:right; padding:10px;">Qty</th>
-                        <th style="text-align:right; padding:10px;">Price</th>
-                        <th style="text-align:right; padding:10px;">Subtotal</th>
+                    <tr>
+                        <th>Item</th>
+                        <th>Serial</th>
+                        <th class="right">Qty</th>
+                        <th class="right">Price</th>
+                        <th class="right">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($sale->items as $item)
                         @php($serial = $item->serial_number ?: ($item->product->serial_number ?? null))
-                        <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">{{ $item->product->name ?? 'Product' }}</td>
-                            <td style="padding:10px;">{{ $serial ?: '-' }}</td>
-                            <td style="padding:10px; text-align:right;">{{ $item->quantity }}</td>
-                            <td style="padding:10px; text-align:right;">KES {{ number_format($item->unit_price, 2) }}</td>
-                            <td style="padding:10px; text-align:right;">KES {{ number_format($item->subtotal, 2) }}</td>
+                        <tr>
+                            <td>{{ $item->product->name ?? 'Product' }}</td>
+                            <td>{{ $serial ?: '-' }}</td>
+                            <td class="right">{{ $item->quantity }}</td>
+                            <td class="right">KES {{ number_format($item->unit_price, 2) }}</td>
+                            <td class="right">KES {{ number_format($item->subtotal, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-        </div>
 
-        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-            <table style="min-width:260px; font-size:14px;">
+            <table class="totals">
                 <tr>
-                    <td style="padding:6px; color:var(--muted);">Subtotal</td>
-                    <td style="padding:6px; text-align:right;">KES {{ number_format($sale->subtotal, 2) }}</td>
+                    <td class="muted">Subtotal</td>
+                    <td class="right">KES {{ number_format($sale->subtotal, 2) }}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px; color:var(--muted);">Tax</td>
-                    <td style="padding:6px; text-align:right;">KES {{ number_format($sale->tax, 2) }}</td>
+                    <td class="muted">Tax</td>
+                    <td class="right">KES {{ number_format($sale->tax, 2) }}</td>
                 </tr>
-                <tr>
-                    <td style="padding:6px; font-weight:700;">Total</td>
-                    <td style="padding:6px; text-align:right; font-weight:700;">KES {{ number_format($sale->total, 2) }}</td>
+                <tr class="total-final">
+                    <td>Total</td>
+                    <td class="right">KES {{ number_format($sale->total, 2) }}</td>
                 </tr>
             </table>
         </div>
-
-        <div style="margin-top:16px; color:var(--muted); font-size:13px;">Thank you for your purchase.</div>
     </div>
-
-    <div style="margin-top:12px;">
-        <button class="btn" onclick="window.print()">Print Receipt</button>
-        <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('sales.index') }}">View all sales</a>
-    </div>
-@endsection
+</body>
+</html>

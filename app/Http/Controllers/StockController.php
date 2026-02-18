@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductStock;
@@ -13,6 +14,23 @@ use App\Support\Tenant;
 
 class StockController extends Controller
 {
+    private function resolveMovementTimestamp(?string $stockDate): Carbon
+    {
+        if (empty($stockDate)) {
+            return now();
+        }
+
+        return Carbon::parse($stockDate)->setTimeFrom(now());
+    }
+
+    private function recordStockMovement(array $attributes, Carbon $movementAt): void
+    {
+        $movement = new StockMovement($attributes);
+        $movement->created_at = $movementAt;
+        $movement->updated_at = $movementAt;
+        $movement->save();
+    }
+
     private function normalizeLocation(?string $location): string
     {
         $normalized = strtolower(trim((string) $location));
@@ -32,10 +50,12 @@ class StockController extends Controller
             'category_id' => 'required|exists:categories,id',
             'serial_numbers' => 'required|string',
             'location' => 'nullable|string|max:100',
+            'stock_date' => 'nullable|date',
             'note' => 'nullable|string|max:255',
         ]);
 
         $location = $this->normalizeLocation($data['location'] ?? null);
+        $movementAt = $this->resolveMovementTimestamp($data['stock_date'] ?? null);
         $branchId = Tenant::branchId();
         $rawSerials = preg_split('/[\r\n,]+/', $data['serial_numbers']) ?: [];
         $serialNumbers = array_values(array_unique(array_filter(array_map('trim', $rawSerials))));
@@ -85,7 +105,7 @@ class StockController extends Controller
             ->orderByDesc('id')
             ->value('cost') ?? 0);
 
-        DB::transaction(function () use ($productsBySerial, $location, $branchId, $data, $serialNumbers, $category, $defaultCategoryPrice, $defaultCategoryCost) {
+        DB::transaction(function () use ($productsBySerial, $location, $movementAt, $branchId, $data, $serialNumbers, $category, $defaultCategoryPrice, $defaultCategoryCost) {
             foreach ($serialNumbers as $serialNumber) {
                 $product = $productsBySerial->get($serialNumber);
 
@@ -117,7 +137,7 @@ class StockController extends Controller
                 $after = $before + 1;
                 $stock->update(['quantity' => $after]);
 
-                StockMovement::create([
+                $this->recordStockMovement([
                     'business_id' => auth()->user()->business_id,
                     'branch_id' => $branchId,
                     'product_id' => $product->id,
@@ -130,7 +150,7 @@ class StockController extends Controller
                     'reference_type' => 'manual_adjustment',
                     'reference_id' => null,
                     'note' => trim(($data['note'] ?? '') . ' Serial: ' . $serialNumber),
-                ]);
+                ], $movementAt);
             }
         });
 
@@ -155,14 +175,16 @@ class StockController extends Controller
         $data = $request->validate([
             'location' => 'nullable|string|max:100',
             'quantity' => 'required|integer|min:0',
+            'stock_date' => 'nullable|date',
             'note' => 'nullable|string|max:255',
             'serial_number' => ['nullable', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
         ]);
 
         $location = $this->normalizeLocation($data['location'] ?? null);
+        $movementAt = $this->resolveMovementTimestamp($data['stock_date'] ?? null);
         $branchId = Tenant::branchId();
 
-        DB::transaction(function () use ($data, $product, $location, $branchId) {
+        DB::transaction(function () use ($data, $product, $movementAt, $location, $branchId) {
             $stock = ProductStock::firstOrCreate(
                 ['product_id' => $product->id, 'location' => $location, 'branch_id' => $branchId],
                 ['quantity' => 0, 'business_id' => auth()->user()->business_id]
@@ -175,7 +197,7 @@ class StockController extends Controller
             $stock->update(['quantity' => $after]);
 
             if ($change !== 0) {
-                StockMovement::create([
+                $this->recordStockMovement([
                     'business_id' => auth()->user()->business_id,
                     'branch_id' => $branchId,
                     'product_id' => $product->id,
@@ -188,7 +210,7 @@ class StockController extends Controller
                     'reference_type' => 'stock_edit',
                     'reference_id' => $product->id,
                     'note' => $data['note'] ?? 'Stock corrected before sale',
-                ]);
+                ], $movementAt);
             }
 
             if (!empty($data['serial_number']) && $product->serial_number !== $data['serial_number']) {

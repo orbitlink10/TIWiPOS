@@ -52,6 +52,11 @@
             </label>
 
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                Stock date
+                <input name="stock_date" type="date" value="{{ old('stock_date', now()->toDateString()) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+            </label>
+
+            <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                 Note
                 <input name="note" type="text" value="{{ old('note') }}" placeholder="Reason (optional)" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
             </label>
