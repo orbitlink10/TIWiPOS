@@ -415,6 +415,7 @@
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('categories.*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
                 <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
                 <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*') || request()->routeIs('payments.*') ? 'active' : '' }}"><span class="nav-icon">BL</span><span>Billing</span></a>
+                <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.*') ? 'active' : '' }}"><span class="nav-icon">PG</span><span>Pages</span></a>
                 @if(auth()->user()->role === 'owner')
                     <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') || request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">SE</span><span>Settings</span></a>
                 @endif
