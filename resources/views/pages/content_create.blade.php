@@ -6,13 +6,6 @@
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
     .manage-wrap { max-width: 980px; }
-    .manage-title {
-        margin: 0 0 14px;
-        font-size: 52px;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        color: #061b45;
-    }
     .manage-card {
         border: 1px solid #d4deec;
         border-radius: 12px;
@@ -22,7 +15,7 @@
     .manage-card-head {
         background: #1a7cea;
         color: #fff;
-        font-size: 36px;
+        font-size: 24px;
         font-weight: 800;
         padding: 14px 20px;
     }
@@ -33,7 +26,7 @@
     }
     .field { display: grid; gap: 6px; }
     .field label {
-        font-size: 34px;
+        font-size: 16px;
         font-weight: 700;
         color: #0f2546;
     }

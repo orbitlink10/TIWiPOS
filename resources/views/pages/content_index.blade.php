@@ -5,7 +5,7 @@
 @push('styles')
 <style>
     .pages-wrap { display: grid; gap: 14px; }
-    .pages-title { margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.02em; color: #061b45; }
+    .pages-title { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: #061b45; }
     .pages-subtitle { margin: 4px 0 0; color: #5b6f86; font-size: 16px; max-width: 780px; }
     .pages-card {
         background: #fff;
@@ -21,7 +21,7 @@
         border-bottom: 1px solid var(--border);
         gap: 10px;
     }
-    .pages-card-head h2 { margin: 0; font-size: 34px; color: #061b45; }
+    .pages-card-head h2 { margin: 0; font-size: 28px; color: #061b45; }
     .add-page-btn {
         display: inline-flex;
         align-items: center;
