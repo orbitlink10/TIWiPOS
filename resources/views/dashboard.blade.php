@@ -31,6 +31,33 @@
     .stat-label { color: var(--muted); font-weight:600; margin-bottom:6px; }
     .stat-value { font-size:22px; font-weight:800; color:#0f172a; }
     .badge-soft { display:inline-block; padding:6px 10px; border-radius:10px; background:#e8f5ff; color:#0b6fa4; font-weight:700; font-size:13px; }
+    .monthly-panel { margin-top: 16px; padding: 16px; }
+    .monthly-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    .monthly-title { margin:0; font-size:19px; font-weight:800; color:#0f172a; }
+    .monthly-subtitle { margin:2px 0 0; color:var(--muted); font-size:13px; font-weight:600; }
+    .monthly-layout { display:grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap:14px; align-items:start; }
+    .monthly-chart-wrap {
+        border:1px solid var(--border);
+        border-radius:12px;
+        background:#f8fbff;
+        padding:12px;
+        min-height:280px;
+    }
+    .monthly-chart-wrap canvas { width:100%; height:250px; }
+    .monthly-table-wrap {
+        border:1px solid var(--border);
+        border-radius:12px;
+        background:#fff;
+        overflow:auto;
+    }
+    .monthly-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .monthly-table th, .monthly-table td { padding:10px 12px; border-bottom:1px solid #edf2f9; text-align:right; white-space:nowrap; }
+    .monthly-table th:first-child, .monthly-table td:first-child { text-align:left; }
+    .monthly-table thead th { color:var(--muted); font-weight:700; background:#f8fbff; position:sticky; top:0; }
+    .monthly-table tfoot td { font-weight:800; background:#f8fbff; }
+    @media (max-width: 980px) {
+        .monthly-layout { grid-template-columns: 1fr; }
+    }
 </style>
 @endpush
 
@@ -68,6 +95,11 @@
 @endsection
 
 @section('content')
+    @php
+        $monthlyRows = collect($monthlyPerformance ?? []);
+        $yearSalesTotal = $monthlyRows->sum('sales');
+        $yearProfitTotal = $monthlyRows->sum('profit');
+    @endphp
     <div class="content" style="grid-template-columns: 1fr;">
         <div class="stats-grid">
             <div class="stat-card">
@@ -103,5 +135,138 @@
                 <div class="badge-soft" style="background:#fef3c7;color:#92400e;">Unavailable</div>
             </div>
         </div>
+
+        <div class="stat-card monthly-panel">
+            <div class="monthly-header">
+                <div>
+                    <h3 class="monthly-title">{{ now()->year }} Monthly Sales &amp; Profit</h3>
+                    <p class="monthly-subtitle">Month-by-month totals and trend chart.</p>
+                </div>
+                <span class="badge-soft">Year to date view</span>
+            </div>
+            <div class="monthly-layout">
+                <div class="monthly-chart-wrap">
+                    <canvas id="monthlySalesProfitChart" aria-label="Monthly sales and profit chart"></canvas>
+                </div>
+                <div class="monthly-table-wrap">
+                    <table class="monthly-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Sales</th>
+                                @if($canViewProfit ?? false)
+                                    <th>Profit</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($monthlyRows as $row)
+                                <tr>
+                                    <td>{{ $row['month'] }}</td>
+                                    <td>KES {{ number_format($row['sales'], 2) }}</td>
+                                    @if($canViewProfit ?? false)
+                                        <td>KES {{ number_format($row['profit'], 2) }}</td>
+                                    @endif
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ ($canViewProfit ?? false) ? 3 : 2 }}">No monthly data yet.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td>KES {{ number_format($yearSalesTotal, 2) }}</td>
+                                @if($canViewProfit ?? false)
+                                    <td>KES {{ number_format($yearProfitTotal, 2) }}</td>
+                                @endif
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var rows = @json($monthlyPerformance ?? []);
+            var chartElement = document.getElementById('monthlySalesProfitChart');
+            if (!chartElement || !rows.length || typeof Chart === 'undefined') return;
+
+            var currency = new Intl.NumberFormat('en-KE', {
+                style: 'currency',
+                currency: 'KES',
+                maximumFractionDigits: 0,
+            });
+
+            var labels = rows.map(function (item) { return item.month; });
+            var salesSeries = rows.map(function (item) { return Number(item.sales || 0); });
+            var datasets = [{
+                label: 'Monthly Sales',
+                data: salesSeries,
+                borderColor: '#0f7fa7',
+                backgroundColor: 'rgba(15,127,167,0.15)',
+                pointBackgroundColor: '#0f7fa7',
+                pointRadius: 3,
+                borderWidth: 2,
+                tension: 0.3
+            }];
+
+            @if($canViewProfit ?? false)
+                datasets.push({
+                    label: 'Monthly Profit',
+                    data: rows.map(function (item) { return Number(item.profit || 0); }),
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22,163,74,0.15)',
+                    pointBackgroundColor: '#16a34a',
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    tension: 0.3
+                });
+            @endif
+
+            new Chart(chartElement, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' + currency.format(context.parsed.y || 0);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return currency.format(value);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(15,23,42,0.08)'
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        })();
+    </script>
+@endpush
