@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Models\Post;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -43,7 +44,6 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/content/{post}/edit', [PostController::class, 'edit'])->name('content.edit');
     Route::put('/content/{post}', [PostController::class, 'update'])->name('content.update');
     Route::delete('/content/{post}', [PostController::class, 'destroy'])->name('content.destroy');
-    Route::get('/content/{post:slug}', [PostController::class, 'show'])->name('content.show');
 
     Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
     Route::post('/billing/pay', [BillingController::class, 'pay'])->name('billing.pay');
@@ -89,9 +89,17 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/branches/switch', [BranchController::class, 'switch'])->name('branches.switch');
 });
 
+// Legacy content URL support: /content/{slug} -> /{slug}
+Route::get('/content/{post:slug}', function (Post $post) {
+    return redirect()->route('post.show', ['post' => $post->slug], 301);
+})->name('content.show');
+
 Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
     Route::post('/tenants/{business}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
     Route::post('/tenants/{business}/deactivate', [TenantController::class, 'deactivate'])->name('tenants.deactivate');
     Route::post('/tenants/{business}/impersonate', [TenantController::class, 'impersonate'])->name('tenants.impersonate');
 });
+
+// Public content URL: https://tiwi.co.ke/{page-title}
+Route::get('/{post:slug}', [PostController::class, 'show'])->name('post.show');

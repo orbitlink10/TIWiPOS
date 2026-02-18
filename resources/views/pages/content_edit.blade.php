@@ -5,7 +5,35 @@
 @push('styles')
 <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
-    .manage-wrap { max-width: 980px; }
+    .manage-wrap { max-width: 1060px; display: grid; gap: 14px; }
+    .theme-hero {
+        background: linear-gradient(140deg, #b41543 0%, #8e1238 100%);
+        color: #fff;
+        border-radius: 14px;
+        padding: 20px 22px;
+        box-shadow: 0 16px 34px rgba(133, 18, 55, 0.28);
+    }
+    .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.9);
+    }
+    .theme-hero h1 {
+        margin: 8px 0 2px;
+        font-size: 32px;
+        color: #fff;
+        letter-spacing: -0.02em;
+    }
+    .theme-hero p {
+        margin: 0;
+        color: rgba(255,255,255,0.88);
+        font-size: 14px;
+    }
     .manage-card {
         border: 1px solid #d4deec;
         border-radius: 12px;
@@ -13,7 +41,7 @@
         background: #fff;
     }
     .manage-card-head {
-        background: #1a7cea;
+        background: #121826;
         color: #fff;
         font-size: 22px;
         font-weight: 800;
@@ -26,7 +54,7 @@
     }
     .field { display: grid; gap: 6px; }
     .field label {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #0f2546;
     }
@@ -35,9 +63,9 @@
         border-radius: 12px;
         border: 1px solid #cfd8e6;
         background: #fff;
-        height: 52px;
-        padding: 0 16px;
-        font-size: 16px;
+        height: 50px;
+        padding: 0 14px;
+        font-size: 15px;
         color: #0f172a;
     }
     .file-input {
@@ -56,22 +84,7 @@
         object-fit: cover;
         border: 1px solid #d4deec;
     }
-    .actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    .btn-secondary {
-        background: #f2f5fa;
-        color: #102545;
-        border: 1px solid #d4deec;
-        text-decoration: none;
-        border-radius: 11px;
-        font-weight: 700;
-        padding: 11px 15px;
-    }
     .status {
-        margin-bottom: 12px;
         border-radius: 10px;
         padding: 10px 12px;
         font-weight: 700;
@@ -82,13 +95,41 @@
         border-color: #f9c7d1;
         color: #9b1d30;
     }
+    .top-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .btn-secondary {
+        background: #fff;
+        color: #102545;
+        border: 1px solid #d4deec;
+        text-decoration: none;
+        border-radius: 11px;
+        font-weight: 700;
+        padding: 11px 15px;
+    }
+    .actions .btn {
+        background: linear-gradient(135deg, #ff7d34 0%, #ff5e2a 100%);
+        box-shadow: 0 10px 22px rgba(255, 94, 42, 0.28);
+    }
 </style>
 @endpush
 
 @section('header')
-    <div class="header-row">
-        <h1>Edit Page/Post</h1>
-        <a class="btn-secondary" href="{{ route('content.index') }}">Back to Pages</a>
+    <div class="manage-wrap">
+        <div class="theme-hero">
+            <div class="hero-kicker">Tiwi Blog CMS</div>
+            <h1>Edit Page/Post</h1>
+            <p>Update metadata, copy, and media using the same publishing layout.</p>
+        </div>
+        <div class="top-actions">
+            <a class="btn-secondary" href="{{ route('content.index') }}">Back to Pages</a>
+        </div>
     </div>
 @endsection
 
@@ -114,7 +155,7 @@
                     </div>
                     <div class="field">
                         <label for="page_title">Page Title</label>
-                        <input class="input" id="page_title" name="page_title" type="text" value="{{ old('page_title', $post->page_title) }}" placeholder="Enter Keyword Title">
+                        <input class="input" id="page_title" name="page_title" type="text" value="{{ old('page_title', $post->page_title) }}" placeholder="Enter Keyword Title" required>
                     </div>
                     <div class="field">
                         <label for="image_alt_text">Image Alt Text</label>

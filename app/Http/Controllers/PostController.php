@@ -54,6 +54,19 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
+        if (($post->page_title || $post->meta_title)) {
+            $canonicalSlug = $this->buildUniqueSlug(
+                $post->page_title,
+                $post->meta_title,
+                $post->id
+            );
+
+            if ($canonicalSlug !== $post->slug) {
+                $post->update(['slug' => $canonicalSlug]);
+                return redirect()->route('post.show', ['post' => $canonicalSlug], 301);
+            }
+        }
+
         $readMinutes = max(1, (int) ceil(str_word_count(strip_tags($post->body ?? '')) / 200));
         return view('pages.content_show', compact('post', 'readMinutes'));
     }
@@ -67,7 +80,7 @@ class PostController extends Controller
             'type' => ['required', 'in:post,page'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
-            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_title' => ['required', 'string', 'max:255'],
             'image_alt_text' => ['nullable', 'string', 'max:255'],
             'heading_two' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string'],
@@ -114,7 +127,7 @@ class PostController extends Controller
             'type' => ['required', 'in:post,page'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
-            'page_title' => ['nullable', 'string', 'max:255'],
+            'page_title' => ['required', 'string', 'max:255'],
             'image_alt_text' => ['nullable', 'string', 'max:255'],
             'heading_two' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string'],

@@ -5,8 +5,25 @@
 @push('styles')
 <style>
     .pages-wrap { display: grid; gap: 14px; }
-    .pages-title { margin: 0; font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: #061b45; }
-    .pages-subtitle { margin: 4px 0 0; color: #5b6f86; font-size: 16px; max-width: 780px; }
+    .theme-hero {
+        background: linear-gradient(140deg, #b41543 0%, #8e1238 100%);
+        color: #fff;
+        border-radius: 14px;
+        padding: 20px 22px;
+        box-shadow: 0 16px 34px rgba(133, 18, 55, 0.28);
+    }
+    .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.9);
+    }
+    .pages-title { margin: 8px 0 0; font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+    .pages-subtitle { margin: 4px 0 0; color: rgba(255,255,255,0.88); font-size: 15px; max-width: 780px; }
     .pages-card {
         background: #fff;
         border: 1px solid var(--border);
@@ -21,19 +38,19 @@
         border-bottom: 1px solid var(--border);
         gap: 10px;
     }
-    .pages-card-head h2 { margin: 0; font-size: 28px; color: #061b45; }
+    .pages-card-head h2 { margin: 0; font-size: 24px; color: #0f172a; }
     .add-page-btn {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         border-radius: 999px;
-        background: #eef5ff;
-        color: #0b6ddb;
+        background: linear-gradient(135deg, #ff7d34 0%, #ff5e2a 100%);
+        color: #fff;
         text-decoration: none;
         font-weight: 800;
         padding: 10px 16px;
         font-size: 15px;
-        border: 1px solid #e1eafd;
+        border: 1px solid transparent;
     }
     .pages-toolbar {
         padding: 16px 20px;
@@ -56,7 +73,7 @@
         padding: 10px 20px;
         font-weight: 800;
         cursor: pointer;
-        background: #1e7ae8;
+        background: #1f2937;
         color: #fff;
     }
     .pages-table-wrap {
@@ -74,9 +91,9 @@
         font-size: 12px;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #587195;
+        color: #6b7280;
         border-bottom: 1px solid var(--border);
-        background: #f8fbff;
+        background: #f8fafc;
     }
     .pages-table td {
         padding: 18px 10px;
@@ -104,8 +121,8 @@
         align-items: center;
         padding: 6px 10px;
         border-radius: 999px;
-        background: #eef5ff;
-        color: #0f4a99;
+        background: #1f2937;
+        color: #fff;
         font-size: 12px;
         font-weight: 800;
         text-transform: capitalize;
@@ -151,16 +168,19 @@
         text-align: center;
     }
     @media (max-width: 980px) {
-        .pages-title { font-size: 34px; }
-        .pages-subtitle { font-size: 16px; }
+        .pages-title { font-size: 30px; }
+        .pages-subtitle { font-size: 14px; }
     }
 </style>
 @endpush
 
 @section('header')
     <div class="pages-wrap">
-        <h1 class="pages-title">Pages</h1>
-        <p class="pages-subtitle">Manage site pages and published content.</p>
+        <div class="theme-hero">
+            <div class="hero-kicker">Tiwi Blog CMS</div>
+            <h1 class="pages-title">Pages</h1>
+            <p class="pages-subtitle">Manage site pages and published content.</p>
+        </div>
     </div>
 @endsection
 
@@ -223,7 +243,7 @@
                                     <td><span class="type-pill">{{ $post->type }}</span></td>
                                     <td>
                                         <div class="actions">
-                                            <a href="{{ route('content.show', ['post' => $post->slug]) }}" class="action-btn action-preview">Preview</a>
+                                            <a href="{{ route('post.show', ['post' => $post->slug]) }}" class="action-btn action-preview">Preview</a>
                                             <a href="{{ route('content.edit', $post) }}" class="action-btn action-update">Update</a>
                                             <form method="POST" action="{{ route('content.destroy', $post) }}" onsubmit="return confirm('Delete this page/post?')">
                                                 @csrf
