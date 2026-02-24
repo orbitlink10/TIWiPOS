@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Support\Tenant;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -42,6 +43,24 @@ class ProductController extends Controller
         $suppliers = \App\Models\Supplier::orderBy('name')->get();
         $productNames = \App\Models\Product::orderBy('name')->pluck('name');
         return view('pages.product_create', compact('categories', 'suppliers', 'productNames'));
+    }
+
+    public function edit(Product $product)
+    {
+        $branchId = Tenant::branchId();
+        $categories = \App\Models\Category::orderBy('name')->get();
+        $suppliers = \App\Models\Supplier::orderBy('name')->get();
+
+        $stockRow = $product->stocks()
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->orderByRaw("CASE WHEN location = 'main' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->first();
+
+        $stockQuantity = (int) ($stockRow->quantity ?? 0);
+        $stockLocation = (string) ($stockRow->location ?? 'main');
+
+        return view('pages.product_edit', compact('product', 'categories', 'suppliers', 'stockQuantity', 'stockLocation'));
     }
 
     public function store(Request $request)
@@ -94,6 +113,58 @@ class ProductController extends Controller
         );
 
         return redirect()->route('products')->with('status', 'Product added successfully.');
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($product->id)],
+            'serial_number' => ['required', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
+            'barcode' => 'nullable|string|max:255',
+            'category_id' => 'required|integer|exists:categories,id',
+            'supplier_id' => 'nullable|integer',
+            'cost' => 'nullable|numeric|min:0',
+            'price' => 'required|numeric|min:0',
+            'stock_alert' => 'nullable|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
+            'stock_location' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $branchId = Tenant::branchId();
+
+        $product->update([
+            'name' => $data['name'],
+            'sku' => $data['sku'],
+            'serial_number' => $data['serial_number'],
+            'barcode' => $data['barcode'] ?? null,
+            'category_id' => $data['category_id'] ?? null,
+            'supplier_id' => $data['supplier_id'] ?? null,
+            'cost' => $data['cost'] ?? 0,
+            'price' => $data['price'],
+            'stock_alert' => $data['stock_alert'] ?? 0,
+            'is_active' => $request->boolean('is_active'),
+            'description' => $data['description'] ?? null,
+        ]);
+
+        if (array_key_exists('stock', $data)) {
+            $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
+            ProductStock::updateOrCreate(
+                [
+                    'product_id' => $product->id,
+                    'location' => $stockLocation,
+                    'branch_id' => $branchId,
+                ],
+                [
+                    'quantity' => (int) $data['stock'],
+                    'business_id' => $product->business_id,
+                ]
+            );
+        }
+
+        return redirect()->route('products')->with('status', 'Product updated successfully.');
     }
 
     public function destroy(Request $request, Product $product)

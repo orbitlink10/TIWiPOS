@@ -40,9 +40,10 @@
                         <th style="text-align:left; padding:10px;">Name</th>
                         <th style="text-align:left; padding:10px;">SKU</th>
                         <th style="text-align:left; padding:10px;">Serial</th>
+                        <th style="text-align:right; padding:10px;">Cost</th>
                         <th style="text-align:right; padding:10px;">Price</th>
                         <th style="text-align:right; padding:10px;">Stock</th>
-                        <th style="text-align:center; padding:10px; width:120px;">Action</th>
+                        <th style="text-align:center; padding:10px; width:220px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -51,21 +52,27 @@
                             <td style="padding:10px;">{{ $product->name }}</td>
                             <td style="padding:10px;">{{ $product->sku }}</td>
                             <td style="padding:10px;">{{ $product->serial_number }}</td>
+                            <td style="padding:10px; text-align:right;">KES {{ number_format($product->cost, 2) }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($product->price, 2) }}</td>
                             <td style="padding:10px; text-align:right;">{{ $product->stock_on_hand ?? 0 }}</td>
                             <td style="padding:10px; text-align:center;">
-                                <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
-                                        Delete
-                                    </button>
-                                </form>
+                                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                                    <a href="{{ route('products.edit', $product) }}" style="border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; border-radius:8px; padding:6px 12px; font-weight:700; text-decoration:none;">
+                                        Edit
+                                    </a>
+                                    <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="padding:12px; text-align:center; color:var(--muted);">No products yet.</td>
+                            <td colspan="7" style="padding:12px; text-align:center; color:var(--muted);">No products yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
