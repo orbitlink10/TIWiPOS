@@ -122,7 +122,7 @@ class ProductController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($product->id)],
+            'sku' => 'required|string|max:255',
             'serial_number' => ['required', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
             'barcode' => 'nullable|string|max:255',
             'category_id' => 'required|integer|exists:categories,id',
