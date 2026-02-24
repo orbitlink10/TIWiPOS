@@ -19,6 +19,7 @@ class SaleItem extends Model
         'serial_number',
         'quantity',
         'unit_price',
+        'unit_cost',
         'discount',
         'subtotal',
     ];

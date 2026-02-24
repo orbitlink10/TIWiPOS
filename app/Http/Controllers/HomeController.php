@@ -7,6 +7,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Support\Tenant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
@@ -37,6 +38,7 @@ class HomeController extends Controller
         $monthStart = now()->startOfMonth();
         $yearStart = now()->copy()->startOfYear();
         $yearEnd = now()->copy()->endOfYear();
+        $saleItemCostExpression = $this->saleItemCostExpression();
 
         $monthSales = Sale::where('status', 'completed')
             ->whereBetween('created_at', [$monthStart, now()])
@@ -76,7 +78,7 @@ class HomeController extends Controller
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-                ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
+                ->selectRaw('coalesce(sum(sale_items.subtotal - (' . $saleItemCostExpression . ') * sale_items.quantity),0) as profit')
                 ->value('profit') ?? 0)
             : null;
 
@@ -101,7 +103,7 @@ class HomeController extends Controller
                 ->where('sales.status', 'completed')
                 ->whereBetween('sales.created_at', [$yearStart, $yearEnd])
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-                ->selectRaw("{$profitMonthExpression} as month_index, coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as total_profit")
+                ->selectRaw("{$profitMonthExpression} as month_index, coalesce(sum(sale_items.subtotal - ({$saleItemCostExpression}) * sale_items.quantity),0) as total_profit")
                 ->groupBy('month_index')
                 ->pluck('total_profit', 'month_index');
 
@@ -140,5 +142,12 @@ class HomeController extends Controller
         return DB::connection()->getDriverName() === 'sqlite'
             ? "cast(strftime('%m', {$column}) as integer)"
             : "month({$column})";
+    }
+
+    private function saleItemCostExpression(): string
+    {
+        return Schema::hasColumn('sale_items', 'unit_cost')
+            ? 'coalesce(sale_items.unit_cost, products.cost)'
+            : 'products.cost';
     }
 }

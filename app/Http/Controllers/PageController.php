@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Support\Tenant;
+use Illuminate\Support\Facades\Schema;
 
 class PageController extends Controller
 {
@@ -98,13 +99,14 @@ class PageController extends Controller
         $profitByProduct = collect();
 
         if ($canViewProfit) {
+            $costExpression = $this->saleItemCostExpression();
             $todayProfit = \App\Models\SaleItem::query()
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-                ->selectRaw('coalesce(sum(sale_items.subtotal - products.cost * sale_items.quantity),0) as profit')
+                ->selectRaw("coalesce(sum(sale_items.subtotal - ({$costExpression}) * sale_items.quantity),0) as profit")
                 ->value('profit') ?? 0;
 
             $profitByProduct = \App\Models\SaleItem::query()
@@ -114,11 +116,18 @@ class PageController extends Controller
                 ->whereDate('sales.created_at', $today)
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
                 ->groupBy('products.id', 'products.name', 'products.sku')
-                ->selectRaw('products.id, products.name, products.sku, SUM(sale_items.quantity) as qty, SUM(sale_items.subtotal) as sales_total, SUM(sale_items.subtotal - products.cost * sale_items.quantity) as profit_total')
+                ->selectRaw("products.id, products.name, products.sku, SUM(sale_items.quantity) as qty, SUM(sale_items.subtotal) as sales_total, SUM(sale_items.subtotal - ({$costExpression}) * sale_items.quantity) as profit_total")
                 ->orderByDesc('profit_total')
                 ->get();
         }
 
         return view('pages.summary', compact('todaySalesTotal', 'todayOrders', 'todayCustomers', 'recentSales', 'todayProfit', 'profitByProduct', 'canViewProfit'));
+    }
+
+    private function saleItemCostExpression(): string
+    {
+        return Schema::hasColumn('sale_items', 'unit_cost')
+            ? 'coalesce(sale_items.unit_cost, products.cost)'
+            : 'products.cost';
     }
 }

@@ -19,6 +19,7 @@ class SaleController extends Controller
     private const TAX_RATE = 0.16;
     private const PRIMARY_LOCATION = 'main';
     private static ?bool $saleItemsHasSerialNumber = null;
+    private static ?bool $saleItemsHasUnitCost = null;
 
     protected $lastSaleId;
 
@@ -36,6 +37,15 @@ class SaleController extends Controller
         }
 
         return self::$saleItemsHasSerialNumber = Schema::hasColumn('sale_items', 'serial_number');
+    }
+
+    private function saleItemsHasUnitCostColumn(): bool
+    {
+        if (self::$saleItemsHasUnitCost !== null) {
+            return self::$saleItemsHasUnitCost;
+        }
+
+        return self::$saleItemsHasUnitCost = Schema::hasColumn('sale_items', 'unit_cost');
     }
 
     private function consumeStockForSale(Product $product, int $quantity, ?int $branchId, Sale $sale, string $note): void
@@ -193,6 +203,7 @@ class SaleController extends Controller
                 'product' => $product,
                 'quantity' => $item['quantity'],
                 'unit_price' => $unitPrice,
+                'unit_cost' => round((float) $product->cost, 2),
                 'subtotal' => $lineSubtotal,
             ];
         }
@@ -233,6 +244,9 @@ class SaleController extends Controller
 
                 if ($this->saleItemsHasSerialNumberColumn()) {
                     $payload['serial_number'] = $line['product']->serial_number;
+                }
+                if ($this->saleItemsHasUnitCostColumn()) {
+                    $payload['unit_cost'] = $line['unit_cost'];
                 }
 
                 SaleItem::create($payload);
@@ -373,6 +387,7 @@ class SaleController extends Controller
                     'product' => $product,
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
+                    'unit_cost' => round((float) $product->cost, 2),
                     'subtotal' => $lineSubtotal,
                 ];
             }
@@ -395,6 +410,9 @@ class SaleController extends Controller
 
                 if ($this->saleItemsHasSerialNumberColumn()) {
                     $payload['serial_number'] = $line['product']->serial_number;
+                }
+                if ($this->saleItemsHasUnitCostColumn()) {
+                    $payload['unit_cost'] = $line['unit_cost'];
                 }
 
                 SaleItem::create($payload);
