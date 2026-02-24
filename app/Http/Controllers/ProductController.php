@@ -72,13 +72,16 @@ class ProductController extends Controller
             'barcode' => 'nullable|string|max:255',
             'category_id' => 'required|integer|exists:categories,id',
             'supplier_id' => 'nullable|integer',
-            'cost' => 'nullable|numeric|min:0',
+            'cost' => 'required|numeric|gt:0',
             'price' => 'required|numeric|min:0',
             'stock_alert' => 'nullable|integer|min:0',
             'stock' => 'nullable|integer|min:0',
             'stock_location' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+        ], [
+            'cost.required' => 'Product cost is required.',
+            'cost.gt' => 'Product cost must be greater than 0.',
         ]);
 
         $branchId = Tenant::branchId();
@@ -124,13 +127,16 @@ class ProductController extends Controller
             'barcode' => 'nullable|string|max:255',
             'category_id' => 'required|integer|exists:categories,id',
             'supplier_id' => 'nullable|integer',
-            'cost' => 'nullable|numeric|min:0',
+            'cost' => 'required|numeric|gt:0',
             'price' => 'required|numeric|min:0',
             'stock_alert' => 'nullable|integer|min:0',
             'stock' => 'nullable|integer|min:0',
             'stock_location' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+        ], [
+            'cost.required' => 'Product cost is required.',
+            'cost.gt' => 'Product cost must be greater than 0.',
         ]);
 
         $branchId = Tenant::branchId();

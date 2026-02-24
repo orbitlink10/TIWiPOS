@@ -81,7 +81,7 @@
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Cost (KES)
-                    <input name="cost" type="number" step="0.01" value="0" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="cost" type="number" step="0.01" min="0.01" value="{{ old('cost') }}" required placeholder="e.g. 25000" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Price (KES)
