@@ -103,6 +103,7 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $branchId = Tenant::branchId();
+        $canViewProfit = in_array(auth()->user()->role, ['owner', 'manager'], true);
         $query = Sale::with(['items.product', 'payments', 'user'])
             ->orderByDesc('created_at');
 
@@ -124,7 +125,25 @@ class SaleController extends Controller
 
         $sales = $query->paginate(15)->withQueryString();
 
-        return view('pages.sales_index', compact('sales'));
+        if ($canViewProfit) {
+            $sales->getCollection()->transform(function (Sale $sale) {
+                $profit = $sale->items->sum(function (SaleItem $item) {
+                    $qty = (float) $item->quantity;
+                    $subtotal = (float) $item->subtotal;
+                    $unitCost = $item->unit_cost !== null
+                        ? (float) $item->unit_cost
+                        : (float) ($item->product->cost ?? 0);
+
+                    return $subtotal - ($unitCost * $qty);
+                });
+
+                $sale->setAttribute('profit_total', round((float) $profit, 2));
+
+                return $sale;
+            });
+        }
+
+        return view('pages.sales_index', compact('sales', 'canViewProfit'));
     }
 
     public function create()

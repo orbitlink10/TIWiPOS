@@ -31,13 +31,16 @@
         </form>
 
         <div style="margin-top:14px; overflow:auto;">
-            <table style="width:100%; border-collapse:collapse; min-width:720px; font-size:14px;">
+            <table style="width:100%; border-collapse:collapse; min-width:820px; font-size:14px;">
                 <thead>
                     <tr style="background:#f7f7fb;">
                         <th style="text-align:left; padding:10px;">Sale #</th>
                         <th style="text-align:left; padding:10px;">Customer</th>
                         <th style="text-align:left; padding:10px;">Cashier</th>
                         <th style="text-align:right; padding:10px;">Total</th>
+                        @if($canViewProfit ?? false)
+                            <th style="text-align:right; padding:10px;">Profit</th>
+                        @endif
                         <th style="text-align:left; padding:10px;">Payment</th>
                         <th style="text-align:left; padding:10px;">Date</th>
                         <th style="text-align:right; padding:10px;">Actions</th>
@@ -51,6 +54,11 @@
                             <td style="padding:10px;">{{ $sale->customer_name ?? 'Walk-in' }}</td>
                             <td style="padding:10px;">{{ $sale->user->name ?? 'N/A' }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($sale->total, 2) }}</td>
+                            @if($canViewProfit ?? false)
+                                <td style="padding:10px; text-align:right; font-weight:700; color:#166534;">
+                                    KES {{ number_format((float) ($sale->profit_total ?? 0), 2) }}
+                                </td>
+                            @endif
                             <td style="padding:10px;">{{ $payment->method ?? 'N/A' }}</td>
                             <td style="padding:10px;">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
                             <td style="padding:10px; text-align:right; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
@@ -62,7 +70,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" style="padding:12px; text-align:center; color:var(--muted);">No sales found.</td>
+                            <td colspan="{{ ($canViewProfit ?? false) ? 8 : 7 }}" style="padding:12px; text-align:center; color:var(--muted);">No sales found.</td>
                         </tr>
                     @endforelse
                 </tbody>
