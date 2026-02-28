@@ -51,7 +51,12 @@ class StaffController extends Controller
             'role' => ['nullable', Rule::in(array_keys(User::assignableRoles()))],
         ]);
 
-        $branchId = $data['branch_id'] ?? Tenant::branchId();
+        $branchId = $data['branch_id'] ?? Branch::query()
+            ->where('business_id', $businessId)
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->value('id')
+            ?? Tenant::branchId();
 
         User::create([
             'name' => $data['name'],

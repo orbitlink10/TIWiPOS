@@ -268,7 +268,7 @@
                     <label class="field">
                         Branch
                         <select name="branch_id">
-                            <option value="">Use current branch</option>
+                            <option value="">Use default branch</option>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" @selected((string) old('branch_id') === (string) $branch->id)>{{ $branch->name }}</option>
                             @endforeach
@@ -297,7 +297,7 @@
             <div style="margin-top:10px; color:var(--muted); font-size:13px;">
                 Role permissions:
                 <strong>Manager</strong> can manage catalog, stock adjustments, and sales edits.
-                <strong>Staff</strong> can view products and sales history, and add/manage products, but cannot view profits.
+                <strong>Staff</strong> can view stock and sales history, add stock, and manage products, but cannot view profits or edit past sales.
             </div>
         </section>
 

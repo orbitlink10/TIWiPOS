@@ -148,7 +148,12 @@
             <h1>Stock</h1>
             <p class="stock-lead">Monitor levels and correct quantities before checkout.</p>
         </div>
-        <a class="btn" href="{{ route('products') }}">Manage Products</a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            @if(auth()->user()->canAccessAbility('adjust_stock'))
+                <a class="btn" href="{{ route('stock.adjust') }}">Add Stock</a>
+            @endif
+            <a class="btn" href="{{ route('products') }}">Manage Products</a>
+        </div>
     </div>
 @endsection
 
@@ -177,6 +182,12 @@
                 <div class="metric-value total">{{ $totalItems }}</div>
             </div>
         </div>
+
+        @if($categories->isEmpty() && isset($currentBranch))
+            <div style="padding:11px 12px; border-radius:12px; border:1px solid rgba(14,165,233,0.3); background:rgba(14,165,233,0.08); color:#0c4a6e; font-weight:600;">
+                No stock data is visible for <strong>{{ $currentBranch->name }}</strong>. If your stock is in another branch, switch branch from the sidebar.
+            </div>
+        @endif
 
         <div class="stock-table-wrap">
             <table class="stock-table">

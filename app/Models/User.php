@@ -89,7 +89,8 @@ class User extends Authenticatable
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),
             'manage_catalog' => $this->isOwner() || $this->isManager() || $this->role === self::ROLE_STAFF,
-            'adjust_stock', 'edit_sales' => $this->isOwner() || $this->isManager(),
+            'adjust_stock' => $this->isOwner() || $this->isManager() || $this->role === self::ROLE_STAFF,
+            'edit_sales' => $this->isOwner() || $this->isManager(),
             'view_profit' => $this->canViewProfit(),
             default => false,
         };

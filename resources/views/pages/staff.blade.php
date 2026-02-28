@@ -113,7 +113,7 @@
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Branch
                         <select name="branch_id" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                            <option value="">Use current branch</option>
+                            <option value="">Use default branch</option>
                             @foreach($branches as $branch)
                                 <option value="{{ $branch->id }}" @selected(old('branch_id') == $branch->id)>{{ $branch->name }}</option>
                             @endforeach
@@ -137,7 +137,7 @@
                     <button class="btn" type="submit" style="justify-content:center;">Create profile</button>
                 </form>
                 <div style="color:var(--muted); font-size:12px; margin-top:8px;">
-                    Role permissions: Manager can manage catalog, stock adjustments, and sales edits. Staff can view products and sales history, and add/manage products, but cannot view profits.
+                    Role permissions: Manager can manage catalog, stock adjustments, and sales edits. Staff can view stock and sales history, add stock, and manage products, but cannot view profits or edit past sales.
                 </div>
             </div>
         </div>
