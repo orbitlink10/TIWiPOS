@@ -51,7 +51,17 @@
                             <tr style="border-top:1px solid #e5e7eb;">
                                 <td style="padding:10px;">{{ $member->name }}</td>
                                 <td style="padding:10px;">{{ $member->email }}</td>
-                                <td style="padding:10px;">{{ $member->branch->name ?? 'Default' }}</td>
+                                <td style="padding:10px;">
+                                    <form method="POST" action="{{ route('staff.branch', $member) }}" style="display:inline-flex;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="branch_id" onchange="this.form.submit()" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                                            @foreach($branches as $branch)
+                                                <option value="{{ $branch->id }}" @selected((int) $member->branch_id === (int) $branch->id)>{{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                </td>
                                 <td style="padding:10px;">
                                     <form method="POST" action="{{ route('staff.role', $member) }}" style="display:inline-flex;">
                                         @csrf

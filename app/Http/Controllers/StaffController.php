@@ -115,4 +115,28 @@ class StaffController extends Controller
 
         return redirect()->route($redirectTo)->with('status', "Staff role updated to {$roleText}.");
     }
+
+    public function branch(Request $request, User $user)
+    {
+        $this->ensureOwner();
+
+        $businessId = Tenant::businessId();
+        if ((int) $user->business_id !== (int) $businessId || $user->role === User::ROLE_OWNER) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'branch_id' => [
+                'required',
+                Rule::exists('branches', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
+        ]);
+
+        $user->branch_id = (int) $data['branch_id'];
+        $user->save();
+
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
+
+        return redirect()->route($redirectTo)->with('status', 'Staff branch updated.');
+    }
 }

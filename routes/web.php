@@ -86,6 +86,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/staff', [StaffController::class, 'store'])->middleware('role.ability:manage_staff')->name('staff.store');
     Route::patch('/staff/{user}/status', [StaffController::class, 'status'])->middleware('role.ability:manage_staff')->name('staff.status');
     Route::patch('/staff/{user}/role', [StaffController::class, 'role'])->middleware('role.ability:manage_staff')->name('staff.role');
+    Route::patch('/staff/{user}/branch', [StaffController::class, 'branch'])->middleware('role.ability:manage_staff')->name('staff.branch');
 
     Route::get('/settings', [SettingsController::class, 'index'])->middleware('role.ability:manage_settings')->name('settings.index');
 

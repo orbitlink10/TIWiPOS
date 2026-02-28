@@ -203,7 +203,18 @@
                             <tr>
                                 <td>{{ $member->name }}</td>
                                 <td>{{ $member->email }}</td>
-                                <td>{{ $member->branch->name ?? 'Default' }}</td>
+                                <td>
+                                    <form method="POST" action="{{ route('staff.branch', $member) }}" style="display:inline-flex; gap:8px; align-items:center;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="redirect_to" value="settings.index">
+                                        <select name="branch_id" onchange="this.form.submit()">
+                                            @foreach($branches as $branch)
+                                                <option value="{{ $branch->id }}" @selected((int) $member->branch_id === (int) $branch->id)>{{ $branch->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                </td>
                                 <td>
                                     <form method="POST" action="{{ route('staff.role', $member) }}" style="display:inline-flex; gap:8px; align-items:center;">
                                         @csrf
