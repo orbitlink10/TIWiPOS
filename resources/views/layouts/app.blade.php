@@ -50,6 +50,8 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .brand-row {
