@@ -12,7 +12,7 @@ class SettingsController extends Controller
 {
     private function ensureOwner(): void
     {
-        if (auth()->user()->role !== 'owner') {
+        if (!auth()->user()->canAccessAbility('manage_settings')) {
             abort(403, 'Only admins can manage settings.');
         }
     }

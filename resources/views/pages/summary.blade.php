@@ -56,7 +56,7 @@
                             </div>
                             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                                 <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
-                                @if(auth()->user()->role === 'owner')
+                                @if(auth()->user()->canAccessAbility('edit_sales'))
                                     <a class="btn" style="padding:8px 12px; font-size:13px; background:#f59e0b;" href="{{ route('sales.edit', $sale) }}">Edit</a>
                                 @endif
                             </div>

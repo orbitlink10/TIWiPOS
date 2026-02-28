@@ -182,7 +182,7 @@
             <div class="settings-toolbar">
                 <div>
                     <h2>Staff Controls</h2>
-                    <p class="settings-subtext">Add new staff accounts and activate/deactivate access.</p>
+                    <p class="settings-subtext">Add new staff accounts, set roles, and activate/deactivate access.</p>
                 </div>
             </div>
 
@@ -204,7 +204,18 @@
                                 <td>{{ $member->name }}</td>
                                 <td>{{ $member->email }}</td>
                                 <td>{{ $member->branch->name ?? 'Default' }}</td>
-                                <td>{{ ucfirst($member->role) }}</td>
+                                <td>
+                                    <form method="POST" action="{{ route('staff.role', $member) }}" style="display:inline-flex; gap:8px; align-items:center;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="redirect_to" value="settings.index">
+                                        <select name="role" onchange="this.form.submit()">
+                                            @foreach(\App\Models\User::assignableRoles() as $roleKey => $roleLabel)
+                                                <option value="{{ $roleKey }}" @selected($member->role === $roleKey)>{{ $roleLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                </td>
                                 <td>
                                     <span class="status-pill {{ $member->is_active ? 'active' : 'inactive' }}">
                                         {{ $member->is_active ? 'Active' : 'Inactive' }}
@@ -272,6 +283,11 @@
                     <button class="btn" type="submit">Add Staff</button>
                 </div>
             </form>
+            <div style="margin-top:10px; color:var(--muted); font-size:13px;">
+                Role permissions:
+                <strong>Manager</strong> can manage catalog, stock adjustments, and sales edits.
+                <strong>Staff</strong> can view products and sales history, and add/manage products, but cannot view profits.
+            </div>
         </section>
 
         <section class="settings-card">

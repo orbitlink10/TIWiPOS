@@ -31,7 +31,7 @@ class HomeController extends Controller
             return view('index', compact('stats'));
         }
 
-        $canViewProfit = in_array(auth()->user()->role, ['owner', 'manager'], true);
+        $canViewProfit = auth()->user()->canViewProfit();
         $branchId = Tenant::branchId();
         $today = now()->startOfDay();
         $weekStart = now()->startOfWeek();

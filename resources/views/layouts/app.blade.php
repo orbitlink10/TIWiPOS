@@ -413,10 +413,12 @@
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.*') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Make a Sale</span></a>
                 <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('categories.*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
-                <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
+                @if(auth()->user()->canAccessAbility('manage_branches'))
+                    <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
+                @endif
                 <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*') || request()->routeIs('payments.*') ? 'active' : '' }}"><span class="nav-icon">BL</span><span>Billing</span></a>
                 <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.*') ? 'active' : '' }}"><span class="nav-icon">PG</span><span>Pages</span></a>
-                @if(auth()->user()->role === 'owner')
+                @if(auth()->user()->canAccessAbility('manage_settings'))
                     <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') || request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">SE</span><span>Settings</span></a>
                 @endif
                 @if(auth()->user()->is_super_admin)

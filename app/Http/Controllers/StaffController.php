@@ -7,12 +7,13 @@ use App\Models\User;
 use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
 {
     protected function ensureOwner(): void
     {
-        if (auth()->user()->role !== 'owner') {
+        if (!auth()->user()->canAccessAbility('manage_staff')) {
             abort(403, 'Only admins can manage staff.');
         }
     }
@@ -37,15 +38,19 @@ class StaffController extends Controller
     {
         $this->ensureOwner();
 
+        $businessId = Tenant::businessId();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'branch_id' => 'nullable|exists:branches,id',
-            'role' => 'nullable|in:staff,manager',
+            'branch_id' => [
+                'nullable',
+                Rule::exists('branches', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
+            'role' => ['nullable', Rule::in(array_keys(User::assignableRoles()))],
         ]);
 
-        $businessId = Tenant::businessId();
         $branchId = $data['branch_id'] ?? Tenant::branchId();
 
         User::create([
@@ -68,7 +73,7 @@ class StaffController extends Controller
         $this->ensureOwner();
 
         $businessId = Tenant::businessId();
-        if ((int) $user->business_id !== (int) $businessId || $user->role === 'owner') {
+        if ((int) $user->business_id !== (int) $businessId || $user->role === User::ROLE_OWNER) {
             abort(404);
         }
 
@@ -87,5 +92,27 @@ class StaffController extends Controller
         $statusText = $user->is_active ? 'activated' : 'deactivated';
 
         return redirect()->route($redirectTo)->with('status', "Staff account {$statusText}.");
+    }
+
+    public function role(Request $request, User $user)
+    {
+        $this->ensureOwner();
+
+        $businessId = Tenant::businessId();
+        if ((int) $user->business_id !== (int) $businessId || $user->role === User::ROLE_OWNER) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'role' => ['required', Rule::in(array_keys(User::assignableRoles()))],
+        ]);
+
+        $user->role = $data['role'];
+        $user->save();
+
+        $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
+        $roleText = User::assignableRoles()[$user->role] ?? ucfirst($user->role);
+
+        return redirect()->route($redirectTo)->with('status', "Staff role updated to {$roleText}.");
     }
 }

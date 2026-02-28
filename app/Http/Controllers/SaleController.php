@@ -25,7 +25,7 @@ class SaleController extends Controller
 
     protected function ensureAdmin(): void
     {
-        if (auth()->user()->role !== 'owner') {
+        if (!auth()->user()->canAccessAbility('edit_sales')) {
             abort(403, 'Only admins can perform this action.');
         }
     }
@@ -103,7 +103,7 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $branchId = Tenant::branchId();
-        $canViewProfit = in_array(auth()->user()->role, ['owner', 'manager'], true);
+        $canViewProfit = auth()->user()->canViewProfit();
         $query = Sale::with(['items.product', 'payments', 'user'])
             ->orderByDesc('created_at');
 

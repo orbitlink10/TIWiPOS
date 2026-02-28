@@ -19,6 +19,11 @@
                 {{ session('status') }}
             </div>
         @endif
+        @if (session('error'))
+            <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
+                {{ session('error') }}
+            </div>
+        @endif
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -37,6 +42,8 @@
                             <th style="text-align:left; padding:10px;">Email</th>
                             <th style="text-align:left; padding:10px;">Branch</th>
                             <th style="text-align:left; padding:10px;">Role</th>
+                            <th style="text-align:left; padding:10px;">Status</th>
+                            <th style="text-align:left; padding:10px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,11 +52,36 @@
                                 <td style="padding:10px;">{{ $member->name }}</td>
                                 <td style="padding:10px;">{{ $member->email }}</td>
                                 <td style="padding:10px;">{{ $member->branch->name ?? 'Default' }}</td>
-                                <td style="padding:10px;">{{ ucfirst($member->role) }}</td>
+                                <td style="padding:10px;">
+                                    <form method="POST" action="{{ route('staff.role', $member) }}" style="display:inline-flex;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="role" onchange="this.form.submit()" style="padding:8px;border:1px solid #e5e7eb;border-radius:8px;">
+                                            @foreach(\App\Models\User::assignableRoles() as $roleKey => $roleLabel)
+                                                <option value="{{ $roleKey }}" @selected($member->role === $roleKey)>{{ $roleLabel }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                </td>
+                                <td style="padding:10px;">
+                                    <span style="display:inline-flex; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:800; {{ $member->is_active ? 'color:#065f46;background:#d1fae5;' : 'color:#991b1b;background:#fee2e2;' }}">
+                                        {{ $member->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td style="padding:10px;">
+                                    <form method="POST" action="{{ route('staff.status', $member) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="is_active" value="{{ $member->is_active ? 0 : 1 }}">
+                                        <button type="submit" style="border:1px solid {{ $member->is_active ? '#fecaca' : '#d1d5db' }}; background:{{ $member->is_active ? '#fff1f2' : '#f8fafc' }}; color:{{ $member->is_active ? '#b91c1c' : '#334155' }}; border-radius:8px; padding:6px 10px; font-weight:700; cursor:pointer;">
+                                            {{ $member->is_active ? 'Deactivate' : 'Activate' }}
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" style="padding:12px; text-align:center; color:var(--muted);">No staff yet.</td>
+                                <td colspan="6" style="padding:12px; text-align:center; color:var(--muted);">No staff yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -94,7 +126,9 @@
                     </label>
                     <button class="btn" type="submit" style="justify-content:center;">Create profile</button>
                 </form>
-                <div style="color:var(--muted); font-size:12px; margin-top:8px;">Staff accounts share the same business data but have limited access compared to the owner.</div>
+                <div style="color:var(--muted); font-size:12px; margin-top:8px;">
+                    Role permissions: Manager can manage catalog, stock adjustments, and sales edits. Staff can view products and sales history, and add/manage products, but cannot view profits.
+                </div>
             </div>
         </div>
     </div>

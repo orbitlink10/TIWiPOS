@@ -56,41 +56,42 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/sale', [PageController::class, 'sale'])->name('sale');
     Route::post('/sale', [SaleController::class, 'store'])->name('sale.store');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
-    Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit');
-    Route::put('/sales/{sale}', [SaleController::class, 'update'])->name('sales.update');
+    Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->middleware('role.ability:edit_sales')->name('sales.edit');
+    Route::put('/sales/{sale}', [SaleController::class, 'update'])->middleware('role.ability:edit_sales')->name('sales.update');
     Route::get('/sale/receipt/{sale}', [SaleController::class, 'receipt'])->name('sale.receipt');
 
     Route::get('/products', [ProductController::class, 'index'])->name('products');
-    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-    Route::patch('/products/{product}/status', [ProductController::class, 'status'])->name('products.status');
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    Route::get('/products/create', [ProductController::class, 'create'])->middleware('role.ability:manage_catalog')->name('products.create');
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('products.edit');
+    Route::post('/products', [ProductController::class, 'store'])->middleware('role.ability:manage_catalog')->name('products.store');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('role.ability:manage_catalog')->name('products.update');
+    Route::patch('/products/{product}/status', [ProductController::class, 'status'])->middleware('role.ability:manage_catalog')->name('products.status');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('products.destroy');
 
-    Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
-    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('categories.create');
+    Route::post('/categories', [CategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('categories.store');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('categories.destroy');
 
-    Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
-    Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
+    Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');
 
-    Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->name('stock.adjust');
-    Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->name('stock.adjust.store');
-    Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->name('stock.edit');
-    Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->name('stock.update');
+    Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:adjust_stock')->name('stock.adjust');
+    Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->middleware('role.ability:adjust_stock')->name('stock.adjust.store');
+    Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->middleware('role.ability:adjust_stock')->name('stock.edit');
+    Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:adjust_stock')->name('stock.update');
 
     Route::get('/summary', [PageController::class, 'summary'])->name('summary');
 
-    Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
-    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
-    Route::patch('/staff/{user}/status', [StaffController::class, 'status'])->name('staff.status');
+    Route::get('/staff', [StaffController::class, 'index'])->middleware('role.ability:manage_staff')->name('staff.index');
+    Route::post('/staff', [StaffController::class, 'store'])->middleware('role.ability:manage_staff')->name('staff.store');
+    Route::patch('/staff/{user}/status', [StaffController::class, 'status'])->middleware('role.ability:manage_staff')->name('staff.status');
+    Route::patch('/staff/{user}/role', [StaffController::class, 'role'])->middleware('role.ability:manage_staff')->name('staff.role');
 
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::get('/settings', [SettingsController::class, 'index'])->middleware('role.ability:manage_settings')->name('settings.index');
 
     // Branch management
-    Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
-    Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/branches', [BranchController::class, 'index'])->middleware('role.ability:manage_branches')->name('branches.index');
+    Route::post('/branches', [BranchController::class, 'store'])->middleware('role.ability:manage_branches')->name('branches.store');
     Route::post('/branches/switch', [BranchController::class, 'switch'])->name('branches.switch');
 });
 

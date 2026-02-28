@@ -11,10 +11,10 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    private function ensureOwner(): void
+    private function ensureCatalogManager(): void
     {
-        if (auth()->user()->role !== 'owner') {
-            abort(403, 'Only admins can manage product status.');
+        if (!auth()->user()->canAccessAbility('manage_catalog')) {
+            abort(403, 'Your role cannot manage products.');
         }
     }
 
@@ -192,7 +192,7 @@ class ProductController extends Controller
 
     public function status(Request $request, Product $product)
     {
-        $this->ensureOwner();
+        $this->ensureCatalogManager();
 
         $data = $request->validate([
             'is_active' => 'required|boolean',
