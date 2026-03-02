@@ -46,19 +46,22 @@ class HomeController extends Controller
         $todaySales = null;
 
         if ($canViewFinancials) {
-            $monthSales = Sale::where('status', 'completed')
+            $monthSales = Sale::query()
+                ->withoutGlobalScope('branch')
+                ->where('status', 'completed')
                 ->whereBetween('created_at', [$monthStart, now()])
-                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->sum('total');
 
-            $weekSales = Sale::where('status', 'completed')
+            $weekSales = Sale::query()
+                ->withoutGlobalScope('branch')
+                ->where('status', 'completed')
                 ->whereBetween('created_at', [$weekStart, now()])
-                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->sum('total');
 
-            $todaySales = Sale::where('status', 'completed')
+            $todaySales = Sale::query()
+                ->withoutGlobalScope('branch')
+                ->where('status', 'completed')
                 ->whereDate('created_at', $today)
-                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->sum('total');
         }
 
@@ -80,11 +83,11 @@ class HomeController extends Controller
 
         $todayProfit = $canViewProfit
             ? (SaleItem::query()
+                ->withoutGlobalScope('branch')
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
-                ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
                 ->selectRaw('coalesce(sum(sale_items.subtotal - (' . $saleItemCostExpression . ') * sale_items.quantity),0) as profit')
                 ->value('profit') ?? 0)
             : null;
@@ -93,9 +96,9 @@ class HomeController extends Controller
         if ($canViewFinancials) {
             $salesMonthExpression = $this->monthIndexExpression('created_at');
             $salesByMonthRaw = Sale::query()
+                ->withoutGlobalScope('branch')
                 ->where('status', 'completed')
                 ->whereBetween('created_at', [$yearStart, $yearEnd])
-                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
                 ->selectRaw("{$salesMonthExpression} as month_index, coalesce(sum(total),0) as total_sales")
                 ->groupBy('month_index')
                 ->pluck('total_sales', 'month_index');
@@ -107,11 +110,11 @@ class HomeController extends Controller
             if ($canViewProfit) {
                 $profitMonthExpression = $this->monthIndexExpression('sales.created_at');
                 $profitByMonthRaw = SaleItem::query()
+                    ->withoutGlobalScope('branch')
                     ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                     ->join('products', 'sale_items.product_id', '=', 'products.id')
                     ->where('sales.status', 'completed')
                     ->whereBetween('sales.created_at', [$yearStart, $yearEnd])
-                    ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
                     ->selectRaw("{$profitMonthExpression} as month_index, coalesce(sum(sale_items.subtotal - ({$saleItemCostExpression}) * sale_items.quantity),0) as total_profit")
                     ->groupBy('month_index')
                     ->pluck('total_profit', 'month_index');
