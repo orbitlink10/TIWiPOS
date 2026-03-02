@@ -57,6 +57,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function setRoleAttribute($value): void
+    {
+        $this->attributes['role'] = strtolower(trim((string) $value));
+    }
+
     public static function assignableRoles(): array
     {
         return [
@@ -65,19 +70,24 @@ class User extends Authenticatable
         ];
     }
 
+    private function normalizedRole(): string
+    {
+        return strtolower(trim((string) $this->role));
+    }
+
     public function isOwner(): bool
     {
-        return $this->role === self::ROLE_OWNER;
+        return $this->normalizedRole() === self::ROLE_OWNER;
     }
 
     public function isManager(): bool
     {
-        return $this->role === self::ROLE_MANAGER;
+        return $this->normalizedRole() === self::ROLE_MANAGER;
     }
 
     public function isStaff(): bool
     {
-        return $this->role === self::ROLE_STAFF;
+        return $this->normalizedRole() === self::ROLE_STAFF;
     }
 
     public function canViewProfit(): bool
