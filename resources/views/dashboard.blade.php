@@ -67,10 +67,10 @@
             <div class="dash-chip">Live store snapshot</div>
             <h2>Welcome back</h2>
             <p>
-                @if($canViewProfit ?? false)
+                @if($canViewFinancials ?? false)
                     Track sales performance, stock health, and today's profit at a glance.
                 @else
-                    Track sales performance and stock health at a glance.
+                    Track stock health and day-to-day operations at a glance.
                 @endif
             </p>
             @isset($subscriptionActive)
@@ -83,13 +83,21 @@
             <div class="quick-actions" style="margin-top:10px;">
                 <a class="btn" href="{{ route('sale') }}">Open POS</a>
                 <a class="btn" href="{{ route('stock') }}">Stock</a>
-                <a class="btn" href="{{ route('summary') }}">Today's Summary</a>
+                @if($canViewFinancials ?? false)
+                    <a class="btn" href="{{ route('summary') }}">Today's Summary</a>
+                @endif
             </div>
         </div>
         <div style="justify-self:end; text-align:right;">
-            <div class="badge-soft">Today</div>
-            <div style="font-size:28px; font-weight:800; margin-top:6px;">KES {{ number_format($stats['today'], 2) }}</div>
-            <div style="color:rgba(255,255,255,0.9);">Sales closed</div>
+            @if($canViewFinancials ?? false)
+                <div class="badge-soft">Today</div>
+                <div style="font-size:28px; font-weight:800; margin-top:6px;">KES {{ number_format($stats['today'], 2) }}</div>
+                <div style="color:rgba(255,255,255,0.9);">Sales closed</div>
+            @else
+                <div class="badge-soft" style="background:#e4f7ec; color:#117a39;">Operations</div>
+                <div style="font-size:22px; font-weight:800; margin-top:6px;">Financial totals hidden</div>
+                <div style="color:rgba(255,255,255,0.9);">Manager access required</div>
+            @endif
         </div>
     </div>
 @endsection
@@ -102,27 +110,29 @@
     @endphp
     <div class="content" style="grid-template-columns: 1fr;">
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">{{ $stats['month_name'] }} Sales</div>
-                <div class="stat-value">KES {{ number_format($stats['month_sales'], 2) }}</div>
-                <div class="badge-soft">Month to date</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">This Week</div>
-                <div class="stat-value">KES {{ number_format($stats['this_week'], 2) }}</div>
-                <div class="badge-soft" style="background:#e4f7ec;color:#117a39;">Week to date</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Today's Sales</div>
-                <div class="stat-value">KES {{ number_format($stats['today'], 2) }}</div>
-                <div class="badge-soft">Daily run-rate</div>
-            </div>
-            @if($canViewProfit ?? false)
+            @if($canViewFinancials ?? false)
                 <div class="stat-card">
-                    <div class="stat-label">Today's Profit</div>
-                    <div class="stat-value">KES {{ number_format($stats['today_profit'], 2) }}</div>
-                    <div class="badge-soft" style="background:#fff4e5;color:#b45b00;">After cost</div>
+                    <div class="stat-label">{{ $stats['month_name'] }} Sales</div>
+                    <div class="stat-value">KES {{ number_format($stats['month_sales'], 2) }}</div>
+                    <div class="badge-soft">Month to date</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-label">This Week</div>
+                    <div class="stat-value">KES {{ number_format($stats['this_week'], 2) }}</div>
+                    <div class="badge-soft" style="background:#e4f7ec;color:#117a39;">Week to date</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Today's Sales</div>
+                    <div class="stat-value">KES {{ number_format($stats['today'], 2) }}</div>
+                    <div class="badge-soft">Daily run-rate</div>
+                </div>
+                @if($canViewProfit ?? false)
+                    <div class="stat-card">
+                        <div class="stat-label">Today's Profit</div>
+                        <div class="stat-value">KES {{ number_format($stats['today_profit'], 2) }}</div>
+                        <div class="badge-soft" style="background:#fff4e5;color:#b45b00;">After cost</div>
+                    </div>
+                @endif
             @endif
             <div class="stat-card">
                 <div class="stat-label">Low Stock</div>
@@ -136,57 +146,59 @@
             </div>
         </div>
 
-        <div class="stat-card monthly-panel">
-            <div class="monthly-header">
-                <div>
-                    <h3 class="monthly-title">{{ now()->year }} Monthly Sales &amp; Profit</h3>
-                    <p class="monthly-subtitle">Month-by-month totals and trend chart.</p>
+        @if($canViewFinancials ?? false)
+            <div class="stat-card monthly-panel">
+                <div class="monthly-header">
+                    <div>
+                        <h3 class="monthly-title">{{ now()->year }} Monthly Sales &amp; Profit</h3>
+                        <p class="monthly-subtitle">Month-by-month totals and trend chart.</p>
+                    </div>
+                    <span class="badge-soft">Year to date view</span>
                 </div>
-                <span class="badge-soft">Year to date view</span>
-            </div>
-            <div class="monthly-layout">
-                <div class="monthly-chart-wrap">
-                    <canvas id="monthlySalesProfitChart" aria-label="Monthly sales and profit chart"></canvas>
-                </div>
-                <div class="monthly-table-wrap">
-                    <table class="monthly-table">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Sales</th>
-                                @if($canViewProfit ?? false)
-                                    <th>Profit</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($monthlyRows as $row)
+                <div class="monthly-layout">
+                    <div class="monthly-chart-wrap">
+                        <canvas id="monthlySalesProfitChart" aria-label="Monthly sales and profit chart"></canvas>
+                    </div>
+                    <div class="monthly-table-wrap">
+                        <table class="monthly-table">
+                            <thead>
                                 <tr>
-                                    <td>{{ $row['month'] }}</td>
-                                    <td>KES {{ number_format($row['sales'], 2) }}</td>
+                                    <th>Month</th>
+                                    <th>Sales</th>
                                     @if($canViewProfit ?? false)
-                                        <td>KES {{ number_format($row['profit'], 2) }}</td>
+                                        <th>Profit</th>
                                     @endif
                                 </tr>
-                            @empty
+                            </thead>
+                            <tbody>
+                                @forelse($monthlyRows as $row)
+                                    <tr>
+                                        <td>{{ $row['month'] }}</td>
+                                        <td>KES {{ number_format($row['sales'], 2) }}</td>
+                                        @if($canViewProfit ?? false)
+                                            <td>KES {{ number_format($row['profit'], 2) }}</td>
+                                        @endif
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="{{ ($canViewProfit ?? false) ? 3 : 2 }}">No monthly data yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot>
                                 <tr>
-                                    <td colspan="{{ ($canViewProfit ?? false) ? 3 : 2 }}">No monthly data yet.</td>
+                                    <td>Total</td>
+                                    <td>KES {{ number_format($yearSalesTotal, 2) }}</td>
+                                    @if($canViewProfit ?? false)
+                                        <td>KES {{ number_format($yearProfitTotal, 2) }}</td>
+                                    @endif
                                 </tr>
-                            @endforelse
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td>Total</td>
-                                <td>KES {{ number_format($yearSalesTotal, 2) }}</td>
-                                @if($canViewProfit ?? false)
-                                    <td>KES {{ number_format($yearProfitTotal, 2) }}</td>
-                                @endif
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
     </div>
 @endsection
 

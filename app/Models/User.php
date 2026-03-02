@@ -95,9 +95,14 @@ class User extends Authenticatable
         return $this->isManager() || $this->isStaff();
     }
 
-    public function canViewProfit(): bool
+    public function canViewFinancials(): bool
     {
         return $this->is_super_admin || $this->isOwner() || $this->isManager();
+    }
+
+    public function canViewProfit(): bool
+    {
+        return $this->canViewFinancials();
     }
 
     public function canAccessAbility(string $ability): bool

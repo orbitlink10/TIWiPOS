@@ -31,6 +31,7 @@ class HomeController extends Controller
             return view('index', compact('stats'));
         }
 
+        $canViewFinancials = auth()->user()->canViewFinancials();
         $canViewProfit = auth()->user()->canViewProfit();
         $branchId = Tenant::branchId();
         $today = now()->startOfDay();
@@ -40,20 +41,26 @@ class HomeController extends Controller
         $yearEnd = now()->copy()->endOfYear();
         $saleItemCostExpression = $this->saleItemCostExpression();
 
-        $monthSales = Sale::where('status', 'completed')
-            ->whereBetween('created_at', [$monthStart, now()])
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->sum('total');
+        $monthSales = null;
+        $weekSales = null;
+        $todaySales = null;
 
-        $weekSales = Sale::where('status', 'completed')
-            ->whereBetween('created_at', [$weekStart, now()])
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->sum('total');
+        if ($canViewFinancials) {
+            $monthSales = Sale::where('status', 'completed')
+                ->whereBetween('created_at', [$monthStart, now()])
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->sum('total');
 
-        $todaySales = Sale::where('status', 'completed')
-            ->whereDate('created_at', $today)
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->sum('total');
+            $weekSales = Sale::where('status', 'completed')
+                ->whereBetween('created_at', [$weekStart, now()])
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->sum('total');
+
+            $todaySales = Sale::where('status', 'completed')
+                ->whereDate('created_at', $today)
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->sum('total');
+        }
 
         $products = Product::query()
             ->select('id', 'stock_alert')
@@ -82,44 +89,47 @@ class HomeController extends Controller
                 ->value('profit') ?? 0)
             : null;
 
-        $salesMonthExpression = $this->monthIndexExpression('created_at');
-        $salesByMonthRaw = Sale::query()
-            ->where('status', 'completed')
-            ->whereBetween('created_at', [$yearStart, $yearEnd])
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
-            ->selectRaw("{$salesMonthExpression} as month_index, coalesce(sum(total),0) as total_sales")
-            ->groupBy('month_index')
-            ->pluck('total_sales', 'month_index');
-
-        $salesByMonth = collect($salesByMonthRaw)
-            ->mapWithKeys(fn($total, $month) => [(int) $month => (float) $total]);
-
-        $profitByMonth = collect();
-        if ($canViewProfit) {
-            $profitMonthExpression = $this->monthIndexExpression('sales.created_at');
-            $profitByMonthRaw = SaleItem::query()
-                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-                ->join('products', 'sale_items.product_id', '=', 'products.id')
-                ->where('sales.status', 'completed')
-                ->whereBetween('sales.created_at', [$yearStart, $yearEnd])
-                ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
-                ->selectRaw("{$profitMonthExpression} as month_index, coalesce(sum(sale_items.subtotal - ({$saleItemCostExpression}) * sale_items.quantity),0) as total_profit")
+        $monthlyPerformance = [];
+        if ($canViewFinancials) {
+            $salesMonthExpression = $this->monthIndexExpression('created_at');
+            $salesByMonthRaw = Sale::query()
+                ->where('status', 'completed')
+                ->whereBetween('created_at', [$yearStart, $yearEnd])
+                ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                ->selectRaw("{$salesMonthExpression} as month_index, coalesce(sum(total),0) as total_sales")
                 ->groupBy('month_index')
-                ->pluck('total_profit', 'month_index');
+                ->pluck('total_sales', 'month_index');
 
-            $profitByMonth = collect($profitByMonthRaw)
+            $salesByMonth = collect($salesByMonthRaw)
                 ->mapWithKeys(fn($total, $month) => [(int) $month => (float) $total]);
-        }
 
-        $monthlyPerformance = collect(range(1, 12))
-            ->map(function (int $month) use ($salesByMonth, $profitByMonth) {
-                return [
-                    'month' => now()->copy()->month($month)->format('M'),
-                    'sales' => (float) ($salesByMonth->get($month, 0)),
-                    'profit' => (float) ($profitByMonth->get($month, 0)),
-                ];
-            })
-            ->all();
+            $profitByMonth = collect();
+            if ($canViewProfit) {
+                $profitMonthExpression = $this->monthIndexExpression('sales.created_at');
+                $profitByMonthRaw = SaleItem::query()
+                    ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                    ->join('products', 'sale_items.product_id', '=', 'products.id')
+                    ->where('sales.status', 'completed')
+                    ->whereBetween('sales.created_at', [$yearStart, $yearEnd])
+                    ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
+                    ->selectRaw("{$profitMonthExpression} as month_index, coalesce(sum(sale_items.subtotal - ({$saleItemCostExpression}) * sale_items.quantity),0) as total_profit")
+                    ->groupBy('month_index')
+                    ->pluck('total_profit', 'month_index');
+
+                $profitByMonth = collect($profitByMonthRaw)
+                    ->mapWithKeys(fn($total, $month) => [(int) $month => (float) $total]);
+            }
+
+            $monthlyPerformance = collect(range(1, 12))
+                ->map(function (int $month) use ($salesByMonth, $profitByMonth) {
+                    return [
+                        'month' => now()->copy()->month($month)->format('M'),
+                        'sales' => (float) ($salesByMonth->get($month, 0)),
+                        'profit' => (float) ($profitByMonth->get($month, 0)),
+                    ];
+                })
+                ->all();
+        }
 
         $stats = [
             'month_name' => now()->format('F Y'),
@@ -134,7 +144,7 @@ class HomeController extends Controller
 
         $subscriptionActive = auth()->user()->business?->subscription_status === 'active';
 
-        return view('dashboard', compact('stats', 'subscriptionActive', 'canViewProfit', 'monthlyPerformance'));
+        return view('dashboard', compact('stats', 'subscriptionActive', 'canViewProfit', 'canViewFinancials', 'monthlyPerformance'));
     }
 
     private function monthIndexExpression(string $column): string
