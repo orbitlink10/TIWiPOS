@@ -149,7 +149,7 @@
             <p class="stock-lead">Monitor levels and correct quantities before checkout.</p>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            @if(auth()->user()->canAccessAbility('adjust_stock'))
+            @if(auth()->user()->canAccessAbility('add_stock'))
                 <a class="btn" href="{{ route('stock.adjust') }}">Add Stock</a>
             @endif
             <a class="btn" href="{{ route('products') }}">Manage Products</a>

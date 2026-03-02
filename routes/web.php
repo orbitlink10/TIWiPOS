@@ -52,7 +52,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/billing/pay', [BillingController::class, 'pay'])->name('billing.pay');
     Route::post('/payments/record', [PaymentController::class, 'store'])->name('payments.store');
 
-    Route::get('/stock', [PageController::class, 'stock'])->name('stock');
+    Route::get('/stock', [PageController::class, 'stock'])->middleware('role.ability:view_stock')->name('stock');
     Route::get('/sale', [PageController::class, 'sale'])->name('sale');
     Route::post('/sale', [SaleController::class, 'store'])->name('sale.store');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
@@ -75,10 +75,10 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');
 
-    Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:adjust_stock')->name('stock.adjust');
-    Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->middleware('role.ability:adjust_stock')->name('stock.adjust.store');
-    Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->middleware('role.ability:adjust_stock')->name('stock.edit');
-    Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:adjust_stock')->name('stock.update');
+    Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
+    Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->middleware('role.ability:add_stock')->name('stock.adjust.store');
+    Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.edit');
+    Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.update');
 
     Route::get('/summary', [PageController::class, 'summary'])->name('summary');
 

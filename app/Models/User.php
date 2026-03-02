@@ -75,6 +75,11 @@ class User extends Authenticatable
         return $this->role === self::ROLE_MANAGER;
     }
 
+    public function isStaff(): bool
+    {
+        return $this->role === self::ROLE_STAFF;
+    }
+
     public function canViewProfit(): bool
     {
         return $this->is_super_admin || $this->isOwner() || $this->isManager();
@@ -86,10 +91,11 @@ class User extends Authenticatable
             return true;
         }
 
+        $canManageInventory = $this->isOwner() || $this->isManager() || $this->isStaff();
+
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),
-            'manage_catalog' => $this->isOwner() || $this->isManager() || $this->role === self::ROLE_STAFF,
-            'adjust_stock' => $this->isOwner() || $this->isManager() || $this->role === self::ROLE_STAFF,
+            'manage_catalog', 'view_stock', 'add_stock', 'adjust_stock' => $canManageInventory,
             'edit_sales' => $this->isOwner() || $this->isManager(),
             'view_profit' => $this->canViewProfit(),
             default => false,
