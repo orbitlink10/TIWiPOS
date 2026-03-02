@@ -34,6 +34,14 @@ class LoginController extends Controller
                 Auth::logout();
                 return back()->withErrors(['email' => 'Account is inactive. Contact your admin.']);
             }
+
+            $branchId = (int) (auth()->user()->branch_id ?? 0);
+            if ($branchId > 0) {
+                $request->session()->put('branch_id', $branchId);
+            } else {
+                $request->session()->forget('branch_id');
+            }
+
             return redirect()->intended('/');
         }
 
