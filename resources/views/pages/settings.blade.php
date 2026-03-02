@@ -138,6 +138,37 @@
             font-size: 13px;
         }
 
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .profile-avatar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .profile-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            object-fit: cover;
+            border: 2px solid #dbe9ff;
+            background: #e2edff;
+        }
+
+        .profile-avatar-fallback {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #1e3a8a;
+        }
+
         .quick-links {
             display: flex;
             gap: 10px;
@@ -178,6 +209,73 @@
             </div>
         @endif
 
+        <section class="settings-card">
+            <div class="settings-toolbar">
+                <div>
+                    <h2>My Profile</h2>
+                    <p class="settings-subtext">Update your name, profile picture, and account password.</p>
+                </div>
+            </div>
+            <div class="profile-grid">
+                <div>
+                    <div class="profile-avatar-wrap">
+                        @if($user->profile_photo_url)
+                            <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="profile-avatar">
+                        @else
+                            <div class="profile-avatar profile-avatar-fallback">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                        @endif
+                        <div style="display:grid; gap:2px;">
+                            <strong>{{ $user->name }}</strong>
+                            <span style="color:var(--muted); font-size:13px;">{{ $user->email }}</span>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('settings.profile.update') }}" enctype="multipart/form-data">
+                        @csrf
+                        @method('PATCH')
+                        <div class="settings-form-grid" style="margin-top:0;">
+                            <label class="field">
+                                Profile name
+                                <input name="name" type="text" value="{{ old('name', $user->name) }}" required>
+                            </label>
+                            <label class="field">
+                                Profile picture (JPG, PNG, WEBP)
+                                <input name="profile_photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                            </label>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <button class="btn" type="submit">Save Profile</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <form method="POST" action="{{ route('settings.password.update') }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="settings-form-grid" style="margin-top:0;">
+                            <label class="field">
+                                Current password
+                                <input name="current_password" type="password" required>
+                            </label>
+                            <label class="field">
+                                New password
+                                <input name="password" type="password" required>
+                            </label>
+                            <label class="field">
+                                Confirm new password
+                                <input name="password_confirmation" type="password" required>
+                            </label>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <button class="btn" type="submit">Change Password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        @if($canManageAdminSettings)
         <section class="settings-card">
             <div class="settings-toolbar">
                 <div>
@@ -298,7 +396,7 @@
                 Role permissions:
                 <strong>Manager</strong> and <strong>Staff</strong> have the same access for catalog management, stock adjustments, sales edits, and sales history.
                 Only <strong>Manager</strong> can view profit figures.
-                Only <strong>Owner</strong> can manage staff, settings, and branches.
+                Only <strong>Owner</strong> can manage staff, branch settings, and business controls.
             </div>
         </section>
 
@@ -425,5 +523,13 @@
                 <a href="{{ route('sales.index') }}">Sales History</a>
             </div>
         </section>
+        @else
+            <section class="settings-card">
+                <h2>Access Scope</h2>
+                <p class="settings-subtext">
+                    Manager settings are limited to personal profile and password updates.
+                </p>
+            </section>
+        @endif
     </div>
 @endsection

@@ -88,7 +88,9 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::patch('/staff/{user}/role', [StaffController::class, 'role'])->middleware('role.ability:manage_staff')->name('staff.role');
     Route::patch('/staff/{user}/branch', [StaffController::class, 'branch'])->middleware('role.ability:manage_staff')->name('staff.branch');
 
-    Route::get('/settings', [SettingsController::class, 'index'])->middleware('role.ability:manage_settings')->name('settings.index');
+    Route::get('/settings', [SettingsController::class, 'index'])->middleware('role.ability:manage_profile')->name('settings.index');
+    Route::patch('/settings/profile', [SettingsController::class, 'updateProfile'])->middleware('role.ability:manage_profile')->name('settings.profile.update');
+    Route::patch('/settings/password', [SettingsController::class, 'updatePassword'])->middleware('role.ability:manage_profile')->name('settings.password.update');
 
     // Branch management
     Route::get('/branches', [BranchController::class, 'index'])->middleware('role.ability:manage_branches')->name('branches.index');

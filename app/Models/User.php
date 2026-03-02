@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -25,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'profile_photo_path',
         'business_id',
         'branch_id',
         'role',
@@ -116,11 +118,23 @@ class User extends Authenticatable
 
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),
+            'manage_profile' => $this->isOwner() || $this->isManager(),
             'manage_catalog', 'view_stock', 'add_stock', 'adjust_stock' => $canManageInventory,
             'edit_sales' => $canEditSales,
             'view_profit' => $this->canViewProfit(),
             default => false,
         };
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        $path = trim((string) $this->profile_photo_path);
+
+        if ($path === '') {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     public function business()
