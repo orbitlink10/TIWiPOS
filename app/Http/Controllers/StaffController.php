@@ -58,11 +58,15 @@ class StaffController extends Controller
             ->value('id')
             ?? Tenant::branchId();
 
+        $branchBusinessId = $branchId
+            ? Branch::withoutGlobalScope('business')->whereKey($branchId)->value('business_id')
+            : null;
+
         User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'business_id' => $businessId,
+            'business_id' => $branchBusinessId ?: $businessId,
             'branch_id' => $branchId,
             'role' => $data['role'] ?? 'staff',
             'is_active' => true,
@@ -137,7 +141,12 @@ class StaffController extends Controller
             ],
         ]);
 
-        $user->branch_id = (int) $data['branch_id'];
+        $branch = Branch::withoutGlobalScope('business')
+            ->select('id', 'business_id')
+            ->findOrFail((int) $data['branch_id']);
+
+        $user->branch_id = (int) $branch->id;
+        $user->business_id = (int) $branch->business_id;
         $user->save();
 
         $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
