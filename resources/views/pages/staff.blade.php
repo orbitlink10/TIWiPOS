@@ -122,7 +122,7 @@
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Role
                         <select name="role" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                            <option value="staff" @selected(old('role') === 'staff')>Staff (restricted)</option>
+                            <option value="staff" @selected(old('role') === 'staff')>Staff</option>
                             <option value="manager" @selected(old('role') === 'manager')>Manager</option>
                         </select>
                     </label>
@@ -137,7 +137,7 @@
                     <button class="btn" type="submit" style="justify-content:center;">Create profile</button>
                 </form>
                 <div style="color:var(--muted); font-size:12px; margin-top:8px;">
-                    Role permissions: Manager can manage catalog, stock adjustments, and sales edits. Staff can view stock and sales history, add stock, and manage products, but cannot view profits or edit past sales.
+                    Role permissions: Manager and Staff have the same access. Only Owner can manage staff, settings, and branches.
                 </div>
             </div>
         </div>
