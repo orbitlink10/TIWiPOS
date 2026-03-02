@@ -102,14 +102,18 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
-        $branchId = Tenant::branchId();
         $canViewProfit = auth()->user()->canViewProfit();
-        $query = Sale::with(['items.product', 'payments', 'user'])
+        $query = Sale::withoutGlobalScope('branch')
+            ->with([
+                'items' => function ($query) {
+                    $query->withoutGlobalScope('branch')->with('product');
+                },
+                'payments' => function ($query) {
+                    $query->withoutGlobalScope('branch');
+                },
+                'user',
+            ])
             ->orderByDesc('created_at');
-
-        if ($branchId) {
-            $query->where('branch_id', $branchId);
-        }
 
         if ($request->filled('q')) {
             $term = $request->get('q');
