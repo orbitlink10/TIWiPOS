@@ -137,7 +137,7 @@
                     <button class="btn" type="submit" style="justify-content:center;">Create profile</button>
                 </form>
                 <div style="color:var(--muted); font-size:12px; margin-top:8px;">
-                    Role permissions: Manager and Staff have the same access. Only Owner can manage staff, settings, and branches.
+                    Role permissions: Manager and Staff share operational access, but only Manager can view profit. Only Owner can manage staff, settings, and branches.
                 </div>
             </div>
         </div>

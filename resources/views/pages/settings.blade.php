@@ -296,7 +296,8 @@
             </form>
             <div style="margin-top:10px; color:var(--muted); font-size:13px;">
                 Role permissions:
-                <strong>Manager</strong> and <strong>Staff</strong> have the same access: catalog management, stock adjustments, sales edits, sales history, and profit visibility.
+                <strong>Manager</strong> and <strong>Staff</strong> have the same access for catalog management, stock adjustments, sales edits, and sales history.
+                Only <strong>Manager</strong> can view profit figures.
                 Only <strong>Owner</strong> can manage staff, settings, and branches.
             </div>
         </section>
