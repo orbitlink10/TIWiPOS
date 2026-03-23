@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
@@ -63,6 +64,22 @@ class User extends Authenticatable
     public function setRoleAttribute($value): void
     {
         $this->attributes['role'] = strtolower(trim((string) $value));
+    }
+
+    public static function supportsPhoneColumn(): bool
+    {
+        return Schema::hasColumn((new static)->getTable(), 'phone');
+    }
+
+    public static function mergePhoneAttribute(array $attributes, ?string $phone): array
+    {
+        if (!self::supportsPhoneColumn()) {
+            return $attributes;
+        }
+
+        $attributes['phone'] = filled($phone) ? trim((string) $phone) : null;
+
+        return $attributes;
     }
 
     public static function assignableRoles(): array

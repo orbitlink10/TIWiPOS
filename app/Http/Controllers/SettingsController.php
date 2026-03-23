@@ -82,10 +82,9 @@ class SettingsController extends Controller
         ]);
 
         $user = $request->user();
-        $updates = [
+        $updates = User::mergePhoneAttribute([
             'name' => trim($data['name']),
-            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
-        ];
+        ], $data['phone'] ?? null);
 
         if ($request->hasFile('profile_photo')) {
             $newPath = $request->file('profile_photo')->store('profile-photos', 'public');

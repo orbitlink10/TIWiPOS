@@ -71,15 +71,14 @@ class RegisterController extends Controller
             'grace_until' => now()->addDays(3),
         ]);
 
-        $user = User::create([
+        $user = User::create(User::mergePhoneAttribute([
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
             'password' => Hash::make($data['password']),
             'business_id' => $business->id,
             'branch_id' => $branch->id,
             'role' => 'owner',
-        ]);
+        ], $data['phone'] ?? null));
 
         Auth::login($user);
 

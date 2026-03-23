@@ -63,16 +63,15 @@ class StaffController extends Controller
             ? Branch::withoutGlobalScope('business')->whereKey($branchId)->value('business_id')
             : null;
 
-        User::create([
+        User::create(User::mergePhoneAttribute([
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
             'password' => Hash::make($data['password']),
             'business_id' => $branchBusinessId ?: $businessId,
             'branch_id' => $branchId,
             'role' => $data['role'] ?? 'staff',
             'is_active' => true,
-        ]);
+        ], $data['phone'] ?? null));
 
         $redirectTo = $request->input('redirect_to') === 'settings.index' ? 'settings.index' : 'staff.index';
 
