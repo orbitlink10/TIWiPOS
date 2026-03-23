@@ -99,6 +99,12 @@ class SettingsController extends Controller
             $user->forceFill($updates)->save();
         }
 
+        $phone = User::normalizePhone($data['phone'] ?? null);
+        if ($user->isOwner()) {
+            $user->business?->update(['phone' => $phone]);
+            $user->branch?->update(['phone' => $phone]);
+        }
+
         return back()->with('status', 'Profile updated successfully.');
     }
 

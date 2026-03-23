@@ -90,6 +90,26 @@ class SuperAdminDirectoryTest extends TestCase
         $response->assertSee('+254733000111');
     }
 
+    public function test_super_admin_directory_falls_back_to_branch_phone_for_owner_accounts(): void
+    {
+        [$business, $branch] = $this->createActiveTenant('Branch Phone Ltd', 'branch-fallback@example.com');
+        $branch->update(['phone' => '+254722333444']);
+
+        User::factory()->create([
+            'name' => 'Branch Fallback Owner',
+            'email' => 'branch-fallback-owner@example.com',
+            'phone' => null,
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_OWNER,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin())->get(route('admin.tenants.index'));
+
+        $response->assertOk();
+        $response->assertSee('+254722333444');
+    }
+
     public function test_super_admin_can_update_registered_user_phone(): void
     {
         [$business, $branch] = $this->createActiveTenant('Phone Update Ltd', 'phone-update@example.com');
@@ -115,6 +135,10 @@ class SuperAdminDirectoryTest extends TestCase
         ]);
         $this->assertDatabaseHas('businesses', [
             'id' => $business->id,
+            'phone' => '0714804532',
+        ]);
+        $this->assertDatabaseHas('branches', [
+            'id' => $branch->id,
             'phone' => '0714804532',
         ]);
     }

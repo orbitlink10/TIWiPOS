@@ -56,6 +56,7 @@ class RegisterController extends Controller
             'name' => $data['branch_name'] ?? 'Main Branch',
             'code' => 'MAIN',
             'location' => null,
+            'phone' => User::normalizePhone($data['phone'] ?? null),
             'is_default' => true,
         ]);
 

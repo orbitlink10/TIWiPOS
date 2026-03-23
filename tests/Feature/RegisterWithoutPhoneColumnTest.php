@@ -39,5 +39,9 @@ class RegisterWithoutPhoneColumnTest extends TestCase
             'name' => 'Spacelink Kenya',
             'phone' => '0714804532',
         ]);
+        $this->assertDatabaseHas('branches', [
+            'business_id' => \App\Models\Business::query()->where('name', 'Spacelink Kenya')->value('id'),
+            'phone' => '0714804532',
+        ]);
     }
 }

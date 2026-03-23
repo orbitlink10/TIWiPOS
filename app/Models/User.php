@@ -98,7 +98,12 @@ class User extends Authenticatable
             return null;
         }
 
-        return self::normalizePhone($this->business?->phone);
+        $businessPhone = self::normalizePhone($this->business?->phone);
+        if ($businessPhone !== null) {
+            return $businessPhone;
+        }
+
+        return self::normalizePhone($this->branch?->phone);
     }
 
     public static function assignableRoles(): array

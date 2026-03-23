@@ -93,6 +93,11 @@ class TenantController extends Controller
             $updated = true;
         }
 
+        if ($user->isOwner() && $user->branch) {
+            $user->branch->update(['phone' => $phone]);
+            $updated = true;
+        }
+
         if (!$updated) {
             return back()->with('error', 'Phone numbers cannot be saved for this account until the phone migration is applied.');
         }
