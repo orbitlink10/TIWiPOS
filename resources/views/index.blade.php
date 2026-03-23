@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --nav-bg: #fdfaf4;
             --hero-bg: #e6ecef;
             --accent: #0c8d3d;
             --accent-dark: #0a7031;
@@ -31,70 +30,6 @@
 
         a { color: inherit; text-decoration: none; }
 
-        .nav-bar {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: var(--nav-bg);
-            border-bottom: 1px solid rgba(15, 45, 25, 0.07);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-        }
-
-        .nav-inner {
-            margin: 0 auto;
-            max-width: 1180px;
-            padding: 16px 24px;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .logo-circle {
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #0c8d3d, #0f9d49);
-            color: #fff;
-            font-weight: 800;
-            display: grid;
-            place-items: center;
-            letter-spacing: 0.5px;
-        }
-
-        .brand-name { font-weight: 800; font-size: 18px; letter-spacing: 0.01em; }
-        .brand-sub { font-size: 12px; color: var(--muted); }
-
-        nav { display: flex; gap: 18px; justify-content: center; align-items: center; flex-wrap: wrap; }
-
-        .nav-link {
-            font-weight: 600;
-            padding: 10px 6px;
-            position: relative;
-            transition: color 0.2s ease;
-            color: #2f3a47;
-        }
-
-        .nav-link.active::after,
-        .nav-link:hover::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: -4px;
-            height: 3px;
-            background: var(--accent);
-            border-radius: 999px;
-        }
-
-        .actions { display: flex; gap: 12px; align-items: center; }
-
         .btn {
             display: inline-flex;
             align-items: center;
@@ -114,8 +49,6 @@
         .btn.primary:active { background: var(--accent-dark); }
 
         .btn.outline { background: #fff; color: var(--text); border-color: rgba(15, 45, 25, 0.12); }
-
-        .btn.ghost { background: var(--nav-bg); color: var(--text); border-color: rgba(15, 45, 25, 0.12); }
 
         main { padding: 0 24px 64px; }
 
@@ -329,17 +262,12 @@
         }
 
         @media (max-width: 1024px) {
-            .nav-inner { grid-template-columns: 1fr; justify-items: center; }
-            .brand { justify-content: center; }
-            .actions { justify-content: center; }
-            nav { width: 100%; justify-content: center; }
             .hero { padding: 48px 0 20px; }
             .hero-visual { min-height: 400px; }
             .pricing-row { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 720px) {
-            .nav-inner { padding: 12px 16px; }
             .hero { gap: 32px; }
             .phone.main { width: 78%; left: 10%; }
             .phone.top, .phone.bottom { display: none; }
@@ -347,42 +275,7 @@
     </style>
 </head>
 <body>
-    @php
-        $siteHomeUrl = route('home', ['landing' => 1]);
-    @endphp
-    <header class="nav-bar">
-        <div class="nav-inner">
-            <div class="brand">
-                <div class="logo-circle">TP</div>
-                <div>
-                    <div class="brand-name">Tiwi POS</div>
-                    <div class="brand-sub">Retail · Finance</div>
-                </div>
-            </div>
-            <nav>
-                <a class="nav-link active" href="{{ $siteHomeUrl }}">Home</a>
-                <a class="nav-link" href="#products">Products</a>
-                <a class="nav-link" href="#pricing">Pricing</a>
-                <a class="nav-link" href="#resources">Resources</a>
-                <a class="nav-link" href="#company">Company</a>
-                <a class="nav-link" href="#app-center">App Center</a>
-                <a class="nav-link" href="#enterprise">Enterprise</a>
-                <a class="nav-link" href="{{ route('blog.index') }}">Blog</a>
-            </nav>
-            <div class="actions">
-                @guest
-                    <a class="nav-link" href="{{ route('login') }}">Sign In</a>
-                    <a class="btn primary" href="{{ route('register') }}">Sign Up</a>
-                @else
-                    <a class="btn ghost" href="{{ route('sale') }}">Open POS</a>
-                    <form method="POST" action="{{ route('logout') }}" style="margin:0;">
-                        @csrf
-                        <button type="submit" class="btn outline">Log out</button>
-                    </form>
-                @endguest
-            </div>
-        </div>
-    </header>
+    @include('partials.public_navigation', ['activeSection' => 'home', 'useLocalAnchors' => true])
 
     <main>
         <section class="hero">

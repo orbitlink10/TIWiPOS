@@ -93,7 +93,6 @@
             --ink: #0f172a;
             --muted: #64748b;
             --hero: #b41543;
-            --dark-nav: #121826;
             --light-bg: #f8fafc;
             --card: #ffffff;
             --line: #e2e8f0;
@@ -105,67 +104,6 @@
             font-family: "Manrope", "Segoe UI", sans-serif;
             color: var(--ink);
             background: var(--light-bg);
-        }
-        .dark-nav {
-            background: var(--dark-nav);
-            color: #94a3b8;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .dark-nav a {
-            color: inherit;
-            text-decoration: none;
-        }
-        .dark-nav a:hover {
-            color: #fff;
-        }
-        .main-nav {
-            background: #fff;
-            border-bottom: 1px solid var(--line);
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-            font-size: 23px;
-            color: #111827;
-        }
-        .brand-badge {
-            width: 34px;
-            height: 24px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #ff8a3d 0%, #ff5e2a 100%);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 800;
-        }
-        .main-links {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            color: #1f2937;
-            font-weight: 700;
-            font-size: 15px;
-        }
-        .main-links a {
-            text-decoration: none;
-            color: inherit;
         }
         .hero {
             background: var(--hero);
@@ -260,17 +198,6 @@
             font-weight: 700;
         }
         @media (max-width: 840px) {
-            .dark-nav {
-                padding: 12px 14px;
-                gap: 10px;
-                font-size: 13px;
-            }
-            .main-nav {
-                padding: 14px;
-            }
-            .brand {
-                font-size: 20px;
-            }
             .hero {
                 padding: 30px 14px 26px;
             }
@@ -288,30 +215,7 @@
     </style>
 </head>
 <body>
-    <div class="dark-nav">
-        <a href="{{ $siteHomeUrl }}#products">Products</a>
-        <a href="{{ $siteHomeUrl }}#pricing">Pricing</a>
-        <a href="{{ $siteHomeUrl }}#resources">Resources</a>
-        <a href="{{ $siteHomeUrl }}#company">Company</a>
-        <a href="{{ $siteHomeUrl }}#app-center">App Center</a>
-        <a href="{{ $siteHomeUrl }}#enterprise">Enterprise</a>
-    </div>
-
-    <div class="main-nav">
-        <a href="{{ $siteHomeUrl }}" class="brand" style="text-decoration:none; color:inherit;">
-            <span class="brand-badge">TP</span>
-            <span>Tiwi Blog</span>
-        </a>
-        <div class="main-links">
-            <a href="{{ route('blog.index') }}">Blog</a>
-            <a href="{{ $siteHomeUrl }}">Main Site</a>
-            @auth
-                @if(auth()->user()->is_super_admin)
-                <a href="{{ route('content.index') }}">Dashboard</a>
-                @endif
-            @endauth
-        </div>
-    </div>
+    @include('partials.public_navigation', ['activeSection' => 'blog'])
 
     <section class="hero">
         <div class="hero-inner">

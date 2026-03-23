@@ -27,7 +27,6 @@
             --ink: #0f172a;
             --muted: #64748b;
             --hero: #b41543;
-            --dark-nav: #121826;
             --line: #e2e8f0;
             --card: #fff;
             --bg: #f8fafc;
@@ -38,51 +37,6 @@
             font-family: "Manrope", "Segoe UI", sans-serif;
             background: var(--bg);
             color: var(--ink);
-        }
-        .dark-nav {
-            background: var(--dark-nav);
-            color: #94a3b8;
-            padding: 12px 20px;
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .dark-nav a {
-            color: inherit;
-            text-decoration: none;
-        }
-        .dark-nav a:hover {
-            color: #fff;
-        }
-        .main-nav {
-            background: #fff;
-            border-bottom: 1px solid var(--line);
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 24px;
-            font-weight: 800;
-        }
-        .badge {
-            width: 34px;
-            height: 24px;
-            border-radius: 999px;
-            display: inline-grid;
-            place-items: center;
-            background: linear-gradient(135deg, #ff8a3d 0%, #ff5e2a 100%);
-            color: #fff;
-            font-size: 12px;
-            font-weight: 800;
         }
         .hero {
             background: linear-gradient(140deg, #b41543 0%, #8e1238 100%);
@@ -156,27 +110,10 @@
         .pager {
             margin-top: 16px;
         }
-        @media (max-width: 700px) {
-            .brand { font-size: 20px; }
-        }
     </style>
 </head>
 <body>
-    @php
-        $siteHomeUrl = route('home', ['landing' => 1]);
-    @endphp
-    <div class="dark-nav">
-        <a href="{{ $siteHomeUrl }}#products">Products</a>
-        <a href="{{ $siteHomeUrl }}#pricing">Pricing</a>
-        <a href="{{ $siteHomeUrl }}#resources">Resources</a>
-        <a href="{{ $siteHomeUrl }}#company">Company</a>
-        <a href="{{ $siteHomeUrl }}#app-center">App Center</a>
-        <a href="{{ $siteHomeUrl }}#enterprise">Enterprise</a>
-    </div>
-    <div class="main-nav">
-        <a href="{{ $siteHomeUrl }}" class="brand" style="text-decoration:none; color:inherit;"><span class="badge">TP</span><span>Tiwi Blog</span></a>
-        <a href="{{ $siteHomeUrl }}" style="font-weight:700; color:#0f172a; text-decoration:none;">Main Site</a>
-    </div>
+    @include('partials.public_navigation', ['activeSection' => 'blog'])
 
     <section class="hero">
         <div class="hero-inner">

@@ -15,6 +15,10 @@ class PublicLandingLinksTest extends TestCase
         $response = $this->get(route('home', ['landing' => 1]));
 
         $response->assertOk();
+        $response->assertSee('Tiwi POS');
+        $response->assertSee('Products');
+        $response->assertSee('Sign in');
+        $response->assertSee('Try it free');
         $response->assertSee('id="products"', false);
         $response->assertSee('id="pricing"', false);
         $response->assertSee('id="resources"', false);
@@ -39,11 +43,17 @@ class PublicLandingLinksTest extends TestCase
         $blogResponse->assertOk();
         $siteHomeUrl = route('home', ['landing' => 1]);
 
+        $blogResponse->assertSee('Tiwi POS');
+        $blogResponse->assertSee('Sign in');
+        $blogResponse->assertSee('Try it free');
         $blogResponse->assertSee($siteHomeUrl . '#products');
         $blogResponse->assertSee($siteHomeUrl);
 
         $postResponse = $this->get(route('post.show', ['post' => $post->slug]));
         $postResponse->assertOk();
+        $postResponse->assertSee('Tiwi POS');
+        $postResponse->assertSee('Sign in');
+        $postResponse->assertSee('Try it free');
         $postResponse->assertSee($siteHomeUrl . '#enterprise');
         $postResponse->assertSee($siteHomeUrl);
     }
