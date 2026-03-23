@@ -106,16 +106,20 @@
                             <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
                             <td style="padding:10px;">{{ $member->email }}</td>
                             <td style="padding:10px;">
-                                <div style="font-weight:600; color:{{ $directoryPhone ? '#0f172a' : 'var(--muted)' }};">{{ $directoryPhone ?: '-' }}</div>
                                 @if($canEditPhone)
                                     <form method="POST" action="{{ route('admin.users.phone', $member) }}" style="margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                                         @csrf
                                         @method('PATCH')
-                                        <input name="phone" type="text" value="{{ $directoryPhone }}" placeholder="+254..." inputmode="tel" style="width:140px; padding:7px 9px; border:1px solid #d1d5db; border-radius:8px; font-size:12px;">
+                                        <input name="phone" type="text" value="{{ old('phone', $directoryPhone) }}" placeholder="+254..." inputmode="tel" style="width:140px; padding:7px 9px; border:1px solid #d1d5db; border-radius:8px; font-size:12px;">
                                         <button type="submit" style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:700; cursor:pointer;">
                                             Save
                                         </button>
                                     </form>
+                                    @if(!$directoryPhone)
+                                        <div style="margin-top:6px; font-size:12px; color:var(--muted);">No signup phone saved yet.</div>
+                                    @endif
+                                @else
+                                    <div style="font-weight:600; color:{{ $directoryPhone ? '#0f172a' : 'var(--muted)' }};">{{ $directoryPhone ?: '-' }}</div>
                                 @endif
                             </td>
                             <td style="padding:10px;">{{ $member->business?->name ?? 'No business assigned' }}</td>
