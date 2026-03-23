@@ -72,6 +72,7 @@
                     <tr style="background:#f7f7fb;">
                         <th style="padding:10px; text-align:left;">Name</th>
                         <th style="padding:10px; text-align:left;">Email</th>
+                        <th style="padding:10px; text-align:left;">Phone</th>
                         <th style="padding:10px; text-align:left;">Business</th>
                         <th style="padding:10px; text-align:left;">Branch</th>
                         <th style="padding:10px; text-align:left;">Role</th>
@@ -85,6 +86,7 @@
                         <tr style="border-top:1px solid #e5e7eb; {{ $member->is_super_admin ? 'background:rgba(15,127,167,0.05);' : '' }}">
                             <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
                             <td style="padding:10px;">{{ $member->email }}</td>
+                            <td style="padding:10px;">{{ $member->phone ?: '-' }}</td>
                             <td style="padding:10px;">{{ $member->business?->name ?? 'No business assigned' }}</td>
                             <td style="padding:10px;">{{ $member->branch?->name ?? 'No branch assigned' }}</td>
                             <td style="padding:10px;">{{ ucfirst($member->role) }}</td>
@@ -96,7 +98,7 @@
                         </tr>
                     @empty
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td colspan="8" style="padding:14px; color:var(--muted);">No registered users found.</td>
+                            <td colspan="9" style="padding:14px; color:var(--muted);">No registered users found.</td>
                         </tr>
                     @endforelse
                 </tbody>

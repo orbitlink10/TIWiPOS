@@ -40,6 +40,7 @@
                         <tr style="background:#f7f7fb;">
                             <th style="text-align:left; padding:10px;">Name</th>
                             <th style="text-align:left; padding:10px;">Email</th>
+                            <th style="text-align:left; padding:10px;">Phone</th>
                             <th style="text-align:left; padding:10px;">Branch</th>
                             <th style="text-align:left; padding:10px;">Role</th>
                             <th style="text-align:left; padding:10px;">Status</th>
@@ -51,6 +52,7 @@
                             <tr style="border-top:1px solid #e5e7eb;">
                                 <td style="padding:10px;">{{ $member->name }}</td>
                                 <td style="padding:10px;">{{ $member->email }}</td>
+                                <td style="padding:10px;">{{ $member->phone ?: '-' }}</td>
                                 <td style="padding:10px;">
                                     <form method="POST" action="{{ route('staff.branch', $member) }}" style="display:inline-flex;">
                                         @csrf
@@ -91,7 +93,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="padding:12px; text-align:center; color:var(--muted);">No staff yet.</td>
+                                <td colspan="7" style="padding:12px; text-align:center; color:var(--muted);">No staff yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -109,6 +111,10 @@
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Email
                         <input name="email" type="email" value="{{ old('email') }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                        Phone number
+                        <input name="phone" type="text" value="{{ old('phone') }}" placeholder="+254..." inputmode="tel" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                     </label>
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Branch

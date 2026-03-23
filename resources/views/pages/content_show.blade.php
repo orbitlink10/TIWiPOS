@@ -298,7 +298,9 @@
             <a href="{{ route('blog.index') }}">Blog</a>
             <a href="{{ route('home') }}">Main Site</a>
             @auth
+                @if(auth()->user()->is_super_admin)
                 <a href="{{ route('content.index') }}">Dashboard</a>
+                @endif
             @endauth
         </div>
     </div>
@@ -351,7 +353,9 @@
     <div class="bottom-actions">
         <a class="action-link" href="{{ route('blog.index') }}">All Articles</a>
         @auth
+            @if(auth()->user()->is_super_admin)
             <a class="action-link" href="{{ route('content.edit', $post) }}">Edit This Page</a>
+            @endif
         @endauth
     </div>
 </body>

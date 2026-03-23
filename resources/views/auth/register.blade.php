@@ -193,6 +193,11 @@
                     @error('email') <small style="color:#d14343;">{{ $message }}</small> @enderror
                 </div>
                 <div class="field">
+                    <label for="phone">Phone number</label>
+                    <input id="phone" name="phone" type="text" value="{{ old('phone') }}" placeholder="+254..." inputmode="tel">
+                    @error('phone') <small style="color:#d14343;">{{ $message }}</small> @enderror
+                </div>
+                <div class="field">
                     <label for="password">Password</label>
                     <input id="password" name="password" type="password" required>
                     @error('password') <small style="color:#d14343;">{{ $message }}</small> @enderror

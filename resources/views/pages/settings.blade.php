@@ -213,7 +213,7 @@
             <div class="settings-toolbar">
                 <div>
                     <h2>My Profile</h2>
-                    <p class="settings-subtext">Update your name, profile picture, and account password.</p>
+                    <p class="settings-subtext">Update your name, phone number, profile picture, and account password.</p>
                 </div>
             </div>
             <div class="profile-grid">
@@ -227,6 +227,7 @@
                         <div style="display:grid; gap:2px;">
                             <strong>{{ $user->name }}</strong>
                             <span style="color:var(--muted); font-size:13px;">{{ $user->email }}</span>
+                            <span style="color:var(--muted); font-size:13px;">{{ $user->phone ?: 'No phone number set' }}</span>
                         </div>
                     </div>
 
@@ -237,6 +238,10 @@
                             <label class="field">
                                 Profile name
                                 <input name="name" type="text" value="{{ old('name', $user->name) }}" required>
+                            </label>
+                            <label class="field">
+                                Phone number
+                                <input name="phone" type="text" value="{{ old('phone', $user->phone) }}" placeholder="+254..." inputmode="tel">
                             </label>
                             <label class="field">
                                 Profile picture (JPG, PNG, WEBP)
@@ -290,6 +295,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>Phone</th>
                             <th>Branch</th>
                             <th>Role</th>
                             <th>Status</th>
@@ -301,6 +307,7 @@
                             <tr>
                                 <td>{{ $member->name }}</td>
                                 <td>{{ $member->email }}</td>
+                                <td>{{ $member->phone ?: '-' }}</td>
                                 <td>
                                     <form method="POST" action="{{ route('staff.branch', $member) }}" style="display:inline-flex; gap:8px; align-items:center;">
                                         @csrf
@@ -344,7 +351,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center; color:var(--muted);">No staff yet.</td>
+                                <td colspan="7" style="text-align:center; color:var(--muted);">No staff yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -362,6 +369,10 @@
                     <label class="field">
                         Email
                         <input name="email" type="email" value="{{ old('email') }}" required>
+                    </label>
+                    <label class="field">
+                        Phone number
+                        <input name="phone" type="text" value="{{ old('phone') }}" placeholder="+254..." inputmode="tel">
                     </label>
                     <label class="field">
                         Branch

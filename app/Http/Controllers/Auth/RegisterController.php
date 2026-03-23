@@ -31,6 +31,7 @@ class RegisterController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'business_name' => ['required', 'string', 'max:255'],
             'branch_name' => ['nullable', 'string', 'max:255'],
@@ -73,6 +74,7 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
             'password' => Hash::make($data['password']),
             'business_id' => $business->id,
             'branch_id' => $branch->id,

@@ -24,6 +24,7 @@ class SuperAdminDirectoryTest extends TestCase
         $firstOwner = User::factory()->create([
             'name' => 'Alpha Owner',
             'email' => 'owner1@example.com',
+            'phone' => '+254700111222',
             'business_id' => $firstBusiness->id,
             'branch_id' => $firstBranch->id,
             'role' => User::ROLE_OWNER,
@@ -32,6 +33,7 @@ class SuperAdminDirectoryTest extends TestCase
         $secondStaff = User::factory()->create([
             'name' => 'Beta Cashier',
             'email' => 'cashier2@example.com',
+            'phone' => '+254711222333',
             'business_id' => $secondBusiness->id,
             'branch_id' => $secondBranch->id,
             'role' => User::ROLE_STAFF,
@@ -43,8 +45,11 @@ class SuperAdminDirectoryTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Registered users');
+        $response->assertSee('Phone');
         $response->assertSee($firstOwner->email);
+        $response->assertSee($firstOwner->phone);
         $response->assertSee($secondStaff->email);
+        $response->assertSee($secondStaff->phone);
         $response->assertSee($firstBusiness->name);
         $response->assertSee($secondBusiness->name);
         $response->assertSee('reisenseo@gmail.com');

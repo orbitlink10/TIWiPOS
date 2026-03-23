@@ -43,6 +43,7 @@ class StaffController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
+            'phone' => 'nullable|string|max:30',
             'password' => 'required|string|min:8|confirmed',
             'branch_id' => [
                 'nullable',
@@ -65,6 +66,7 @@ class StaffController extends Controller
         User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
             'password' => Hash::make($data['password']),
             'business_id' => $branchBusinessId ?: $businessId,
             'branch_id' => $branchId,

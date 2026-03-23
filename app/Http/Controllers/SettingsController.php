@@ -77,12 +77,14 @@ class SettingsController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $user = $request->user();
         $updates = [
             'name' => trim($data['name']),
+            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
         ];
 
         if ($request->hasFile('profile_photo')) {
