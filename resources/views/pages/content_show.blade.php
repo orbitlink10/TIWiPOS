@@ -36,7 +36,7 @@
                     '@type' => 'ListItem',
                     'position' => 1,
                     'name' => 'Home',
-                    'item' => url('/'),
+                    'item' => route('site.home'),
                 ],
                 [
                     '@type' => 'ListItem',
@@ -115,6 +115,13 @@
             flex-wrap: wrap;
             font-weight: 600;
             font-size: 14px;
+        }
+        .dark-nav a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .dark-nav a:hover {
+            color: #fff;
         }
         .main-nav {
             background: #fff;
@@ -281,22 +288,22 @@
 </head>
 <body>
     <div class="dark-nav">
-        <span>Products</span>
-        <span>Pricing</span>
-        <span>Resources</span>
-        <span>Company</span>
-        <span>App Center</span>
-        <span>Enterprise</span>
+        <a href="{{ route('site.home') }}#products">Products</a>
+        <a href="{{ route('site.home') }}#pricing">Pricing</a>
+        <a href="{{ route('site.home') }}#resources">Resources</a>
+        <a href="{{ route('site.home') }}#company">Company</a>
+        <a href="{{ route('site.home') }}#app-center">App Center</a>
+        <a href="{{ route('site.home') }}#enterprise">Enterprise</a>
     </div>
 
     <div class="main-nav">
-        <div class="brand">
+        <a href="{{ route('site.home') }}" class="brand" style="text-decoration:none; color:inherit;">
             <span class="brand-badge">TP</span>
             <span>Tiwi Blog</span>
-        </div>
+        </a>
         <div class="main-links">
             <a href="{{ route('blog.index') }}">Blog</a>
-            <a href="{{ route('home') }}">Main Site</a>
+            <a href="{{ route('site.home') }}">Main Site</a>
             @auth
                 @if(auth()->user()->is_super_admin)
                 <a href="{{ route('content.index') }}">Dashboard</a>

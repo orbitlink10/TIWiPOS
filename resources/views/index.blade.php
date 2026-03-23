@@ -200,6 +200,125 @@
         .phone.top { width: min(44%, 240px); top: 8%; right: 4%; transform: rotate(6deg); z-index: 4; }
         .phone.bottom { width: min(48%, 260px); bottom: -4%; right: 18%; transform: rotate(10deg); z-index: 2; }
 
+        .sections {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+            padding-top: 8px;
+        }
+
+        .section-block {
+            scroll-margin-top: 110px;
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(15, 45, 25, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 18px 45px rgba(15, 45, 25, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .section-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(12, 141, 61, 0.1);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .section-head {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 40px);
+            line-height: 1.08;
+        }
+
+        .section-head p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 760px;
+            font-size: 16px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid rgba(15, 45, 25, 0.08);
+            box-shadow: 0 12px 26px rgba(15, 45, 25, 0.06);
+        }
+
+        .info-card h3 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+
+        .info-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .pricing-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+            gap: 16px;
+        }
+
+        .pricing-panel {
+            background: linear-gradient(135deg, #123524 0%, #0c8d3d 100%);
+            color: #fff;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 20px 48px rgba(12, 141, 61, 0.2);
+        }
+
+        .pricing-panel strong {
+            display: block;
+            font-size: 42px;
+            line-height: 1;
+            margin: 12px 0 10px;
+        }
+
+        .pricing-panel p,
+        .contact-card p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .pricing-list {
+            margin: 16px 0 0;
+            padding-left: 18px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .contact-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 24px;
+            border: 1px solid rgba(15, 45, 25, 0.08);
+        }
+
         footer {
             margin: 34px auto 0;
             max-width: 1180px;
@@ -216,6 +335,7 @@
             nav { width: 100%; justify-content: center; }
             .hero { padding: 48px 0 20px; }
             .hero-visual { min-height: 400px; }
+            .pricing-row { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 720px) {
@@ -237,12 +357,14 @@
                 </div>
             </div>
             <nav>
-                <a class="nav-link active" href="{{ route('home') }}">Home</a>
-                <a class="nav-link" href="#about">About</a>
-                <a class="nav-link" href="#features">Features</a>
-                <a class="nav-link" href="#accounting">Accounting</a>
+                <a class="nav-link active" href="{{ route('site.home') }}">Home</a>
+                <a class="nav-link" href="#products">Products</a>
+                <a class="nav-link" href="#pricing">Pricing</a>
+                <a class="nav-link" href="#resources">Resources</a>
+                <a class="nav-link" href="#company">Company</a>
+                <a class="nav-link" href="#app-center">App Center</a>
+                <a class="nav-link" href="#enterprise">Enterprise</a>
                 <a class="nav-link" href="{{ route('blog.index') }}">Blog</a>
-                <a class="nav-link" href="#contact">Contact</a>
             </nav>
             <div class="actions">
                 @guest
@@ -287,6 +409,138 @@
                 </div>
             </div>
         </section>
+
+        <div class="sections">
+            <section id="products" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">Products</span>
+                    <h2>Retail tools built to keep sales, stock, and finance aligned.</h2>
+                    <p>Tiwi POS combines checkout, stock control, branch oversight, and reporting in one operating layer for growing businesses.</p>
+                </div>
+                <div class="info-grid">
+                    <article class="info-card">
+                        <h3>Point of sale</h3>
+                        <p>Handle fast checkout flows, customer details, and receipt-ready sales from a clean interface.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Inventory control</h3>
+                        <p>Track stock levels, alerts, adjustments, and branch movement without running a separate stock tool.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Team access</h3>
+                        <p>Assign controlled access to owners, managers, and staff while keeping sensitive admin tools restricted.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="pricing" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">Pricing</span>
+                    <h2>Simple pricing for stores that want clarity, not negotiation.</h2>
+                    <p>Run your branches on a predictable plan with billing visibility and subscription controls built into the platform.</p>
+                </div>
+                <div class="pricing-row">
+                    <div class="pricing-panel">
+                        <span>Standard plan</span>
+                        <strong>Flexible</strong>
+                        <p>One subscription for POS, stock, branch management, user access, and reporting.</p>
+                        <ul class="pricing-list">
+                            <li>Branch-aware operations</li>
+                            <li>Role-based user management</li>
+                            <li>Billing and activation controls</li>
+                        </ul>
+                    </div>
+                    <div class="contact-card">
+                        <h3 style="margin:0 0 10px;">Need a quote?</h3>
+                        <p>Talk to the Tiwi team for onboarding support, rollout planning, or enterprise packaging for multi-location operations.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="resources" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">Resources</span>
+                    <h2>Use the blog and guides to improve operations faster.</h2>
+                    <p>Browse practical content on POS workflows, inventory discipline, reporting, and business growth across Kenyan retail environments.</p>
+                </div>
+                <div class="info-grid">
+                    <article class="info-card">
+                        <h3>Blog articles</h3>
+                        <p>Read current posts on POS systems, business systems, and operational best practices.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Setup guidance</h3>
+                        <p>Get your first branch, products, and staff accounts configured with less friction.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Support access</h3>
+                        <p>Reach the team directly when you need rollout help or troubleshooting assistance.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="company" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">Company</span>
+                    <h2>Tiwi is focused on practical systems for real operators.</h2>
+                    <p>The platform is designed for businesses that need clearer control over sales, staff, inventory, and branch execution.</p>
+                </div>
+                <div class="info-grid">
+                    <article class="info-card">
+                        <h3>Retail-first</h3>
+                        <p>Every workflow is shaped around the pace and accountability demands of day-to-day retail operations.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Built for growth</h3>
+                        <p>Move from a single shop to multiple branches without replacing your operating stack.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Operational visibility</h3>
+                        <p>Keep decision-makers close to the numbers that matter without burying them in spreadsheets.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="app-center" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">App Center</span>
+                    <h2>One control point for selling, stocking, and administration.</h2>
+                    <p>The app center experience brings together the daily actions your team needs instead of scattering them across disconnected tools.</p>
+                </div>
+                <div class="info-grid">
+                    <article class="info-card">
+                        <h3>Sales console</h3>
+                        <p>Open POS fast, complete transactions, and issue receipts from the same workspace.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Stock workspace</h3>
+                        <p>Adjust quantities, watch thresholds, and maintain branch-level accuracy from one place.</p>
+                    </article>
+                    <article class="info-card">
+                        <h3>Admin controls</h3>
+                        <p>Manage billing, staff, branches, and business settings with clear separation of privileges.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="enterprise" class="section-block">
+                <div class="section-head">
+                    <span class="section-kicker">Enterprise</span>
+                    <h2>Support multi-branch operations with tighter control.</h2>
+                    <p>Enterprise teams can coordinate branches, manage wider teams, and keep a clearer view of activity across the business.</p>
+                </div>
+                <div class="pricing-row">
+                    <div class="contact-card">
+                        <h3 style="margin:0 0 10px;">Enterprise rollout</h3>
+                        <p>Use Tiwi to standardize branch processes, centralize oversight, and reduce visibility gaps between HQ and field teams.</p>
+                    </div>
+                    <div class="contact-card">
+                        <h3 style="margin:0 0 10px;">Contact</h3>
+                        <p>Email <a href="mailto:support@tiwi.co.ke" style="font-weight:700; color:var(--accent);">support@tiwi.co.ke</a> to discuss onboarding, support, or enterprise requirements.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
     </main>
 
     <footer>

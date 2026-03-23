@@ -49,6 +49,13 @@
             font-size: 14px;
             font-weight: 600;
         }
+        .dark-nav a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .dark-nav a:hover {
+            color: #fff;
+        }
         .main-nav {
             background: #fff;
             border-bottom: 1px solid var(--line);
@@ -156,16 +163,16 @@
 </head>
 <body>
     <div class="dark-nav">
-        <span>Products</span>
-        <span>Pricing</span>
-        <span>Resources</span>
-        <span>Company</span>
-        <span>App Center</span>
-        <span>Enterprise</span>
+        <a href="{{ route('site.home') }}#products">Products</a>
+        <a href="{{ route('site.home') }}#pricing">Pricing</a>
+        <a href="{{ route('site.home') }}#resources">Resources</a>
+        <a href="{{ route('site.home') }}#company">Company</a>
+        <a href="{{ route('site.home') }}#app-center">App Center</a>
+        <a href="{{ route('site.home') }}#enterprise">Enterprise</a>
     </div>
     <div class="main-nav">
-        <div class="brand"><span class="badge">TP</span><span>Tiwi Blog</span></div>
-        <a href="{{ route('home') }}" style="font-weight:700; color:#0f172a; text-decoration:none;">Main Site</a>
+        <a href="{{ route('site.home') }}" class="brand" style="text-decoration:none; color:inherit;"><span class="badge">TP</span><span>Tiwi Blog</span></a>
+        <a href="{{ route('site.home') }}" style="font-weight:700; color:#0f172a; text-decoration:none;">Main Site</a>
     </div>
 
     <section class="hero">

@@ -11,24 +11,18 @@ use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
+    public function landing()
+    {
+        return view('index');
+    }
+
     /**
      * Display the application home page.
      */
     public function index()
     {
         if (! auth()->check()) {
-            $stats = [
-                'month_name' => now()->format('F Y'),
-                'month_sales' => 0,
-                'out_of_stock' => 0,
-                'low_stock' => 0,
-                'this_month' => 0,
-                'this_week' => 0,
-                'today' => 0,
-                'today_profit' => 0,
-            ];
-
-            return view('index', compact('stats'));
+            return $this->landing();
         }
 
         $canViewFinancials = auth()->user()->canViewFinancials();

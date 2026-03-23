@@ -23,6 +23,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Admin\TenantController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/site', [HomeController::class, 'landing'])->name('site.home');
 Route::get('/login', [LoginController::class, 'show'])->name('login');
 Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::match(['get', 'post'], '/logout', LogoutController::class)->name('logout');
