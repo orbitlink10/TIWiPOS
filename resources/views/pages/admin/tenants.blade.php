@@ -10,8 +10,6 @@
 @endsection
 
 @section('content')
-    @php($supportsUserPhone = \App\Models\User::supportsPhoneColumn())
-    @php($hasAdminUserPhoneRoute = Route::has('admin.users.phone'))
     @php($hasAdminUserStatusRoute = Route::has('admin.users.status'))
     @php($hasAdminUserDeleteRoute = Route::has('admin.users.destroy'))
 
@@ -100,27 +98,12 @@
                 <tbody>
                     @forelse($users as $member)
                         @php($directoryPhone = $member->directory_phone)
-                        @php($canEditPhone = $hasAdminUserPhoneRoute && ($supportsUserPhone || $member->isOwner()))
                         @php($isProtectedAccount = $member->is_super_admin || (int) $member->id === (int) auth()->id())
                         <tr style="border-top:1px solid #e5e7eb; {{ $member->is_super_admin ? 'background:rgba(15,127,167,0.05);' : '' }}">
                             <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
                             <td style="padding:10px;">{{ $member->email }}</td>
                             <td style="padding:10px;">
-                                @if($canEditPhone)
-                                    <form method="POST" action="{{ route('admin.users.phone', $member) }}" style="margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input name="phone" type="text" value="{{ old('phone', $directoryPhone) }}" placeholder="+254..." inputmode="tel" style="width:140px; padding:7px 9px; border:1px solid #d1d5db; border-radius:8px; font-size:12px;">
-                                        <button type="submit" style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:700; cursor:pointer;">
-                                            Save
-                                        </button>
-                                    </form>
-                                    @if(!$directoryPhone)
-                                        <div style="margin-top:6px; font-size:12px; color:var(--muted);">No signup phone saved yet.</div>
-                                    @endif
-                                @else
-                                    <div style="font-weight:600; color:{{ $directoryPhone ? '#0f172a' : 'var(--muted)' }};">{{ $directoryPhone ?: '-' }}</div>
-                                @endif
+                                <div style="font-weight:600; color:{{ $directoryPhone ? '#0f172a' : 'var(--muted)' }};">{{ $directoryPhone ?: '-' }}</div>
                             </td>
                             <td style="padding:10px;">{{ $member->business?->name ?? 'No business assigned' }}</td>
                             <td style="padding:10px;">{{ $member->branch?->name ?? 'No branch assigned' }}</td>
@@ -155,7 +138,7 @@
                                         <span style="display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; background:#e2e8f0; color:#334155;">
                                             Protected
                                         </span>
-                                    @elseif(!$hasAdminUserPhoneRoute || !$hasAdminUserStatusRoute || !$hasAdminUserDeleteRoute)
+                                    @elseif(!$hasAdminUserStatusRoute || !$hasAdminUserDeleteRoute)
                                         <span style="display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; background:#f8fafc; color:#64748b;">
                                             Update routes
                                         </span>
