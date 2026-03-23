@@ -35,5 +35,9 @@ class RegisterWithoutPhoneColumnTest extends TestCase
             'name' => 'James Kimani',
             'role' => 'owner',
         ]);
+        $this->assertDatabaseHas('businesses', [
+            'name' => 'Spacelink Kenya',
+            'phone' => '0714804532',
+        ]);
     }
 }

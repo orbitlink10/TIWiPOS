@@ -109,6 +109,9 @@ Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->gro
     Route::post('/tenants/{business}/activate', [TenantController::class, 'activate'])->name('tenants.activate');
     Route::post('/tenants/{business}/deactivate', [TenantController::class, 'deactivate'])->name('tenants.deactivate');
     Route::post('/tenants/{business}/impersonate', [TenantController::class, 'impersonate'])->name('tenants.impersonate');
+    Route::patch('/users/{user}/phone', [TenantController::class, 'updateUserPhone'])->name('users.phone');
+    Route::patch('/users/{user}/status', [TenantController::class, 'status'])->name('users.status');
+    Route::delete('/users/{user}', [TenantController::class, 'destroyUser'])->name('users.destroy');
 });
 
 // Public content URL: https://tiwi.co.ke/{page-title}

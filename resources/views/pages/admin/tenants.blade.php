@@ -10,11 +10,23 @@
 @endsection
 
 @section('content')
+    @php($supportsUserPhone = \App\Models\User::supportsPhoneColumn())
+
     <div class="panel">
         <h2>All businesses</h2>
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
                 {{ session('status') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(220,53,69,0.2); background:rgba(220,53,69,0.08); color:#991b1b;">
+                {{ session('error') }}
+            </div>
+        @endif
+        @if ($errors->any())
+            <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(220,53,69,0.2); background:rgba(220,53,69,0.08); color:#991b1b;">
+                {{ $errors->first() }}
             </div>
         @endif
         <div style="overflow:auto; margin-top:12px;">
@@ -67,7 +79,7 @@
             <div style="font-weight:700; color:var(--muted);">{{ $users->count() }} accounts</div>
         </div>
         <div style="overflow:auto; margin-top:12px;">
-            <table style="width:100%; min-width:960px; border-collapse:collapse; font-size:14px;">
+            <table style="width:100%; min-width:1180px; border-collapse:collapse; font-size:14px;">
                 <thead>
                     <tr style="background:#f7f7fb;">
                         <th style="padding:10px; text-align:left;">Name</th>
@@ -79,14 +91,30 @@
                         <th style="padding:10px; text-align:left;">Status</th>
                         <th style="padding:10px; text-align:left;">Access</th>
                         <th style="padding:10px; text-align:left;">Registered</th>
+                        <th style="padding:10px; text-align:left;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($users as $member)
+                        @php($directoryPhone = $member->directory_phone)
+                        @php($canEditPhone = $supportsUserPhone || $member->isOwner())
+                        @php($isProtectedAccount = $member->is_super_admin || (int) $member->id === (int) auth()->id())
                         <tr style="border-top:1px solid #e5e7eb; {{ $member->is_super_admin ? 'background:rgba(15,127,167,0.05);' : '' }}">
                             <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
                             <td style="padding:10px;">{{ $member->email }}</td>
-                            <td style="padding:10px;">{{ $member->phone ?: '-' }}</td>
+                            <td style="padding:10px;">
+                                <div style="font-weight:600; color:{{ $directoryPhone ? '#0f172a' : 'var(--muted)' }};">{{ $directoryPhone ?: '-' }}</div>
+                                @if($canEditPhone)
+                                    <form method="POST" action="{{ route('admin.users.phone', $member) }}" style="margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input name="phone" type="text" value="{{ $directoryPhone }}" placeholder="+254..." inputmode="tel" style="width:140px; padding:7px 9px; border:1px solid #d1d5db; border-radius:8px; font-size:12px;">
+                                        <button type="submit" style="border:1px solid #cbd5e1; background:#f8fafc; color:#0f172a; border-radius:8px; padding:7px 10px; font-size:12px; font-weight:700; cursor:pointer;">
+                                            Save
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
                             <td style="padding:10px;">{{ $member->business?->name ?? 'No business assigned' }}</td>
                             <td style="padding:10px;">{{ $member->branch?->name ?? 'No branch assigned' }}</td>
                             <td style="padding:10px;">{{ ucfirst($member->role) }}</td>
@@ -95,10 +123,38 @@
                             </td>
                             <td style="padding:10px;">{{ $member->is_super_admin ? 'Super admin' : 'Standard user' }}</td>
                             <td style="padding:10px;">{{ optional($member->created_at)->toDateString() }}</td>
+                            <td style="padding:10px;">
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    @unless($member->is_super_admin)
+                                        <form method="POST" action="{{ route('admin.users.status', $member) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="is_active" value="{{ $member->is_active ? 0 : 1 }}">
+                                            <button type="submit" style="border:1px solid {{ $member->is_active ? '#fecaca' : '#d1d5db' }}; background:{{ $member->is_active ? '#fff1f2' : '#f8fafc' }}; color:{{ $member->is_active ? '#b91c1c' : '#334155' }}; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer;">
+                                                {{ $member->is_active ? 'Deactivate' : 'Activate' }}
+                                            </button>
+                                        </form>
+                                    @endunless
+
+                                    @if(!$isProtectedAccount)
+                                        <form method="POST" action="{{ route('admin.users.destroy', $member) }}" onsubmit="return confirm('Delete this registered user? This action cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer;">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span style="display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; background:#e2e8f0; color:#334155;">
+                                            Protected
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td colspan="9" style="padding:14px; color:var(--muted);">No registered users found.</td>
+                            <td colspan="10" style="padding:14px; color:var(--muted);">No registered users found.</td>
                         </tr>
                     @endforelse
                 </tbody>

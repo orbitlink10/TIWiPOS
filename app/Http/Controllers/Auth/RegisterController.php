@@ -43,6 +43,7 @@ class RegisterController extends Controller
             'slug' => Str::slug($data['business_name']) . '-' . Str::random(6),
             'industry' => $data['industry'] ?? null,
             'billing_email' => $data['email'],
+            'phone' => filled($data['phone'] ?? null) ? trim((string) $data['phone']) : null,
             'status' => 'active',
             'plan' => 'standard',
             'subscription_status' => 'active',

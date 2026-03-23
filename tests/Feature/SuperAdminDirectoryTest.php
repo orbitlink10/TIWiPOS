@@ -70,6 +70,136 @@ class SuperAdminDirectoryTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_super_admin_directory_falls_back_to_business_phone_for_owner_accounts(): void
+    {
+        [$business, $branch] = $this->createActiveTenant('Phone Fallback Ltd', 'fallback@example.com');
+        $business->update(['phone' => '+254733000111']);
+
+        User::factory()->create([
+            'name' => 'Fallback Owner',
+            'email' => 'fallback-owner@example.com',
+            'phone' => null,
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_OWNER,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin())->get(route('admin.tenants.index'));
+
+        $response->assertOk();
+        $response->assertSee('+254733000111');
+    }
+
+    public function test_super_admin_can_update_registered_user_phone(): void
+    {
+        [$business, $branch] = $this->createActiveTenant('Phone Update Ltd', 'phone-update@example.com');
+
+        $user = User::factory()->create([
+            'name' => 'Phone Update Owner',
+            'email' => 'phone-update-owner@example.com',
+            'phone' => null,
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_OWNER,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin())->patch(route('admin.users.phone', $user), [
+            'phone' => '0714804532',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'User phone updated.');
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'phone' => '0714804532',
+        ]);
+        $this->assertDatabaseHas('businesses', [
+            'id' => $business->id,
+            'phone' => '0714804532',
+        ]);
+    }
+
+    public function test_super_admin_can_toggle_registered_user_status(): void
+    {
+        [$business, $branch] = $this->createActiveTenant('Status Toggle Ltd', 'status@example.com');
+
+        $user = User::factory()->create([
+            'name' => 'Status User',
+            'email' => 'status-user@example.com',
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF,
+            'is_active' => true,
+        ]);
+
+        DB::table('sessions')->insert([
+            'id' => 'user-session-status',
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => base64_encode('test'),
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $deactivateResponse = $this->actingAs($this->superAdmin())->patch(route('admin.users.status', $user), [
+            'is_active' => 0,
+        ]);
+
+        $deactivateResponse->assertRedirect();
+        $deactivateResponse->assertSessionHas('status', 'User account deactivated.');
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'is_active' => false,
+        ]);
+        $this->assertDatabaseMissing('sessions', [
+            'id' => 'user-session-status',
+        ]);
+
+        $activateResponse = $this->actingAs($this->superAdmin())->patch(route('admin.users.status', $user), [
+            'is_active' => 1,
+        ]);
+
+        $activateResponse->assertRedirect();
+        $activateResponse->assertSessionHas('status', 'User account activated.');
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_super_admin_can_delete_registered_user(): void
+    {
+        [$business, $branch] = $this->createActiveTenant('Delete User Ltd', 'delete@example.com');
+
+        $user = User::factory()->create([
+            'name' => 'Delete Me',
+            'email' => 'delete-me@example.com',
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        DB::table('sessions')->insert([
+            'id' => 'user-session-delete',
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => base64_encode('test'),
+            'last_activity' => now()->timestamp,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin())->delete(route('admin.users.destroy', $user));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('status', 'User deleted.');
+        $this->assertDatabaseMissing('users', [
+            'id' => $user->id,
+        ]);
+        $this->assertDatabaseMissing('sessions', [
+            'id' => 'user-session-delete',
+        ]);
+    }
+
     public function test_database_seeder_promotes_reisenseo_account_without_resetting_password(): void
     {
         $superAdmin = User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
@@ -129,5 +259,10 @@ class SuperAdminDirectoryTest extends TestCase
         ]);
 
         return [$business, $branch];
+    }
+
+    private function superAdmin(): User
+    {
+        return User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
     }
 }

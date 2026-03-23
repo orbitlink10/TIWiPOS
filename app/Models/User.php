@@ -71,15 +71,34 @@ class User extends Authenticatable
         return Schema::hasColumn((new static)->getTable(), 'phone');
     }
 
-    public static function mergePhoneAttribute(array $attributes, ?string $phone): array
+    public static function normalizePhone(mixed $phone): ?string
+    {
+        return filled($phone) ? trim((string) $phone) : null;
+    }
+
+    public static function mergePhoneAttribute(array $attributes, mixed $phone): array
     {
         if (!self::supportsPhoneColumn()) {
             return $attributes;
         }
 
-        $attributes['phone'] = filled($phone) ? trim((string) $phone) : null;
+        $attributes['phone'] = self::normalizePhone($phone);
 
         return $attributes;
+    }
+
+    public function getDirectoryPhoneAttribute(): ?string
+    {
+        $phone = self::normalizePhone($this->getAttribute('phone'));
+        if ($phone !== null) {
+            return $phone;
+        }
+
+        if (!$this->isOwner()) {
+            return null;
+        }
+
+        return self::normalizePhone($this->business?->phone);
     }
 
     public static function assignableRoles(): array
