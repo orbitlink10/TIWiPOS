@@ -11,6 +11,9 @@
 
 @section('content')
     @php($supportsUserPhone = \App\Models\User::supportsPhoneColumn())
+    @php($hasAdminUserPhoneRoute = Route::has('admin.users.phone'))
+    @php($hasAdminUserStatusRoute = Route::has('admin.users.status'))
+    @php($hasAdminUserDeleteRoute = Route::has('admin.users.destroy'))
 
     <div class="panel">
         <h2>All businesses</h2>
@@ -97,7 +100,7 @@
                 <tbody>
                     @forelse($users as $member)
                         @php($directoryPhone = $member->directory_phone)
-                        @php($canEditPhone = $supportsUserPhone || $member->isOwner())
+                        @php($canEditPhone = $hasAdminUserPhoneRoute && ($supportsUserPhone || $member->isOwner()))
                         @php($isProtectedAccount = $member->is_super_admin || (int) $member->id === (int) auth()->id())
                         <tr style="border-top:1px solid #e5e7eb; {{ $member->is_super_admin ? 'background:rgba(15,127,167,0.05);' : '' }}">
                             <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
@@ -125,7 +128,7 @@
                             <td style="padding:10px;">{{ optional($member->created_at)->toDateString() }}</td>
                             <td style="padding:10px;">
                                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                                    @unless($member->is_super_admin)
+                                    @if($hasAdminUserStatusRoute && !$member->is_super_admin)
                                         <form method="POST" action="{{ route('admin.users.status', $member) }}">
                                             @csrf
                                             @method('PATCH')
@@ -134,9 +137,9 @@
                                                 {{ $member->is_active ? 'Deactivate' : 'Activate' }}
                                             </button>
                                         </form>
-                                    @endunless
+                                    @endif
 
-                                    @if(!$isProtectedAccount)
+                                    @if($hasAdminUserDeleteRoute && !$isProtectedAccount)
                                         <form method="POST" action="{{ route('admin.users.destroy', $member) }}" onsubmit="return confirm('Delete this registered user? This action cannot be undone.');">
                                             @csrf
                                             @method('DELETE')
@@ -144,9 +147,13 @@
                                                 Delete
                                             </button>
                                         </form>
-                                    @else
+                                    @elseif($isProtectedAccount)
                                         <span style="display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; background:#e2e8f0; color:#334155;">
                                             Protected
+                                        </span>
+                                    @elseif(!$hasAdminUserPhoneRoute || !$hasAdminUserStatusRoute || !$hasAdminUserDeleteRoute)
+                                        <span style="display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; background:#f8fafc; color:#64748b;">
+                                            Update routes
                                         </span>
                                     @endif
                                 </div>
