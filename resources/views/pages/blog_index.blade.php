@@ -162,17 +162,20 @@
     </style>
 </head>
 <body>
+    @php
+        $siteHomeUrl = route('home', ['landing' => 1]);
+    @endphp
     <div class="dark-nav">
-        <a href="{{ route('site.home') }}#products">Products</a>
-        <a href="{{ route('site.home') }}#pricing">Pricing</a>
-        <a href="{{ route('site.home') }}#resources">Resources</a>
-        <a href="{{ route('site.home') }}#company">Company</a>
-        <a href="{{ route('site.home') }}#app-center">App Center</a>
-        <a href="{{ route('site.home') }}#enterprise">Enterprise</a>
+        <a href="{{ $siteHomeUrl }}#products">Products</a>
+        <a href="{{ $siteHomeUrl }}#pricing">Pricing</a>
+        <a href="{{ $siteHomeUrl }}#resources">Resources</a>
+        <a href="{{ $siteHomeUrl }}#company">Company</a>
+        <a href="{{ $siteHomeUrl }}#app-center">App Center</a>
+        <a href="{{ $siteHomeUrl }}#enterprise">Enterprise</a>
     </div>
     <div class="main-nav">
-        <a href="{{ route('site.home') }}" class="brand" style="text-decoration:none; color:inherit;"><span class="badge">TP</span><span>Tiwi Blog</span></a>
-        <a href="{{ route('site.home') }}" style="font-weight:700; color:#0f172a; text-decoration:none;">Main Site</a>
+        <a href="{{ $siteHomeUrl }}" class="brand" style="text-decoration:none; color:inherit;"><span class="badge">TP</span><span>Tiwi Blog</span></a>
+        <a href="{{ $siteHomeUrl }}" style="font-weight:700; color:#0f172a; text-decoration:none;">Main Site</a>
     </div>
 
     <section class="hero">

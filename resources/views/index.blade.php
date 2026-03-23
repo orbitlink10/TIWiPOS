@@ -347,6 +347,9 @@
     </style>
 </head>
 <body>
+    @php
+        $siteHomeUrl = route('home', ['landing' => 1]);
+    @endphp
     <header class="nav-bar">
         <div class="nav-inner">
             <div class="brand">
@@ -357,7 +360,7 @@
                 </div>
             </div>
             <nav>
-                <a class="nav-link active" href="{{ route('site.home') }}">Home</a>
+                <a class="nav-link active" href="{{ $siteHomeUrl }}">Home</a>
                 <a class="nav-link" href="#products">Products</a>
                 <a class="nav-link" href="#pricing">Pricing</a>
                 <a class="nav-link" href="#resources">Resources</a>

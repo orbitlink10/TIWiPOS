@@ -28,6 +28,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     @php
+        $siteHomeUrl = route('home', ['landing' => 1]);
         $breadcrumbJsonLd = [
             '@context' => 'https://schema.org',
             '@type' => 'BreadcrumbList',
@@ -36,7 +37,7 @@
                     '@type' => 'ListItem',
                     'position' => 1,
                     'name' => 'Home',
-                    'item' => route('site.home'),
+                    'item' => $siteHomeUrl,
                 ],
                 [
                     '@type' => 'ListItem',
@@ -288,22 +289,22 @@
 </head>
 <body>
     <div class="dark-nav">
-        <a href="{{ route('site.home') }}#products">Products</a>
-        <a href="{{ route('site.home') }}#pricing">Pricing</a>
-        <a href="{{ route('site.home') }}#resources">Resources</a>
-        <a href="{{ route('site.home') }}#company">Company</a>
-        <a href="{{ route('site.home') }}#app-center">App Center</a>
-        <a href="{{ route('site.home') }}#enterprise">Enterprise</a>
+        <a href="{{ $siteHomeUrl }}#products">Products</a>
+        <a href="{{ $siteHomeUrl }}#pricing">Pricing</a>
+        <a href="{{ $siteHomeUrl }}#resources">Resources</a>
+        <a href="{{ $siteHomeUrl }}#company">Company</a>
+        <a href="{{ $siteHomeUrl }}#app-center">App Center</a>
+        <a href="{{ $siteHomeUrl }}#enterprise">Enterprise</a>
     </div>
 
     <div class="main-nav">
-        <a href="{{ route('site.home') }}" class="brand" style="text-decoration:none; color:inherit;">
+        <a href="{{ $siteHomeUrl }}" class="brand" style="text-decoration:none; color:inherit;">
             <span class="brand-badge">TP</span>
             <span>Tiwi Blog</span>
         </a>
         <div class="main-links">
             <a href="{{ route('blog.index') }}">Blog</a>
-            <a href="{{ route('site.home') }}">Main Site</a>
+            <a href="{{ $siteHomeUrl }}">Main Site</a>
             @auth
                 @if(auth()->user()->is_super_admin)
                 <a href="{{ route('content.index') }}">Dashboard</a>

@@ -8,6 +8,7 @@ use App\Models\SaleItem;
 use App\Support\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
@@ -19,8 +20,12 @@ class HomeController extends Controller
     /**
      * Display the application home page.
      */
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->boolean('landing')) {
+            return $this->landing();
+        }
+
         if (! auth()->check()) {
             return $this->landing();
         }

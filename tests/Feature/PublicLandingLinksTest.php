@@ -12,7 +12,7 @@ class PublicLandingLinksTest extends TestCase
 
     public function test_public_site_has_marketing_section_anchors(): void
     {
-        $response = $this->get(route('site.home'));
+        $response = $this->get(route('home', ['landing' => 1]));
 
         $response->assertOk();
         $response->assertSee('id="products"', false);
@@ -37,12 +37,14 @@ class PublicLandingLinksTest extends TestCase
 
         $blogResponse = $this->get(route('blog.index'));
         $blogResponse->assertOk();
-        $blogResponse->assertSee(route('site.home') . '#products');
-        $blogResponse->assertSee(route('site.home'));
+        $siteHomeUrl = route('home', ['landing' => 1]);
+
+        $blogResponse->assertSee($siteHomeUrl . '#products');
+        $blogResponse->assertSee($siteHomeUrl);
 
         $postResponse = $this->get(route('post.show', ['post' => $post->slug]));
         $postResponse->assertOk();
-        $postResponse->assertSee(route('site.home') . '#enterprise');
-        $postResponse->assertSee(route('site.home'));
+        $postResponse->assertSee($siteHomeUrl . '#enterprise');
+        $postResponse->assertSee($siteHomeUrl);
     }
 }
