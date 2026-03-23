@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Tenants')
+@section('title', 'Admin Console')
 
 @section('header')
     <div class="header-row">
-        <h1>Tenants</h1>
+        <h1>Admin Console</h1>
         <a class="btn" href="{{ route('home') }}">Back</a>
     </div>
 @endsection
@@ -18,13 +18,14 @@
             </div>
         @endif
         <div style="overflow:auto; margin-top:12px;">
-            <table style="width:100%; min-width:720px; border-collapse:collapse; font-size:14px;">
+            <table style="width:100%; min-width:780px; border-collapse:collapse; font-size:14px;">
                 <thead>
                     <tr style="background:#f7f7fb;">
                         <th style="padding:10px; text-align:left;">Name</th>
                         <th style="padding:10px; text-align:left;">Status</th>
                         <th style="padding:10px; text-align:left;">Sub status</th>
                         <th style="padding:10px; text-align:left;">Period end</th>
+                        <th style="padding:10px; text-align:left;">Users</th>
                         <th style="padding:10px; text-align:left;">Actions</th>
                     </tr>
                 </thead>
@@ -35,6 +36,7 @@
                             <td style="padding:10px;">{{ $tenant->status }}</td>
                             <td style="padding:10px;">{{ $tenant->subscription_status }}</td>
                             <td style="padding:10px;">{{ optional($tenant->current_period_end)->toDateString() }}</td>
+                            <td style="padding:10px;">{{ $tenant->users_count }}</td>
                             <td style="padding:10px; display:flex; gap:8px; flex-wrap:wrap;">
                                 <form method="POST" action="{{ route('admin.tenants.activate', $tenant) }}">
                                     @csrf
@@ -51,6 +53,52 @@
                             </td>
                         </tr>
                     @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px;">
+        <div class="header-row" style="margin-bottom:0;">
+            <div>
+                <h2>Registered users</h2>
+                <p style="margin:6px 0 0; color:var(--muted);">System-wide user directory visible to super admin.</p>
+            </div>
+            <div style="font-weight:700; color:var(--muted);">{{ $users->count() }} accounts</div>
+        </div>
+        <div style="overflow:auto; margin-top:12px;">
+            <table style="width:100%; min-width:960px; border-collapse:collapse; font-size:14px;">
+                <thead>
+                    <tr style="background:#f7f7fb;">
+                        <th style="padding:10px; text-align:left;">Name</th>
+                        <th style="padding:10px; text-align:left;">Email</th>
+                        <th style="padding:10px; text-align:left;">Business</th>
+                        <th style="padding:10px; text-align:left;">Branch</th>
+                        <th style="padding:10px; text-align:left;">Role</th>
+                        <th style="padding:10px; text-align:left;">Status</th>
+                        <th style="padding:10px; text-align:left;">Access</th>
+                        <th style="padding:10px; text-align:left;">Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($users as $member)
+                        <tr style="border-top:1px solid #e5e7eb; {{ $member->is_super_admin ? 'background:rgba(15,127,167,0.05);' : '' }}">
+                            <td style="padding:10px; font-weight:700;">{{ $member->name }}</td>
+                            <td style="padding:10px;">{{ $member->email }}</td>
+                            <td style="padding:10px;">{{ $member->business?->name ?? 'No business assigned' }}</td>
+                            <td style="padding:10px;">{{ $member->branch?->name ?? 'No branch assigned' }}</td>
+                            <td style="padding:10px;">{{ ucfirst($member->role) }}</td>
+                            <td style="padding:10px; color:{{ $member->is_active ? '#0f9d6f' : '#dc3545' }};">
+                                {{ $member->is_active ? 'Active' : 'Inactive' }}
+                            </td>
+                            <td style="padding:10px;">{{ $member->is_super_admin ? 'Super admin' : 'Standard user' }}</td>
+                            <td style="padding:10px;">{{ optional($member->created_at)->toDateString() }}</td>
+                        </tr>
+                    @empty
+                        <tr style="border-top:1px solid #e5e7eb;">
+                            <td colspan="8" style="padding:14px; color:var(--muted);">No registered users found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

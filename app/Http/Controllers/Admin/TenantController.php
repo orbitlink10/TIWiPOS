@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\SubscriptionEvent;
+use App\Models\User;
 use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 
@@ -16,8 +17,18 @@ class TenantController extends Controller
 
     public function index()
     {
-        $tenants = Business::with('subscriptions')->orderBy('name')->get();
-        return view('pages.admin.tenants', compact('tenants'));
+        $tenants = Business::with('subscriptions')
+            ->withCount('users')
+            ->orderBy('name')
+            ->get();
+
+        $users = User::with(['business', 'branch'])
+            ->orderByDesc('is_super_admin')
+            ->orderByDesc('created_at')
+            ->orderBy('name')
+            ->get();
+
+        return view('pages.admin.tenants', compact('tenants', 'users'));
     }
 
     public function activate(Business $business)
