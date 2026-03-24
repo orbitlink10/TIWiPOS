@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -182,9 +183,14 @@ class SaleController extends Controller
 
     public function store(Request $request)
     {
+        $businessId = Tenant::businessId();
+
         $data = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'nullable|numeric|min:0',
             'method' => 'required|in:cash,card,bank,mobile,other',
@@ -321,10 +327,14 @@ class SaleController extends Controller
     public function update(Request $request, Sale $sale)
     {
         $this->ensureAdmin();
+        $businessId = Tenant::businessId();
 
         $data = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'method' => 'required|in:cash,card,bank,mobile,other',
             'apply_tax' => 'nullable|boolean',

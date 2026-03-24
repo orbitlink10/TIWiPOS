@@ -19,12 +19,24 @@ return new class extends Migration
             }
         });
 
-        DB::statement('
-            UPDATE sale_items si
-            INNER JOIN sales s ON s.id = si.sale_id
-            SET si.branch_id = s.branch_id
-            WHERE si.branch_id IS NULL
-        ');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('
+                UPDATE sale_items
+                SET branch_id = (
+                    SELECT sales.branch_id
+                    FROM sales
+                    WHERE sales.id = sale_items.sale_id
+                )
+                WHERE branch_id IS NULL
+            ');
+        } else {
+            DB::statement('
+                UPDATE sale_items si
+                INNER JOIN sales s ON s.id = si.sale_id
+                SET si.branch_id = s.branch_id
+                WHERE si.branch_id IS NULL
+            ');
+        }
     }
 
     /**
@@ -40,4 +52,3 @@ return new class extends Migration
         });
     }
 };
-

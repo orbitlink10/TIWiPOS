@@ -65,13 +65,23 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        $businessId = Tenant::businessId();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|max:255',
             'serial_number' => 'required|string|max:255|unique:products,serial_number',
             'barcode' => 'nullable|string|max:255',
-            'category_id' => 'required|integer|exists:categories,id',
-            'supplier_id' => 'nullable|integer',
+            'category_id' => [
+                'required',
+                'integer',
+                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
+            'supplier_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('suppliers', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
             'cost' => 'required|numeric|gt:0',
             'price' => 'required|numeric|min:0',
             'stock_alert' => 'nullable|integer|min:0',
@@ -120,13 +130,23 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        $businessId = Tenant::businessId();
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|max:255',
             'serial_number' => ['required', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
             'barcode' => 'nullable|string|max:255',
-            'category_id' => 'required|integer|exists:categories,id',
-            'supplier_id' => 'nullable|integer',
+            'category_id' => [
+                'required',
+                'integer',
+                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
+            'supplier_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('suppliers', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
             'cost' => 'required|numeric|gt:0',
             'price' => 'required|numeric|min:0',
             'stock_alert' => 'nullable|integer|min:0',

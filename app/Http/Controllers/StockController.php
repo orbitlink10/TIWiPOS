@@ -46,8 +46,13 @@ class StockController extends Controller
 
     public function adjustStore(Request $request)
     {
+        $businessId = Tenant::businessId();
+
         $data = $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => [
+                'required',
+                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
             'serial_numbers' => 'required|string',
             'location' => 'nullable|string|max:100',
             'stock_date' => 'nullable|date',

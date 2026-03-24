@@ -10,6 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE `stock_movements`
             MODIFY COLUMN `type` ENUM('sale', 'sale_edit', 'purchase', 'adjustment', 'correction', 'return')
@@ -22,6 +26,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE `stock_movements`
             MODIFY COLUMN `type` ENUM('sale', 'purchase', 'adjustment', 'return')
@@ -29,4 +37,3 @@ return new class extends Migration
         ");
     }
 };
-
