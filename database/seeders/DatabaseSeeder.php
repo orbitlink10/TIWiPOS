@@ -24,31 +24,31 @@ class DatabaseSeeder extends Seeder
                 ->value('id')
             : null;
 
-        $superAdmin = User::firstOrNew([
+        $user = User::firstOrNew([
             'email' => 'reisenseo@gmail.com',
         ]);
 
-        if (!$superAdmin->exists) {
-            $superAdmin->name = 'Super Admin';
-            $superAdmin->password = bcrypt('admin123');
-            $superAdmin->email_verified_at = now();
+        if (!$user->exists) {
+            $user->name = 'Super Admin';
+            $user->password = bcrypt('admin123');
+            $user->email_verified_at = now();
         }
 
-        if (!$superAdmin->business_id) {
-            $superAdmin->business_id = $businessId;
+        if (!$user->business_id) {
+            $user->business_id = $businessId;
         }
 
-        if (!$superAdmin->branch_id) {
-            $superAdmin->branch_id = $branchId;
+        if (!$user->branch_id) {
+            $user->branch_id = $branchId;
         }
 
-        if (blank($superAdmin->name)) {
-            $superAdmin->name = 'Super Admin';
+        if (blank($user->name)) {
+            $user->name = 'Super Admin';
         }
 
-        $superAdmin->role = User::ROLE_OWNER;
-        $superAdmin->is_active = true;
-        $superAdmin->is_super_admin = true;
-        $superAdmin->save();
+        $user->role = User::ROLE_OWNER;
+        $user->is_active = true;
+        $user->is_super_admin = false;
+        $user->save();
     }
 }

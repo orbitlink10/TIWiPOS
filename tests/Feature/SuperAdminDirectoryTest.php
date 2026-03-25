@@ -16,6 +16,8 @@ class SuperAdminDirectoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    private ?User $superAdminUser = null;
+
     public function test_super_admin_can_view_registered_users_from_admin_console(): void
     {
         [$firstBusiness, $firstBranch] = $this->createActiveTenant('Alpha Stores', 'alpha@example.com');
@@ -39,7 +41,7 @@ class SuperAdminDirectoryTest extends TestCase
             'role' => User::ROLE_STAFF,
         ]);
 
-        $superAdmin = User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
+        $superAdmin = $this->superAdmin();
 
         $response = $this->actingAs($superAdmin)->get(route('admin.tenants.index'));
 
@@ -52,7 +54,7 @@ class SuperAdminDirectoryTest extends TestCase
         $response->assertSee($secondStaff->phone);
         $response->assertSee($firstBusiness->name);
         $response->assertSee($secondBusiness->name);
-        $response->assertSee('reisenseo@gmail.com');
+        $response->assertSee($superAdmin->email);
     }
 
     public function test_non_super_admin_cannot_view_admin_console(): void
@@ -224,7 +226,7 @@ class SuperAdminDirectoryTest extends TestCase
         ]);
     }
 
-    public function test_database_seeder_promotes_reisenseo_account_without_resetting_password(): void
+    public function test_database_seeder_keeps_reisenseo_out_of_super_admin_without_resetting_password(): void
     {
         $superAdmin = User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
 
@@ -245,7 +247,7 @@ class SuperAdminDirectoryTest extends TestCase
 
         $this->assertSame(User::ROLE_OWNER, $superAdmin->role);
         $this->assertTrue($superAdmin->is_active);
-        $this->assertTrue($superAdmin->is_super_admin);
+        $this->assertFalse($superAdmin->is_super_admin);
         $this->assertSame('Francis', $superAdmin->name);
         $this->assertTrue(Hash::check('custom-secret', $superAdmin->password));
     }
@@ -287,6 +289,12 @@ class SuperAdminDirectoryTest extends TestCase
 
     private function superAdmin(): User
     {
-        return User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
+        return $this->superAdminUser ??= User::factory()->create([
+            'name' => 'Test Super Admin',
+            'email' => 'super-admin@example.com',
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+            'is_super_admin' => true,
+        ]);
     }
 }

@@ -44,7 +44,7 @@ class UserPhoneAndContentAccessTest extends TestCase
 
     public function test_super_admin_can_access_pages_cms(): void
     {
-        $superAdmin = User::query()->where('email', 'reisenseo@gmail.com')->firstOrFail();
+        $superAdmin = $this->createSuperAdmin();
 
         $response = $this->actingAs($superAdmin)->get(route('content.index'));
 
@@ -93,5 +93,16 @@ class UserPhoneAndContentAccessTest extends TestCase
         ]);
 
         return [$business, $branch, $owner];
+    }
+
+    private function createSuperAdmin(): User
+    {
+        return User::factory()->create([
+            'name' => 'Test Super Admin',
+            'email' => 'super-admin@example.com',
+            'role' => User::ROLE_OWNER,
+            'is_active' => true,
+            'is_super_admin' => true,
+        ]);
     }
 }
