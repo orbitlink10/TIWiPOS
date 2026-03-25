@@ -149,6 +149,16 @@ class User extends Authenticatable
         return $this->canViewFinancials();
     }
 
+    public function canViewAllSales(): bool
+    {
+        return $this->is_super_admin || $this->isOwner() || $this->isManager();
+    }
+
+    public function canAccessSaleRecord(Sale $sale): bool
+    {
+        return $this->canViewAllSales() || (int) $sale->user_id === (int) $this->id;
+    }
+
     public function canAccessAbility(string $ability): bool
     {
         if ($this->is_super_admin) {

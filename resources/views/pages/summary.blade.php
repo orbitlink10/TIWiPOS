@@ -13,6 +13,11 @@
     <div class="panel">
         <h2>Overview</h2>
         <p style="color: var(--muted); margin-top:6px;">Snapshot of today's performance.</p>
+        @if($showingOwnSalesOnly ?? false)
+            <div style="margin-top:8px; color:#0f766e; font-weight:700;">
+                Showing your sales only.
+            </div>
+        @endif
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px;">
             <div class="kpi-card green">
                 <div style="font-size:22px;">KES {{ number_format($todaySalesTotal, 2) }}</div>

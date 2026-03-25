@@ -16,6 +16,11 @@
     <div class="panel">
         <h2>All sales</h2>
         <p style="color: var(--muted); margin-top:6px;">Search, view, reprint, or edit past sales.</p>
+        @if($showingOwnSalesOnly ?? false)
+            <div style="margin-top:8px; color:#0f766e; font-weight:700;">
+                Showing your sales only.
+            </div>
+        @endif
         @isset($currentBusiness)
             @if($currentBusiness->subscription_status !== 'active')
                 <div style="margin-top:8px; padding:8px 10px; border-radius:10px; background:#fff1f2; color:#991b1b; font-weight:700;">

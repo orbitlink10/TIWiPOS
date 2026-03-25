@@ -2,12 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use App\Support\Tenant;
 use Illuminate\Support\Facades\Schema;
 
 class PageController extends Controller
 {
+    private function visibleSales(Builder $query, string $table = 'sales'): Builder
+    {
+        $user = auth()->user();
+
+        if ($user && !$user->canViewAllSales()) {
+            $query->where($table . '.user_id', $user->id);
+        }
+
+        return $query;
+    }
+
     public function stock()
     {
         $branchId = Tenant::branchId();
@@ -68,27 +81,28 @@ class PageController extends Controller
     public function summary()
     {
         $canViewProfit = auth()->user()->canViewProfit();
+        $showingOwnSalesOnly = !auth()->user()->canViewAllSales();
         $today = now()->toDateString();
         $branchId = Tenant::branchId();
 
-        $todaySalesTotal = \App\Models\Sale::where('status', 'completed')
+        $todaySalesTotal = $this->visibleSales(Sale::where('status', 'completed'))
             ->whereDate('created_at', $today)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->sum('total');
 
-        $todayOrders = \App\Models\Sale::where('status', 'completed')
+        $todayOrders = $this->visibleSales(Sale::where('status', 'completed'))
             ->whereDate('created_at', $today)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->count();
 
-        $todayCustomers = \App\Models\Sale::where('status', 'completed')
+        $todayCustomers = $this->visibleSales(Sale::where('status', 'completed'))
             ->whereDate('created_at', $today)
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->whereNotNull('customer_id')
             ->distinct('customer_id')
             ->count('customer_id');
 
-        $recentSales = \App\Models\Sale::where('status', 'completed')
+        $recentSales = $this->visibleSales(Sale::where('status', 'completed'))
             ->with(['items.product'])
             ->orderByDesc('created_at')
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
@@ -103,6 +117,7 @@ class PageController extends Controller
             $todayProfit = \App\Models\SaleItem::query()
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->when($showingOwnSalesOnly, fn ($q) => $q->where('sales.user_id', auth()->id()))
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
@@ -112,6 +127,7 @@ class PageController extends Controller
             $profitByProduct = \App\Models\SaleItem::query()
                 ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                 ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->when($showingOwnSalesOnly, fn ($q) => $q->where('sales.user_id', auth()->id()))
                 ->where('sales.status', 'completed')
                 ->whereDate('sales.created_at', $today)
                 ->when($branchId, fn($q) => $q->where('sales.branch_id', $branchId))
@@ -121,7 +137,7 @@ class PageController extends Controller
                 ->get();
         }
 
-        return view('pages.summary', compact('todaySalesTotal', 'todayOrders', 'todayCustomers', 'recentSales', 'todayProfit', 'profitByProduct', 'canViewProfit'));
+        return view('pages.summary', compact('todaySalesTotal', 'todayOrders', 'todayCustomers', 'recentSales', 'todayProfit', 'profitByProduct', 'canViewProfit', 'showingOwnSalesOnly'));
     }
 
     private function saleItemCostExpression(): string

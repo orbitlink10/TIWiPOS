@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +24,24 @@ class SaleController extends Controller
     private static ?bool $saleItemsHasUnitCost = null;
 
     protected $lastSaleId;
+
+    private function visibleSales(Builder $query, string $table = 'sales'): Builder
+    {
+        $user = auth()->user();
+
+        if ($user && !$user->canViewAllSales()) {
+            $query->where($table . '.user_id', $user->id);
+        }
+
+        return $query;
+    }
+
+    private function ensureSaleIsVisible(Sale $sale): void
+    {
+        if (!auth()->user()->canAccessSaleRecord($sale)) {
+            abort(404);
+        }
+    }
 
     protected function ensureAdmin(): void
     {
@@ -104,7 +123,8 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         $canViewProfit = auth()->user()->canViewProfit();
-        $query = Sale::withoutGlobalScope('branch')
+        $showingOwnSalesOnly = !auth()->user()->canViewAllSales();
+        $query = $this->visibleSales(Sale::withoutGlobalScope('branch'))
             ->with([
                 'items' => function ($query) {
                     $query->withoutGlobalScope('branch')->with('product');
@@ -148,7 +168,7 @@ class SaleController extends Controller
             });
         }
 
-        return view('pages.sales_index', compact('sales', 'canViewProfit'));
+        return view('pages.sales_index', compact('sales', 'canViewProfit', 'showingOwnSalesOnly'));
     }
 
     public function create()
@@ -307,6 +327,7 @@ class SaleController extends Controller
 
     public function edit(Sale $sale)
     {
+        $this->ensureSaleIsVisible($sale);
         $this->ensureAdmin();
         $branchId = $sale->branch_id ?? Tenant::branchId();
 
@@ -326,6 +347,7 @@ class SaleController extends Controller
 
     public function update(Request $request, Sale $sale)
     {
+        $this->ensureSaleIsVisible($sale);
         $this->ensureAdmin();
         $businessId = Tenant::businessId();
 
@@ -500,6 +522,7 @@ class SaleController extends Controller
 
     public function receipt(Sale $sale)
     {
+        $this->ensureSaleIsVisible($sale);
         $sale->load(['items.product', 'payments']);
         return view('pages.receipt', compact('sale'));
     }
