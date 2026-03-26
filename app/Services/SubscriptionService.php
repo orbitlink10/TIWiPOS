@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class SubscriptionService
 {
+    private ?bool $paymentsSaleIdAllowsNull = null;
+
     public function checkAndUpdate(Business $business): bool
     {
         $subscription = $business->subscriptions()
@@ -92,22 +94,28 @@ class SubscriptionService
 
             $payment = null;
             $paymentEventNotes = 'Payment recorded';
+            $shouldPersistPayment = ($paymentAttributes['sale_id'] ?? null) !== null || $this->paymentsTableAllowsNullSaleId();
 
-            try {
-                $payment = Payment::create($paymentAttributes);
-            } catch (QueryException $e) {
-                $message = strtolower($e->getMessage());
+            if ($shouldPersistPayment) {
+                try {
+                    $payment = Payment::create($paymentAttributes);
+                } catch (QueryException $e) {
+                    $message = strtolower($e->getMessage());
 
-                if (
-                    ($paymentAttributes['sale_id'] ?? null) === null
-                    && str_contains($message, 'sale_id')
-                    && (str_contains($message, 'cannot be null') || str_contains($message, "doesn't have a default value"))
-                ) {
-                    $payment = new Payment($paymentAttributes);
-                    $paymentEventNotes = 'Payment captured without a payments row because payments.sale_id is still required in the database schema.';
-                } else {
-                    throw $e;
+                    if (
+                        ($paymentAttributes['sale_id'] ?? null) === null
+                        && str_contains($message, 'sale_id')
+                        && (str_contains($message, 'cannot be null') || str_contains($message, "doesn't have a default value"))
+                    ) {
+                        $payment = new Payment($paymentAttributes);
+                        $paymentEventNotes = 'Payment captured without a payments row because payments.sale_id is still required in the database schema.';
+                    } else {
+                        throw $e;
+                    }
                 }
+            } else {
+                $payment = new Payment($paymentAttributes);
+                $paymentEventNotes = 'Payment captured without a payments row because payments.sale_id is still required in the database schema.';
             }
 
             $this->recordEvent($business, $subscription, 'payment', $business->subscription_status, 'active', $paymentEventNotes);
@@ -142,5 +150,21 @@ class SubscriptionService
             'new_status' => $new,
             'notes' => $notes,
         ]);
+    }
+
+    private function paymentsTableAllowsNullSaleId(): bool
+    {
+        if ($this->paymentsSaleIdAllowsNull !== null) {
+            return $this->paymentsSaleIdAllowsNull;
+        }
+
+        try {
+            $column = DB::selectOne("SHOW COLUMNS FROM payments LIKE 'sale_id'");
+            $this->paymentsSaleIdAllowsNull = strtoupper((string) ($column->Null ?? 'NO')) === 'YES';
+        } catch (\Throwable $e) {
+            $this->paymentsSaleIdAllowsNull = true;
+        }
+
+        return $this->paymentsSaleIdAllowsNull;
     }
 }
