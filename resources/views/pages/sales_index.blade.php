@@ -84,7 +84,7 @@
 
         @if($sales->hasPages())
             <div style="margin-top:12px;">
-                {{ $sales->links() }}
+                {{ $sales->links('pagination.app') }}
             </div>
         @endif
     </div>

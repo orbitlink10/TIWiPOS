@@ -283,7 +283,7 @@
             </form>
 
             <div style="padding: 0 20px 16px;">
-                {{ $posts->links() }}
+                {{ $posts->links('pagination.app') }}
             </div>
         </div>
     </div>

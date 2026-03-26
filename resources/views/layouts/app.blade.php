@@ -352,6 +352,81 @@
             border-spacing: 0;
         }
 
+        .app-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .app-pagination__meta {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .app-pagination__meta strong {
+            color: var(--text);
+        }
+
+        .app-pagination__controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .app-pagination__link,
+        .app-pagination__current,
+        .app-pagination__separator {
+            min-width: 42px;
+            height: 42px;
+            padding: 0 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1;
+            text-decoration: none;
+        }
+
+        .app-pagination__link {
+            color: var(--text);
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .app-pagination__link:hover {
+            transform: translateY(-1px);
+            border-color: #bfd0e6;
+            background: var(--bg-2);
+        }
+
+        .app-pagination__link.is-disabled {
+            color: var(--muted);
+            background: #f8fbff;
+            pointer-events: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .app-pagination__current {
+            color: #fff;
+            border-color: transparent;
+            background: linear-gradient(135deg, var(--accent) 0%, #0f6f9d 100%);
+            box-shadow: 0 10px 24px rgba(15, 127, 167, 0.24);
+        }
+
+        .app-pagination__separator {
+            color: var(--muted);
+            background: transparent;
+            border-style: dashed;
+        }
+
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
@@ -392,6 +467,7 @@
 
             main { padding: 16px; }
             h1 { font-size: 26px; }
+            .app-pagination__controls { width: 100%; }
         }
     </style>
     @stack('styles')
