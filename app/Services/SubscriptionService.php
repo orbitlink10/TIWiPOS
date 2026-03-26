@@ -77,6 +77,7 @@ class SubscriptionService
             $payment = Payment::create([
                 'business_id' => $business->id,
                 'branch_id' => null,
+                'sale_id' => null,
                 'subscription_id' => $subscription->id,
                 'method' => $payload['method'] ?? 'other',
                 'amount' => $payload['amount'] ?? 0,

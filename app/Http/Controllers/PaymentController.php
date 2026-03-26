@@ -26,7 +26,7 @@ class PaymentController extends Controller
 
         $business = $request->user()->business;
         $payment = $this->subscriptionService->recordPaymentAndActivate($business, array_merge($data, [
-            'method' => 'manual',
+            'method' => 'other',
         ]));
 
         return response()->json(['payment' => $payment], 201);

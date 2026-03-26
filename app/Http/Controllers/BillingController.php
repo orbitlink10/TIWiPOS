@@ -40,7 +40,7 @@ class BillingController extends Controller
             'provider_ref' => $data['provider_ref'] ?? null,
             'plan_id' => $data['plan_id'] ?? null,
             'status' => 'success',
-            'method' => 'manual',
+            'method' => 'other',
             'raw_payload' => $data,
         ]);
 
