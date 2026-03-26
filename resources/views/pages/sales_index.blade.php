@@ -57,7 +57,7 @@
                         <tr style="border-top:1px solid #e5e7eb;">
                             <td style="padding:10px; font-weight:700;">{{ $sale->sale_number }}</td>
                             <td style="padding:10px;">{{ $sale->customer_name ?? 'Walk-in' }}</td>
-                            <td style="padding:10px;">{{ $sale->user->name ?? 'N/A' }}</td>
+                            <td style="padding:10px;">{{ $sale->user->display_name ?? 'N/A' }}</td>
                             <td style="padding:10px; text-align:right;">KES {{ number_format($sale->total, 2) }}</td>
                             @if($canViewProfit ?? false)
                                 <td style="padding:10px; text-align:right; font-weight:700; color:#166534;">

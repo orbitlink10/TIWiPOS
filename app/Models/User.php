@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -187,6 +188,32 @@ class User extends Authenticatable
         }
 
         return Storage::disk('public')->url($path);
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $name = trim((string) $this->name);
+
+        if ($name !== '' && !filter_var($name, FILTER_VALIDATE_EMAIL)) {
+            return $name;
+        }
+
+        $emailSource = $name !== '' ? $name : trim((string) $this->email);
+        if ($emailSource !== '' && filter_var($emailSource, FILTER_VALIDATE_EMAIL)) {
+            $localPart = Str::before($emailSource, '@');
+            $normalized = preg_replace('/[._-]+/', ' ', $localPart) ?? $localPart;
+            $display = Str::of($normalized)->trim()->title()->toString();
+
+            return $display !== '' ? $display : $emailSource;
+        }
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        $email = trim((string) $this->email);
+
+        return $email !== '' ? $email : 'Unknown User';
     }
 
     public function business()
