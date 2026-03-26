@@ -48,7 +48,7 @@
                         @endif
                         <th style="text-align:left; padding:10px;">Payment</th>
                         <th style="text-align:left; padding:10px;">Date</th>
-                        <th style="text-align:right; padding:10px;">Actions</th>
+                        <th style="text-align:right; padding:10px;">Receipt</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,11 +66,8 @@
                             @endif
                             <td style="padding:10px;">{{ $payment->method ?? 'N/A' }}</td>
                             <td style="padding:10px;">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
-                            <td style="padding:10px; text-align:right; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+                            <td style="padding:10px; text-align:right;">
                                 <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
-                                @if(auth()->user()->canAccessAbility('edit_sales') && optional($currentBusiness)->subscription_status === 'active')
-                                    <a class="btn" style="padding:8px 12px; font-size:13px; background:#f59e0b;" href="{{ route('sales.edit', $sale) }}">Edit</a>
-                                @endif
                             </td>
                         </tr>
                     @empty
