@@ -520,10 +520,22 @@ class SaleController extends Controller
         return redirect()->route('sale.receipt', $sale->id)->with('status', 'Sale updated.');
     }
 
-    public function receipt(Sale $sale)
+    public function receipt($sale)
     {
+        $sale = Sale::withoutGlobalScope('branch')
+            ->with([
+                'items' => function ($query) {
+                    $query->withoutGlobalScope('branch')->with('product');
+                },
+                'payments' => function ($query) {
+                    $query->withoutGlobalScope('branch');
+                },
+            ])
+            ->whereKey($sale)
+            ->firstOrFail();
+
         $this->ensureSaleIsVisible($sale);
-        $sale->load(['items.product', 'payments']);
+
         return view('pages.receipt', compact('sale'));
     }
 }
