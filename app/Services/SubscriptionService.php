@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionEvent;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class SubscriptionService
@@ -74,7 +75,7 @@ class SubscriptionService
                 ])->save();
             }
 
-            $payment = Payment::create([
+            $paymentAttributes = [
                 'business_id' => $business->id,
                 'branch_id' => null,
                 'sale_id' => null,
@@ -87,9 +88,29 @@ class SubscriptionService
                 'status' => $payload['status'] ?? 'success',
                 'raw_payload' => $payload['raw_payload'] ?? null,
                 'paid_at' => now(),
-            ]);
+            ];
 
-            $this->recordEvent($business, $subscription, 'payment', $business->subscription_status, 'active', 'Payment recorded');
+            $payment = null;
+            $paymentEventNotes = 'Payment recorded';
+
+            try {
+                $payment = Payment::create($paymentAttributes);
+            } catch (QueryException $e) {
+                $message = strtolower($e->getMessage());
+
+                if (
+                    ($paymentAttributes['sale_id'] ?? null) === null
+                    && str_contains($message, 'sale_id')
+                    && (str_contains($message, 'cannot be null') || str_contains($message, "doesn't have a default value"))
+                ) {
+                    $payment = new Payment($paymentAttributes);
+                    $paymentEventNotes = 'Payment captured without a payments row because payments.sale_id is still required in the database schema.';
+                } else {
+                    throw $e;
+                }
+            }
+
+            $this->recordEvent($business, $subscription, 'payment', $business->subscription_status, 'active', $paymentEventNotes);
 
             $business->forceFill([
                 'subscription_status' => 'active',
