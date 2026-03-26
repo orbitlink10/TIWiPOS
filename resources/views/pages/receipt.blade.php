@@ -124,18 +124,14 @@
                 </div>
             </div>
 
-            @if($sale->customer_name || $sale->customer_phone || $sale->customer_location)
-                <div style="margin-top:10px; padding:10px; border-radius:10px; border:1px solid #e2e8f0; background:#f8fafc;">
-                    <div style="font-weight:700; font-size:13px;">Customer</div>
-                    <div class="muted">{{ $sale->customer_name ?: 'Walk-in' }}</div>
-                    @if($sale->customer_phone)
-                        <div class="muted">{{ $sale->customer_phone }}</div>
-                    @endif
-                    @if($sale->customer_location)
-                        <div class="muted">{{ $sale->customer_location }}</div>
-                    @endif
-                </div>
-            @endif
+            <div style="margin-top:10px; padding:10px; border-radius:10px; border:1px solid #e2e8f0; background:#f8fafc;">
+                <div style="font-weight:700; font-size:13px;">Customer</div>
+                <div class="muted">Name: {{ $sale->customer_name ?: 'Walk-in' }}</div>
+                <div class="muted">Phone: {{ $sale->customer_phone ?: 'N/A' }}</div>
+                @if($sale->customer_location)
+                    <div class="muted">Location: {{ $sale->customer_location }}</div>
+                @endif
+            </div>
 
             <table>
                 <thead>
