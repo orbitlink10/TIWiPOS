@@ -62,6 +62,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/sale/receipt/{sale}', [SaleController::class, 'receipt'])->name('sale.receipt');
 
     Route::get('/products', [ProductController::class, 'index'])->name('products');
+    Route::get('/services', [PageController::class, 'services'])->name('services');
     Route::get('/products/create', [ProductController::class, 'create'])->middleware('role.ability:manage_catalog')->name('products.create');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('products.edit');
     Route::post('/products', [ProductController::class, 'store'])->middleware('role.ability:manage_catalog')->name('products.store');
