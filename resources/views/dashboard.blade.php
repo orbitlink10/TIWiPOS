@@ -126,6 +126,11 @@
                     <div class="stat-value">KES {{ number_format($stats['today'], 2) }}</div>
                     <div class="badge-soft">Daily run-rate</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tax</div>
+                    <div class="stat-value">KES {{ number_format($stats['today_tax'], 2) }}</div>
+                    <div class="badge-soft" style="background:#eef2ff;color:#3730a3;">Included in sales</div>
+                </div>
                 @if($canViewProfit ?? false)
                     <div class="stat-card">
                         <div class="stat-label">Today's Profit</div>

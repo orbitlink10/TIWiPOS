@@ -43,6 +43,7 @@ class HomeController extends Controller
         $monthSales = null;
         $weekSales = null;
         $todaySales = null;
+        $todayTax = null;
 
         if ($canViewFinancials) {
             $monthSales = Sale::query()
@@ -62,6 +63,12 @@ class HomeController extends Controller
                 ->where('status', 'completed')
                 ->whereDate('created_at', $today)
                 ->sum('total');
+
+            $todayTax = Sale::query()
+                ->withoutGlobalScope('branch')
+                ->where('status', 'completed')
+                ->whereDate('created_at', $today)
+                ->sum('tax');
         }
 
         $products = Product::query()
@@ -141,6 +148,7 @@ class HomeController extends Controller
             'this_month' => $monthSales,
             'this_week' => $weekSales,
             'today' => $todaySales,
+            'today_tax' => $todayTax,
             'today_profit' => $todayProfit,
         ];
 
