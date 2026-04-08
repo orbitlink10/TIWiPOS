@@ -13,6 +13,8 @@
 
 @section('content')
     @php($canManageCatalog = auth()->user()->canAccessAbility('manage_catalog'))
+    @php($canViewFinancials = auth()->user()->canViewFinancials())
+    @php($columnCount = 5 + ($canViewFinancials ? 1 : 0) + ($canManageCatalog ? 1 : 0))
     <div class="panel">
         <h2>Catalog</h2>
         <p style="color: var(--muted); margin-top:6px;">Manage items available for sale.</p>
@@ -45,7 +47,9 @@
                         <th style="text-align:left; padding:10px;">Name</th>
                         <th style="text-align:left; padding:10px;">SKU</th>
                         <th style="text-align:left; padding:10px;">Serial</th>
-                        <th style="text-align:right; padding:10px;">Cost</th>
+                        @if($canViewFinancials)
+                            <th style="text-align:right; padding:10px;">Cost</th>
+                        @endif
                         <th style="text-align:right; padding:10px;">Price</th>
                         <th style="text-align:right; padding:10px;">Stock</th>
                         @if($canManageCatalog)
@@ -59,7 +63,9 @@
                             <td style="padding:10px;">{{ $product->name }}</td>
                             <td style="padding:10px;">{{ $product->sku }}</td>
                             <td style="padding:10px;">{{ $product->serial_number }}</td>
-                            <td style="padding:10px; text-align:right;">KES {{ number_format($product->cost, 2) }}</td>
+                            @if($canViewFinancials)
+                                <td style="padding:10px; text-align:right;">KES {{ number_format($product->cost, 2) }}</td>
+                            @endif
                             <td style="padding:10px; text-align:right;">KES {{ number_format($product->price, 2) }}</td>
                             <td style="padding:10px; text-align:right;">{{ $product->stock_on_hand ?? 0 }}</td>
                             @if($canManageCatalog)
@@ -81,7 +87,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $canManageCatalog ? 7 : 6 }}" style="padding:12px; text-align:center; color:var(--muted);">No products yet.</td>
+                            <td colspan="{{ $columnCount }}" style="padding:12px; text-align:center; color:var(--muted);">No products yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
