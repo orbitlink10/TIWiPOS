@@ -16,7 +16,15 @@ class ServiceCategoryController extends Controller
 {
     private function catalogSchemaReady(): bool
     {
-        return Schema::hasTable('service_categories') && Schema::hasTable('services');
+        $tables = ['service_categories', 'services', 'service_workers', 'service_worker_service', 'service_visits'];
+
+        foreach ($tables as $table) {
+            if (! Schema::hasTable($table)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function create()

@@ -6,29 +6,33 @@ use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Service extends Model
+class ServiceWorker extends Model
 {
     use HasFactory, BelongsToBusiness;
 
     protected $fillable = [
         'business_id',
-        'service_category_id',
+        'branch_id',
         'name',
-        'duration_minutes',
-        'cost',
-        'price',
+        'title',
+        'phone',
+        'email',
+        'notes',
         'is_active',
-        'description',
     ];
 
-    public function category()
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function branch()
     {
-        return $this->belongsTo(ServiceCategory::class, 'service_category_id');
+        return $this->belongsTo(Branch::class);
     }
 
-    public function workers()
+    public function services()
     {
-        return $this->belongsToMany(ServiceWorker::class, 'service_worker_service')->withTimestamps();
+        return $this->belongsToMany(Service::class, 'service_worker_service')->withTimestamps();
     }
 
     public function visits()

@@ -12,6 +12,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ServiceCategoryController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServiceVisitController;
+use App\Http\Controllers\ServiceWorkerController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
@@ -79,6 +81,14 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/service-categories/create', [ServiceCategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('service-categories.create');
     Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('service-categories.store');
     Route::delete('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('service-categories.destroy');
+    Route::post('/service-workers', [ServiceWorkerController::class, 'store'])->middleware('role.ability:manage_catalog')->name('service-workers.store');
+    Route::get('/service-workers/{serviceWorker}/edit', [ServiceWorkerController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('service-workers.edit');
+    Route::put('/service-workers/{serviceWorker}', [ServiceWorkerController::class, 'update'])->middleware('role.ability:manage_catalog')->name('service-workers.update');
+    Route::patch('/service-workers/{serviceWorker}/status', [ServiceWorkerController::class, 'status'])->middleware('role.ability:manage_catalog')->name('service-workers.status');
+    Route::post('/service-visits', [ServiceVisitController::class, 'store'])->middleware('role.ability:manage_catalog')->name('service-visits.store');
+    Route::get('/service-visits/{serviceVisit}/edit', [ServiceVisitController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('service-visits.edit');
+    Route::put('/service-visits/{serviceVisit}', [ServiceVisitController::class, 'update'])->middleware('role.ability:manage_catalog')->name('service-visits.update');
+    Route::patch('/service-visits/{serviceVisit}/status', [ServiceVisitController::class, 'status'])->middleware('role.ability:manage_catalog')->name('service-visits.status');
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('categories.store');

@@ -491,7 +491,7 @@
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.*') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Make a Sale</span></a>
                 <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('categories.*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
-                <a href="{{ route('services') }}" class="{{ request()->routeIs('services*') || request()->routeIs('service-categories.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Services</span></a>
+                <a href="{{ route('services') }}" class="{{ request()->routeIs('services*') || request()->routeIs('service-categories.*') || request()->routeIs('service-workers.*') || request()->routeIs('service-visits.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Services</span></a>
                 @if(auth()->user()->canAccessAbility('manage_branches'))
                     <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
                 @endif

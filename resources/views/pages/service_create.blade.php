@@ -12,7 +12,7 @@
 @section('content')
     <div class="panel">
         <h2>Service details</h2>
-        <p style="color: var(--muted); margin-top:6px;">Register a service so it can be managed like the product catalog.</p>
+        <p style="color: var(--muted); margin-top:6px;">Register a service, then assign the stylists who are allowed to perform it.</p>
 
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
@@ -55,6 +55,27 @@
                     Duration (minutes)
                     <input name="duration_minutes" type="number" min="1" max="1440" value="{{ old('duration_minutes') }}" placeholder="45" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
+            </div>
+
+            <div>
+                <div style="font-weight:700; margin-bottom:8px;">Assign stylists to this service</div>
+                @if($workers->isEmpty())
+                    <div style="color:#b45309; font-size:14px;">
+                        No stylists are registered for the active branch yet. Use the Services page to add them first.
+                    </div>
+                @else
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;">
+                        @foreach($workers as $worker)
+                            <label style="display:flex; align-items:flex-start; gap:10px; border:1px solid #e5e7eb; border-radius:12px; padding:12px;">
+                                <input type="checkbox" name="worker_ids[]" value="{{ $worker->id }}" @checked(collect(old('worker_ids', []))->contains((string) $worker->id) || collect(old('worker_ids', []))->contains($worker->id)) style="width:18px; height:18px; margin-top:2px;">
+                                <span style="display:grid; gap:3px;">
+                                    <strong>{{ $worker->name }}</strong>
+                                    <span style="color:var(--muted); font-size:13px;">{{ $worker->title }}{{ $worker->phone ? ' · '.$worker->phone : '' }}</span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;">
