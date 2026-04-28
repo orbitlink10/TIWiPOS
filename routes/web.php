@@ -10,6 +10,8 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\ServiceCategoryController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
@@ -62,13 +64,21 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/sale/receipt/{sale}', [SaleController::class, 'receipt'])->name('sale.receipt');
 
     Route::get('/products', [ProductController::class, 'index'])->name('products');
-    Route::get('/services', [PageController::class, 'services'])->name('services');
+    Route::get('/services', [ServiceController::class, 'index'])->name('services');
     Route::get('/products/create', [ProductController::class, 'create'])->middleware('role.ability:manage_catalog')->name('products.create');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('products.edit');
     Route::post('/products', [ProductController::class, 'store'])->middleware('role.ability:manage_catalog')->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('role.ability:manage_catalog')->name('products.update');
     Route::patch('/products/{product}/status', [ProductController::class, 'status'])->middleware('role.ability:manage_catalog')->name('products.status');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('products.destroy');
+    Route::get('/services/create', [ServiceController::class, 'create'])->middleware('role.ability:manage_catalog')->name('services.create');
+    Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('services.edit');
+    Route::post('/services', [ServiceController::class, 'store'])->middleware('role.ability:manage_catalog')->name('services.store');
+    Route::put('/services/{service}', [ServiceController::class, 'update'])->middleware('role.ability:manage_catalog')->name('services.update');
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('services.destroy');
+    Route::get('/service-categories/create', [ServiceCategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('service-categories.create');
+    Route::post('/service-categories', [ServiceCategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('service-categories.store');
+    Route::delete('/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('service-categories.destroy');
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('categories.store');
