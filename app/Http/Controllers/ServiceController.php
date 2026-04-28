@@ -6,14 +6,36 @@ use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Support\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class ServiceController extends Controller
 {
+    private function catalogSchemaReady(): bool
+    {
+        return Schema::hasTable('service_categories') && Schema::hasTable('services');
+    }
+
     public function index()
     {
+        if (! $this->catalogSchemaReady()) {
+            $services = collect();
+            $serviceCategories = collect();
+            $stats = [
+                'active_services' => 0,
+                'inactive_services' => 0,
+                'categories_count' => 0,
+                'average_duration' => 0,
+                'average_price' => 0,
+            ];
+            $schemaMissing = true;
+
+            return view('pages.services', compact('services', 'serviceCategories', 'stats', 'schemaMissing'));
+        }
+
         $services = Service::with('category')->latest()->get();
         $serviceCategories = ServiceCategory::with('parent')->withCount('services')->orderBy('name')->get();
+        $schemaMissing = false;
 
         $stats = [
             'active_services' => Service::query()->where('is_active', true)->count(),
@@ -28,6 +50,10 @@ class ServiceController extends Controller
 
     public function create()
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $categories = ServiceCategory::orderBy('name')->get();
 
         return view('pages.service_create', compact('categories'));
@@ -35,6 +61,10 @@ class ServiceController extends Controller
 
     public function edit(Service $service)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $categories = ServiceCategory::orderBy('name')->get();
 
         return view('pages.service_edit', compact('service', 'categories'));
@@ -42,6 +72,10 @@ class ServiceController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $businessId = Tenant::businessId();
 
         $data = $request->validate([
@@ -90,6 +124,10 @@ class ServiceController extends Controller
 
     public function update(Request $request, Service $service)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $businessId = Tenant::businessId();
 
         $data = $request->validate([
@@ -138,6 +176,10 @@ class ServiceController extends Controller
 
     public function destroy(Service $service)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $service->delete();
 
         return redirect()->route('services')->with('status', 'Service deleted successfully.');

@@ -36,6 +36,12 @@
                 </div>
             @endif
 
+            @if(!empty($schemaMissing))
+                <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
+                    Service catalog tables are missing in this environment. Run the latest migrations to enable categories and services.
+                </div>
+            @endif
+
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-top:16px;">
                 <div class="kpi-card blue">
                     {{ $stats['active_services'] }}

@@ -8,13 +8,23 @@ use App\Support\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ServiceCategoryController extends Controller
 {
+    private function catalogSchemaReady(): bool
+    {
+        return Schema::hasTable('service_categories') && Schema::hasTable('services');
+    }
+
     public function create()
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $categories = ServiceCategory::with('parent')
             ->withCount('services')
             ->orderBy('name')
@@ -25,6 +35,10 @@ class ServiceCategoryController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $businessId = Tenant::businessId();
 
         $data = $request->validate([
@@ -73,6 +87,10 @@ class ServiceCategoryController extends Controller
 
     public function destroy(Request $request, ServiceCategory $serviceCategory)
     {
+        if (! $this->catalogSchemaReady()) {
+            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+        }
+
         $redirectTo = $request->input('redirect_to') === 'services'
             ? 'services'
             : 'service-categories.create';
