@@ -159,6 +159,59 @@ class ServiceOperationsTest extends TestCase
         $this->assertDatabaseCount('customers', 0);
     }
 
+    public function test_first_service_visit_can_auto_assign_stylist_when_service_has_no_worker_mapping(): void
+    {
+        [$business, $branch, $owner] = $this->createActiveTenant('Salon First Assign', 'salon-first-assign@example.com');
+
+        $category = ServiceCategory::create([
+            'business_id' => $business->id,
+            'name' => 'Nails',
+            'slug' => 'nails-'.Str::lower(Str::random(5)),
+            'is_active' => true,
+        ]);
+
+        $worker = ServiceWorker::create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'name' => 'Joyce Stylist',
+            'title' => 'Nail Technician',
+            'is_active' => true,
+        ]);
+
+        $service = Service::create([
+            'business_id' => $business->id,
+            'service_category_id' => $category->id,
+            'name' => 'Manicure',
+            'duration_minutes' => 60,
+            'cost' => 500,
+            'price' => 3000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('service-visits.store'), [
+                'customer_name' => 'Joyce Njeri',
+                'customer_phone' => '0722920728',
+                'service_id' => $service->id,
+                'service_worker_id' => $worker->id,
+                'service_date' => now()->toDateString(),
+                'price' => 3000,
+                'status' => ServiceVisit::STATUS_COMPLETED,
+            ]);
+
+        $response->assertRedirect(route('services', ['date' => now()->toDateString()]));
+
+        $this->assertDatabaseHas('service_visits', [
+            'customer_name' => 'Joyce Njeri',
+            'service_worker_id' => $worker->id,
+        ]);
+
+        $this->assertDatabaseHas('service_worker_service', [
+            'service_id' => $service->id,
+            'service_worker_id' => $worker->id,
+        ]);
+    }
+
     public function test_service_visit_creation_rejects_foreign_tenant_records(): void
     {
         [$businessOne, $branchOne, $ownerOne] = $this->createActiveTenant('Salon One', 'salon-one-ops@example.com');

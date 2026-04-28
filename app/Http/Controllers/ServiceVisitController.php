@@ -190,7 +190,16 @@ class ServiceVisitController extends Controller
 
     private function assertWorkerCanPerformService(Service $service, ServiceWorker $worker): void
     {
-        $allowed = $service->workers()->whereKey($worker->id)->exists();
+        $serviceWorkers = $service->workers();
+        $assignedWorkersExist = $serviceWorkers->exists();
+
+        if (! $assignedWorkersExist) {
+            // First recorded visit can establish the initial stylist mapping for a service.
+            $serviceWorkers->syncWithoutDetaching([$worker->id]);
+            return;
+        }
+
+        $allowed = $serviceWorkers->whereKey($worker->id)->exists();
 
         if (! $allowed) {
             throw ValidationException::withMessages([

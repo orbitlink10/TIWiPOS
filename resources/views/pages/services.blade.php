@@ -293,7 +293,7 @@
                             <select name="service_id" id="service-visit-service" required>
                                 <option value="">Select service</option>
                                 @foreach($services->where('is_active', true) as $service)
-                                    <option value="{{ $service->id }}" data-price="{{ number_format((float) $service->price, 2, '.', '') }}" @selected((string) old('service_id') === (string) $service->id)>
+                                    <option value="{{ $service->id }}" data-price="{{ number_format((float) $service->price, 2, '.', '') }}" data-worker-count="{{ $service->workers->count() }}" @selected((string) old('service_id') === (string) $service->id)>
                                         {{ $service->name }} · {{ $service->duration_minutes }} min
                                     </option>
                                 @endforeach
@@ -309,6 +309,7 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <small id="service-worker-help" style="color:var(--muted); font-weight:500;"></small>
                         </label>
                         <label class="service-field">
                             Visit date
@@ -632,6 +633,7 @@
             var serviceSelect = document.getElementById('service-visit-service');
             var workerSelect = document.getElementById('service-visit-worker');
             var priceInput = document.getElementById('service-visit-price');
+            var workerHelp = document.getElementById('service-worker-help');
 
             if (!serviceSelect || !workerSelect || !priceInput) {
                 return;
@@ -639,7 +641,10 @@
 
             function filterWorkers() {
                 var serviceId = serviceSelect.value;
+                var selectedServiceOption = serviceSelect.options[serviceSelect.selectedIndex];
+                var serviceHasAssignedWorkers = selectedServiceOption && Number(selectedServiceOption.dataset.workerCount || '0') > 0;
                 var fallbackValue = '';
+                var visibleCount = 0;
 
                 for (var i = 0; i < workerSelect.options.length; i += 1) {
                     var option = workerSelect.options[i];
@@ -648,11 +653,15 @@
                     }
 
                     var allowedServices = (option.dataset.services || '').split(',').filter(Boolean);
-                    var visible = !serviceId || allowedServices.indexOf(serviceId) !== -1;
+                    var visible = !serviceId || !serviceHasAssignedWorkers || allowedServices.indexOf(serviceId) !== -1;
                     option.hidden = !visible;
 
                     if (visible && !fallbackValue) {
                         fallbackValue = option.value;
+                    }
+
+                    if (visible) {
+                        visibleCount += 1;
                     }
                 }
 
@@ -662,6 +671,25 @@
                         workerSelect.value = fallbackValue;
                     }
                 }
+
+                if (!serviceId) {
+                    workerHelp.textContent = '';
+                    return;
+                }
+
+                if (!serviceHasAssignedWorkers) {
+                    workerHelp.textContent = visibleCount > 0
+                        ? 'No stylist is assigned to this service yet. Showing all active stylists for first assignment.'
+                        : 'No active stylists are available for the current branch.';
+                    return;
+                }
+
+                if (visibleCount === 0) {
+                    workerHelp.textContent = 'No assigned stylist is currently available for this service.';
+                    return;
+                }
+
+                workerHelp.textContent = '';
             }
 
             function fillPrice() {
