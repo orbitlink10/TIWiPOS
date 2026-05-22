@@ -8,188 +8,194 @@
 @endphp
 
 <style>
-    .public-nav {
+    .znav {
         position: sticky;
         top: 0;
         z-index: 80;
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: blur(18px);
-        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        background: #fff;
+        border-bottom: 1px solid rgba(10, 100, 188, 0.10);
+        box-shadow: 0 2px 16px rgba(10, 100, 188, 0.07);
     }
 
-    .public-nav__inner {
+    .znav__inner {
         margin: 0 auto;
         max-width: 1240px;
-        padding: 12px 24px;
+        padding: 0 24px;
+        height: 64px;
         display: grid;
         grid-template-columns: auto 1fr auto;
         gap: 24px;
         align-items: center;
     }
 
-    .public-nav__brand {
+    /* Brand */
+    .znav__brand {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-        color: #1f2937;
+        gap: 10px;
         text-decoration: none;
+        color: #1a2d3d;
     }
 
-    .public-nav__mark {
-        width: 46px;
-        height: 46px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #0c8d3d 0%, #0f9d49 100%);
-        color: #fff;
-        display: inline-grid;
-        place-items: center;
-        font-size: 16px;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        box-shadow: 0 14px 32px rgba(12, 141, 61, 0.22);
-    }
-
-    .public-nav__brand-text {
+    .znav__logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0a64bc 0%, #1a8ad4 100%);
         display: grid;
-        gap: 2px;
-    }
-
-    .public-nav__title {
-        font-size: 18px;
+        place-items: center;
+        color: #fff;
+        font-size: 14px;
         font-weight: 800;
-        letter-spacing: 0.01em;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
     }
 
-    .public-nav__subtitle {
-        font-size: 12px;
-        color: #6b7280;
-        font-weight: 600;
+    .znav__wordmark {
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: #0a64bc;
     }
 
-    .public-nav__links {
+    .znav__wordmark span {
+        color: #F05A22;
+    }
+
+    /* Links */
+    .znav__links {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 2px;
         flex-wrap: wrap;
     }
 
-    .public-nav__link {
+    .znav__link {
         color: #374151;
         text-decoration: none;
-        font-size: 15px;
-        font-weight: 700;
-        padding: 10px 12px;
-        border-radius: 12px;
-        transition: background 0.18s ease, color 0.18s ease;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
+        white-space: nowrap;
     }
 
-    .public-nav__link:hover {
-        background: #f3f4f6;
-        color: #111827;
+    .znav__link:hover {
+        background: rgba(10, 100, 188, 0.06);
+        color: #0a64bc;
     }
 
-    .public-nav__link.is-active {
-        color: #7c3f67;
-        background: rgba(124, 63, 103, 0.10);
+    .znav__link.is-active {
+        color: #0a64bc;
+        background: rgba(10, 100, 188, 0.08);
     }
 
-    .public-nav__actions {
+    /* Actions */
+    .znav__actions {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         justify-content: flex-end;
     }
 
-    .public-nav__signin {
+    .znav__signin {
         color: #374151;
         text-decoration: none;
-        font-size: 15px;
-        font-weight: 700;
-        padding: 10px 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
     }
 
-    .public-nav__cta,
-    .public-nav__secondary {
+    .znav__signin:hover { background: #f3f4f6; color: #111827; }
+
+    .znav__cta {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 46px;
-        border-radius: 12px;
+        height: 38px;
         padding: 0 18px;
-        font-size: 15px;
-        font-weight: 800;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
         text-decoration: none;
-        border: 1px solid transparent;
-    }
-
-    .public-nav__cta {
-        background: #7c3f67;
+        background: #F05A22;
         color: #fff;
-        box-shadow: 0 14px 34px rgba(124, 63, 103, 0.20);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(240, 90, 34, 0.30);
+        transition: background 0.2s, transform 0.15s;
+        white-space: nowrap;
     }
 
-    .public-nav__secondary {
+    .znav__cta:hover { background: #d44d1a; transform: translateY(-1px); }
+
+    .znav__outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+        padding: 0 18px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
         background: #fff;
-        color: #1f2937;
-        border-color: rgba(15, 23, 42, 0.10);
+        color: #1a2d3d;
+        border: 1.5px solid rgba(10, 100, 188, 0.20);
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        white-space: nowrap;
     }
+
+    .znav__outline:hover { background: #f4f9ff; border-color: rgba(10, 100, 188, 0.35); }
 
     @media (max-width: 1080px) {
-        .public-nav__inner {
+        .znav__inner {
             grid-template-columns: 1fr;
+            height: auto;
+            padding: 12px 20px;
             justify-items: center;
+            gap: 10px;
         }
 
-        .public-nav__actions {
-            justify-content: center;
-        }
+        .znav__actions { justify-content: center; }
     }
 
-    @media (max-width: 720px) {
-        .public-nav__inner {
-            padding: 12px 16px;
-            gap: 14px;
-        }
-
-        .public-nav__links,
-        .public-nav__actions {
-            width: 100%;
-            justify-content: center;
-        }
+    @media (max-width: 640px) {
+        .znav__links { display: none; }
     }
 </style>
 
-<header class="public-nav">
-    <div class="public-nav__inner">
-        <a href="{{ $siteHomeUrl }}" class="public-nav__brand">
-            <span class="public-nav__mark">TP</span>
-            <span class="public-nav__brand-text">
-                <span class="public-nav__title">Tiwi POS</span>
-                <span class="public-nav__subtitle">Retail · Finance</span>
-            </span>
+<header class="znav">
+    <div class="znav__inner">
+        <a href="{{ $siteHomeUrl }}" class="znav__brand">
+            <span class="znav__logo">TP</span>
+            <span class="znav__wordmark">Tiwi<span>POS</span></span>
         </a>
 
-        <nav class="public-nav__links" aria-label="Public navigation">
-            <a href="{{ $sectionHref('products') }}" class="public-nav__link {{ $activeSection === 'products' ? 'is-active' : '' }}">Products</a>
-            <a href="{{ $sectionHref('pricing') }}" class="public-nav__link {{ $activeSection === 'pricing' ? 'is-active' : '' }}">Pricing</a>
-            <a href="{{ $sectionHref('resources') }}" class="public-nav__link {{ $activeSection === 'resources' ? 'is-active' : '' }}">Resources</a>
-            <a href="{{ $sectionHref('company') }}" class="public-nav__link {{ $activeSection === 'company' ? 'is-active' : '' }}">Company</a>
-            <a href="{{ $sectionHref('app-center') }}" class="public-nav__link {{ $activeSection === 'app-center' ? 'is-active' : '' }}">App Center</a>
-            <a href="{{ $sectionHref('enterprise') }}" class="public-nav__link {{ $activeSection === 'enterprise' ? 'is-active' : '' }}">Enterprise</a>
-            <a href="{{ route('blog.index') }}" class="public-nav__link {{ $activeSection === 'blog' ? 'is-active' : '' }}">Blog</a>
+        <nav class="znav__links" aria-label="Main navigation">
+            <a href="{{ $sectionHref('products') }}"   class="znav__link {{ $activeSection === 'products'   ? 'is-active' : '' }}">Products</a>
+            <a href="{{ $sectionHref('pricing') }}"    class="znav__link {{ $activeSection === 'pricing'    ? 'is-active' : '' }}">Pricing</a>
+            <a href="{{ $sectionHref('resources') }}"  class="znav__link {{ $activeSection === 'resources'  ? 'is-active' : '' }}">Resources</a>
+            <a href="{{ $sectionHref('company') }}"    class="znav__link {{ $activeSection === 'company'    ? 'is-active' : '' }}">Company</a>
+            <a href="{{ $sectionHref('app-center') }}" class="znav__link {{ $activeSection === 'app-center' ? 'is-active' : '' }}">App Center</a>
+            <a href="{{ $sectionHref('enterprise') }}" class="znav__link {{ $activeSection === 'enterprise' ? 'is-active' : '' }}">Enterprise</a>
+            <a href="{{ route('blog.index') }}"         class="znav__link {{ $activeSection === 'blog'       ? 'is-active' : '' }}">Blog</a>
         </nav>
 
-        <div class="public-nav__actions">
+        <div class="znav__actions">
             @guest
-                <a href="{{ route('login') }}" class="public-nav__signin">Sign in</a>
-                <a href="{{ route('register') }}" class="public-nav__cta">Try it free</a>
+                <a href="{{ route('login') }}"    class="znav__signin">Sign in</a>
+                <a href="{{ route('register') }}" class="znav__cta">Get started free</a>
             @else
-                <a href="{{ route('sale') }}" class="public-nav__secondary">Open POS</a>
+                <a href="{{ route('sale') }}"    class="znav__outline">Open POS</a>
                 <form method="POST" action="{{ route('logout') }}" style="margin:0;">
                     @csrf
-                    <button type="submit" class="public-nav__cta" style="cursor:pointer;">Sign out</button>
+                    <button type="submit" class="znav__cta" style="cursor:pointer;">Sign out</button>
                 </form>
             @endguest
         </div>
