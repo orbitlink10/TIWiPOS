@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Services')
+@section('title', 'Delivery')
 
 @section('header')
     <div class="header-row">
-        <h1>Salon & Spa Services</h1>
+        <h1>Delivery</h1>
         @if(auth()->user()->canAccessAbility('manage_catalog'))
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <a class="btn" href="{{ route('services.create') }}">Add Service</a>
+                <a class="btn" href="{{ route('services.create') }}">Add Goods</a>
                 <a class="btn" href="{{ route('service-categories.create') }}" style="background:#0ea5e9;">Manage Categories</a>
             </div>
         @endif
@@ -16,12 +16,12 @@
 
 @push('styles')
     <style>
-        .services-stack {
+        .goods-stack {
             display: grid;
             gap: 16px;
         }
 
-        .services-card {
+        .goods-card {
             background: #fff;
             border: 1px solid var(--border);
             border-radius: 18px;
@@ -29,20 +29,20 @@
             padding: 22px;
         }
 
-        .services-subgrid {
+        .goods-subgrid {
             display: grid;
             gap: 16px;
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .service-category-pills {
+        .goods-category-pills {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 14px;
         }
 
-        .service-category-pill {
+        .goods-category-pill {
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -53,7 +53,7 @@
             font-weight: 700;
         }
 
-        .service-toolbar {
+        .goods-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -62,13 +62,13 @@
             margin-bottom: 14px;
         }
 
-        .service-form-grid {
+        .goods-form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
         }
 
-        .service-field {
+        .goods-field {
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -76,20 +76,20 @@
             font-weight: 700;
         }
 
-        .service-note {
+        .goods-note {
             color: var(--muted);
             font-size: 13px;
             line-height: 1.6;
         }
 
-        .service-table {
+        .goods-table {
             width: 100%;
             border-collapse: collapse;
             min-width: 760px;
             font-size: 14px;
         }
 
-        .service-table th {
+        .goods-table th {
             text-align: left;
             padding: 10px;
             background: #f7f7fb;
@@ -99,13 +99,13 @@
             letter-spacing: 0.06em;
         }
 
-        .service-table td {
+        .goods-table td {
             padding: 12px 10px;
             border-top: 1px solid #e5e7eb;
             vertical-align: top;
         }
 
-        .service-tag {
+        .goods-tag {
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
@@ -119,14 +119,14 @@
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
 
-        .service-actions {
+        .goods-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
 
-        .service-actions form,
-        .service-actions a {
+        .goods-actions form,
+        .goods-actions a {
             display: inline-flex;
         }
 
@@ -159,13 +159,13 @@
             border-color: #fed7aa;
         }
 
-        .service-assignments {
+        .goods-assignments {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
 
-        .service-assignments span {
+        .goods-assignments span {
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
@@ -178,7 +178,7 @@
         }
 
         @media (max-width: 980px) {
-            .services-subgrid {
+            .goods-subgrid {
                 grid-template-columns: 1fr;
             }
         }
@@ -191,16 +191,16 @@
     @php($inProgressStatus = \App\Models\ServiceVisit::STATUS_IN_PROGRESS)
     @php($cancelledStatus = \App\Models\ServiceVisit::STATUS_CANCELLED)
 
-    <div class="services-stack">
-        <section class="services-card">
-            <div class="service-toolbar">
+    <div class="goods-stack">
+        <section class="goods-card">
+            <div class="goods-toolbar">
                 <div>
-                    <h2 style="margin:0;">Service Desk Snapshot</h2>
-                    <p class="service-note" style="margin:6px 0 0;">Register stylists, assign them to services, and record daily salon or spa work with customer names and completion status.</p>
+                    <h2 style="margin:0;">Delivery Snapshot</h2>
+                    <p class="goods-note" style="margin:6px 0 0;">Record customer deliveries with goods, delivery person, location, status, charges, and notes.</p>
                 </div>
                 <form method="GET" action="{{ route('services') }}" style="display:flex; gap:8px; align-items:end; flex-wrap:wrap;">
-                    <label class="service-field" style="min-width:180px;">
-                        Service date
+                    <label class="goods-field" style="min-width:180px;">
+                        Delivery date
                         <input type="date" name="date" value="{{ $selectedDate }}">
                     </label>
                     <button class="btn" type="submit">Load Day</button>
@@ -229,22 +229,22 @@
 
             @if(!empty($schemaMissing))
                 <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
-                    Service desk tables are missing in this environment. Run the latest migrations to enable salon operations.
+                    Delivery tables are missing in this environment. Run the latest migrations to enable delivery tracking.
                 </div>
             @endif
 
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:16px;">
                 <div class="kpi-card blue">
                     {{ $stats['active_services'] }}
-                    <span>Active services</span>
+                    <span>Active delivery items</span>
                 </div>
                 <div class="kpi-card">
                     {{ $stats['categories_count'] }}
-                    <span>Service categories</span>
+                    <span>Delivery categories</span>
                 </div>
                 <div class="kpi-card green">
                     {{ $stats['active_workers'] }}
-                    <span>Active stylists</span>
+                    <span>Active delivery people</span>
                 </div>
                 <div class="kpi-card amber">
                     {{ $stats['completed_visits'] }}
@@ -252,78 +252,86 @@
                 </div>
                 <div class="kpi-card" style="background:#edf7ff; color:#0f5d8d;">
                     KES {{ number_format($stats['daily_revenue'], 2) }}
-                    <span>Completed service value</span>
+                    <span>Completed delivery value</span>
                 </div>
             </div>
 
-            <div class="service-category-pills">
+            <div class="goods-category-pills">
                 @forelse($serviceCategories as $category)
-                    <div class="service-category-pill">
+                    <div class="goods-category-pill">
                         <span>{{ $category->name }}</span>
                         <span style="color:var(--muted);">{{ $category->services_count }}</span>
                     </div>
                 @empty
-                    <div class="service-note">No service categories registered yet.</div>
+                    <div class="goods-note">No delivery categories registered yet.</div>
                 @endforelse
             </div>
         </section>
 
-        <div class="services-subgrid">
-            <section class="services-card">
-                <div class="service-toolbar">
+        <div class="goods-subgrid">
+            <section class="goods-card">
+                <div class="goods-toolbar">
                     <div>
-                        <h2 style="margin:0;">Record Service Visit</h2>
-                        <p class="service-note" style="margin:6px 0 0;">Capture customer name, assign the service to a stylist, and mark what happened during the day.</p>
+                        <h2 style="margin:0;">Record Delivery</h2>
+                        <p class="goods-note" style="margin:6px 0 0;">Capture customer name, assign the goods to a delivery person, and mark what happened during the day.</p>
                     </div>
                 </div>
 
                 <form method="POST" action="{{ route('service-visits.store') }}" style="display:grid; gap:12px;">
                     @csrf
-                    <div class="service-form-grid">
-                        <label class="service-field">
+                    <div class="goods-form-grid">
+                        <label class="goods-field">
                             Customer name
                             <input name="customer_name" type="text" value="{{ old('customer_name') }}" placeholder="Walk-in customer" required>
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Customer phone
                             <input name="customer_phone" type="text" value="{{ old('customer_phone') }}" placeholder="+254..." inputmode="tel">
                         </label>
-                        <label class="service-field">
-                            Service
-                            <select name="service_id" id="service-visit-service" required>
-                                <option value="">Select service</option>
+                        <label class="goods-field">
+                            Delivery location
+                            <input name="delivery_location" type="text" value="{{ old('delivery_location') }}" placeholder="Estate, building, town..." required>
+                        </label>
+                        <label class="goods-field">
+                            Reference / order no.
+                            <input name="delivery_reference" type="text" value="{{ old('delivery_reference') }}" placeholder="Optional order or receipt number">
+                        </label>
+                        <label class="goods-field">
+                            Goods
+                            <select name="service_id" id="goods-visit-goods" required>
+                                <option value="">Select goods</option>
                                 @foreach($services->where('is_active', true) as $service)
                                     <option value="{{ $service->id }}" data-price="{{ number_format((float) $service->price, 2, '.', '') }}" data-worker-count="{{ $service->workers->count() }}" @selected((string) old('service_id') === (string) $service->id)>
-                                        {{ $service->name }} · {{ $service->duration_minutes }} min
+                                        {{ $service->name }} - {{ $service->duration_minutes }} min
                                     </option>
                                 @endforeach
                             </select>
                         </label>
-                        <label class="service-field">
-                            Stylist
-                            <select name="service_worker_id" id="service-visit-worker" required>
-                                <option value="">Select stylist</option>
+                        <label class="goods-field">
+                            Delivery Person
+                            <select name="service_worker_id" id="goods-visit-worker" required>
+                                <option value="">Select delivery person</option>
                                 @foreach($serviceWorkers->where('is_active', true) as $worker)
                                     <option value="{{ $worker->id }}" data-services="{{ $worker->services->pluck('id')->implode(',') }}" @selected((string) old('service_worker_id') === (string) $worker->id)>
-                                        {{ $worker->name }}{{ $worker->title ? ' · '.$worker->title : '' }}
+                                        {{ $worker->name }}{{ $worker->title ? ' - '.$worker->title : '' }}
                                     </option>
                                 @endforeach
                             </select>
-                            <small id="service-worker-help" style="color:var(--muted); font-weight:500;"></small>
+                            <small id="goods-worker-help" style="color:var(--muted); font-weight:500;"></small>
                         </label>
-                        <label class="service-field">
-                            Visit date
+                        <label class="goods-field">
+                            Delivery date
                             <input name="service_date" type="date" value="{{ old('service_date', $selectedDate) }}" required>
                         </label>
-                        <label class="service-field">
-                            Visit time
+                        <label class="goods-field">
+                            Delivery time
                             <input name="service_time" type="time" value="{{ old('service_time') }}">
                         </label>
-                        <label class="service-field">
-                            Price charged (KES)
-                            <input name="price" id="service-visit-price" type="number" min="0" step="0.01" value="{{ old('price') }}" required>
+                        <label class="goods-field">
+                            Delivery charge (KES)
+                            <input name="price" id="goods-visit-price" type="number" min="0" step="0.01" value="{{ old('price') }}" required>
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Status
                             <select name="status" required>
                                 @foreach($visitStatuses as $statusKey => $statusLabel)
@@ -333,45 +341,45 @@
                         </label>
                     </div>
 
-                    <label class="service-field">
+                    <label class="goods-field">
                         Notes
-                        <textarea name="notes" rows="3" placeholder="Aftercare, room notes, color formula, product used...">{{ old('notes') }}</textarea>
+                        <textarea name="notes" rows="3" placeholder="Package condition, delivery instructions, payment notes...">{{ old('notes') }}</textarea>
                     </label>
 
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="btn" type="submit">Save Visit</button>
+                        <button class="btn" type="submit">Save Delivery</button>
                     </div>
                 </form>
             </section>
 
-            <section class="services-card">
-                <div class="service-toolbar">
+            <section class="goods-card">
+                <div class="goods-toolbar">
                     <div>
-                        <h2 style="margin:0;">Register Stylist</h2>
-                        <p class="service-note" style="margin:6px 0 0;">Add salon workers first, then assign them to services in the catalog.</p>
+                        <h2 style="margin:0;">Register Delivery Person</h2>
+                        <p class="goods-note" style="margin:6px 0 0;">Add delivery people first, then assign them to the goods they can deliver.</p>
                     </div>
                 </div>
 
                 <form method="POST" action="{{ route('service-workers.store') }}" style="display:grid; gap:12px;">
                     @csrf
-                    <div class="service-form-grid">
-                        <label class="service-field">
+                    <div class="goods-form-grid">
+                        <label class="goods-field">
                             Full name
-                            <input name="name" type="text" value="{{ old('name') }}" placeholder="Stylist full name" required>
+                            <input name="name" type="text" value="{{ old('name') }}" placeholder="Delivery Person full name" required>
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Title
-                            <input name="title" type="text" value="{{ old('title', 'Stylist') }}" placeholder="Stylist, Barber, Therapist" required>
+                            <input name="title" type="text" value="{{ old('title', 'Rider') }}" placeholder="Rider, Driver, Courier" required>
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Phone
                             <input name="phone" type="text" value="{{ old('phone') }}" placeholder="+254..." inputmode="tel">
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Email
                             <input name="email" type="email" value="{{ old('email') }}" placeholder="optional@example.com">
                         </label>
-                        <label class="service-field">
+                        <label class="goods-field">
                             Branch
                             <select name="branch_id">
                                 <option value="">Use active branch</option>
@@ -382,40 +390,41 @@
                         </label>
                     </div>
 
-                    <label class="service-field">
+                    <label class="goods-field">
                         Notes
-                        <textarea name="notes" rows="3" placeholder="Specialties, room preference, commission notes...">{{ old('notes') }}</textarea>
+                        <textarea name="notes" rows="3" placeholder="Vehicle, route, ID, commission notes...">{{ old('notes') }}</textarea>
                     </label>
 
                     <label style="display:flex; align-items:center; gap:10px; font-weight:700;">
                         <input type="hidden" name="is_active" value="0">
                         <input type="checkbox" name="is_active" value="1" @checked(old('is_active', '1') == '1') style="width:18px;height:18px;">
-                        Active stylist
+                        Active delivery person
                     </label>
 
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="btn" type="submit">Add Stylist</button>
+                        <button class="btn" type="submit">Add Delivery Person</button>
                     </div>
                 </form>
             </section>
         </div>
 
-        <section class="services-card">
-            <div class="service-toolbar">
+        <section class="goods-card">
+            <div class="goods-toolbar">
                 <div>
-                    <h2 style="margin:0;">Daily Service Register</h2>
-                    <p class="service-note" style="margin:6px 0 0;">Track the work booked, in progress, completed, or cancelled for {{ \Illuminate\Support\Carbon::parse($selectedDate)->format('d M Y') }}.</p>
+                    <h2 style="margin:0;">Daily Delivery Register</h2>
+                    <p class="goods-note" style="margin:6px 0 0;">Track deliveries booked, in progress, completed, or cancelled for {{ \Illuminate\Support\Carbon::parse($selectedDate)->format('d M Y') }}.</p>
                 </div>
             </div>
 
             <div style="overflow:auto;">
-                <table class="service-table">
+                <table class="goods-table">
                     <thead>
                         <tr>
                             <th>Time</th>
                             <th>Customer</th>
-                            <th>Service</th>
-                            <th>Stylist</th>
+                            <th>Goods</th>
+                            <th>Delivery Person</th>
+                            <th>Location</th>
                             <th>Price</th>
                             <th>Status</th>
                             <th>Recorded By</th>
@@ -428,19 +437,26 @@
                                 <td>{{ $visit->service_time ? substr((string) $visit->service_time, 0, 5) : '-' }}</td>
                                 <td>
                                     <div style="font-weight:700;">{{ $visit->customer_name }}</div>
-                                    <div class="service-note">{{ $visit->customer_phone ?: 'No phone recorded' }}</div>
+                                    <div class="goods-note">{{ $visit->customer_phone ?: 'No phone recorded' }}</div>
                                 </td>
                                 <td>
-                                    <div style="font-weight:700;">{{ $visit->service->name ?? 'Service' }}</div>
-                                    <div class="service-note">{{ $visit->service->category->name ?? 'No category' }}</div>
+                                    <div style="font-weight:700;">{{ $visit->service->name ?? 'Goods' }}</div>
+                                    <div class="goods-note">{{ $visit->service->category->name ?? 'No category' }}</div>
                                 </td>
                                 <td>
                                     <div style="font-weight:700;">{{ $visit->worker->name ?? 'Unassigned' }}</div>
-                                    <div class="service-note">{{ $visit->worker->title ?? '-' }}</div>
+                                    <div class="goods-note">{{ $visit->worker->title ?? '-' }}</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight:700;">{{ $visit->delivery_location ?: '-' }}</div>
+                                    <div class="goods-note">{{ $visit->delivery_reference ? 'Ref: '.$visit->delivery_reference : 'No reference' }}</div>
+                                    @if($visit->notes)
+                                        <div class="goods-note">{{ \Illuminate\Support\Str::limit($visit->notes, 80) }}</div>
+                                    @endif
                                 </td>
                                 <td>KES {{ number_format((float) $visit->price, 2) }}</td>
                                 <td>
-                                    <span class="service-tag {{
+                                    <span class="goods-tag {{
                                         $visit->status === \App\Models\ServiceVisit::STATUS_BOOKED ? 'status-booked'
                                         : ($visit->status === \App\Models\ServiceVisit::STATUS_IN_PROGRESS ? 'status-progress'
                                         : ($visit->status === \App\Models\ServiceVisit::STATUS_CANCELLED ? 'status-cancelled' : 'status-completed'))
@@ -450,7 +466,7 @@
                                 </td>
                                 <td>{{ $visit->recorder->name ?? 'System' }}</td>
                                 <td style="text-align:center;">
-                                    <div class="service-actions" style="justify-content:center;">
+                                    <div class="goods-actions" style="justify-content:center;">
                                         <a class="btn-soft" href="{{ route('service-visits.edit', $visit) }}">Edit</a>
                                         @if($visit->status !== $inProgressStatus)
                                             <form method="POST" action="{{ route('service-visits.status', $visit) }}">
@@ -481,7 +497,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" style="text-align:center; color:var(--muted);">No service visits recorded for this day yet.</td>
+                                <td colspan="9" style="text-align:center; color:var(--muted);">No deliveries recorded for this day yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -489,22 +505,22 @@
             </div>
         </section>
 
-        <section class="services-card">
-            <div class="service-toolbar">
+        <section class="goods-card">
+            <div class="goods-toolbar">
                 <div>
-                    <h2 style="margin:0;">Stylist Roster</h2>
-                    <p class="service-note" style="margin:6px 0 0;">Stylists can be activated or deactivated without removing past visit history.</p>
+                    <h2 style="margin:0;">Delivery People</h2>
+                    <p class="goods-note" style="margin:6px 0 0;">Delivery people can be activated or deactivated without removing past delivery history.</p>
                 </div>
             </div>
 
             <div style="overflow:auto;">
-                <table class="service-table">
+                <table class="goods-table">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Title</th>
                             <th>Contact</th>
-                            <th>Assigned Services</th>
+                            <th>Assigned Goods</th>
                             <th>Status</th>
                             <th style="text-align:center;">Action</th>
                         </tr>
@@ -516,24 +532,24 @@
                                 <td>{{ $worker->title }}</td>
                                 <td>
                                     <div>{{ $worker->phone ?: '-' }}</div>
-                                    <div class="service-note">{{ $worker->email ?: 'No email' }}</div>
+                                    <div class="goods-note">{{ $worker->email ?: 'No email' }}</div>
                                 </td>
                                 <td>
-                                    <div class="service-assignments">
+                                    <div class="goods-assignments">
                                         @forelse($worker->services as $service)
                                             <span>{{ $service->name }}</span>
                                         @empty
-                                            <span style="background:#f8fafc; color:#64748b; border-color:#e2e8f0;">No services assigned</span>
+                                            <span style="background:#f8fafc; color:#64748b; border-color:#e2e8f0;">No goods assigned</span>
                                         @endforelse
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="service-tag {{ $worker->is_active ? 'status-completed' : 'status-cancelled' }}">
+                                    <span class="goods-tag {{ $worker->is_active ? 'status-completed' : 'status-cancelled' }}">
                                         {{ $worker->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
                                 <td style="text-align:center;">
-                                    <div class="service-actions" style="justify-content:center;">
+                                    <div class="goods-actions" style="justify-content:center;">
                                         <a class="btn-soft" href="{{ route('service-workers.edit', $worker) }}">Edit</a>
                                         <form method="POST" action="{{ route('service-workers.status', $worker) }}">
                                             @csrf
@@ -548,7 +564,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center; color:var(--muted);">No stylists registered yet.</td>
+                                <td colspan="6" style="text-align:center; color:var(--muted);">No delivery people registered yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -556,25 +572,25 @@
             </div>
         </section>
 
-        <section class="services-card">
-            <div class="service-toolbar">
+        <section class="goods-card">
+            <div class="goods-toolbar">
                 <div>
-                    <h2 style="margin:0;">Service Catalog</h2>
-                    <p class="service-note" style="margin:6px 0 0;">Each service can be mapped to the stylists allowed to perform it.</p>
+                    <h2 style="margin:0;">Delivery Catalog</h2>
+                    <p class="goods-note" style="margin:6px 0 0;">Each goods entry can be mapped to the delivery people allowed to handle it.</p>
                 </div>
                 @if($canManageCatalog)
-                    <a class="btn" href="{{ route('services.create') }}">Add Service</a>
+                    <a class="btn" href="{{ route('services.create') }}">Add Goods</a>
                 @endif
             </div>
 
             <div style="overflow:auto;">
-                <table class="service-table">
+                <table class="goods-table">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Category</th>
                             <th>Duration</th>
-                            <th>Assigned Stylists</th>
+                            <th>Assigned Delivery People</th>
                             <th>Price</th>
                             <th>Status</th>
                             <th style="text-align:center;">Action</th>
@@ -585,29 +601,29 @@
                             <tr>
                                 <td>
                                     <div style="font-weight:700;">{{ $service->name }}</div>
-                                    <div class="service-note">{{ $service->description ?: 'No description added yet.' }}</div>
+                                    <div class="goods-note">{{ $service->description ?: 'No description added yet.' }}</div>
                                 </td>
                                 <td>{{ $service->category->name ?? 'No category' }}</td>
                                 <td>{{ $service->duration_minutes }} min</td>
                                 <td>
-                                    <div class="service-assignments">
+                                    <div class="goods-assignments">
                                         @forelse($service->workers as $worker)
                                             <span>{{ $worker->name }}</span>
                                         @empty
-                                            <span style="background:#f8fafc; color:#64748b; border-color:#e2e8f0;">Assign stylists</span>
+                                            <span style="background:#f8fafc; color:#64748b; border-color:#e2e8f0;">Assign delivery people</span>
                                         @endforelse
                                     </div>
                                 </td>
                                 <td>KES {{ number_format((float) $service->price, 2) }}</td>
                                 <td>
-                                    <span class="service-tag {{ $service->is_active ? 'status-completed' : 'status-cancelled' }}">
+                                    <span class="goods-tag {{ $service->is_active ? 'status-completed' : 'status-cancelled' }}">
                                         {{ $service->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
                                 <td style="text-align:center;">
-                                    <div class="service-actions" style="justify-content:center;">
+                                    <div class="goods-actions" style="justify-content:center;">
                                         <a class="btn-soft" href="{{ route('services.edit', $service) }}">Edit</a>
-                                        <form method="POST" action="{{ route('services.destroy', $service) }}" onsubmit="return confirm('Delete this service? This action cannot be undone.');">
+                                        <form method="POST" action="{{ route('services.destroy', $service) }}" onsubmit="return confirm('Delete these goods? This action cannot be undone.');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn-soft danger">Delete</button>
@@ -617,7 +633,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align:center; color:var(--muted);">No services yet.</td>
+                                <td colspan="7" style="text-align:center; color:var(--muted);">No goods yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -630,19 +646,19 @@
 @push('scripts')
     <script>
         (function () {
-            var serviceSelect = document.getElementById('service-visit-service');
-            var workerSelect = document.getElementById('service-visit-worker');
-            var priceInput = document.getElementById('service-visit-price');
-            var workerHelp = document.getElementById('service-worker-help');
+            var goodsSelect = document.getElementById('goods-visit-goods');
+            var workerSelect = document.getElementById('goods-visit-worker');
+            var priceInput = document.getElementById('goods-visit-price');
+            var workerHelp = document.getElementById('goods-worker-help');
 
-            if (!serviceSelect || !workerSelect || !priceInput) {
+            if (!goodsSelect || !workerSelect || !priceInput) {
                 return;
             }
 
             function filterWorkers() {
-                var serviceId = serviceSelect.value;
-                var selectedServiceOption = serviceSelect.options[serviceSelect.selectedIndex];
-                var serviceHasAssignedWorkers = selectedServiceOption && Number(selectedServiceOption.dataset.workerCount || '0') > 0;
+                var goodsId = goodsSelect.value;
+                var selectedGoodsOption = goodsSelect.options[goodsSelect.selectedIndex];
+                var goodsHasAssignedWorkers = selectedGoodsOption && Number(selectedGoodsOption.dataset.workerCount || '0') > 0;
                 var fallbackValue = '';
                 var visibleCount = 0;
 
@@ -652,8 +668,8 @@
                         continue;
                     }
 
-                    var allowedServices = (option.dataset.services || '').split(',').filter(Boolean);
-                    var visible = !serviceId || !serviceHasAssignedWorkers || allowedServices.indexOf(serviceId) !== -1;
+                    var allowedDelivery = (option.dataset.services || '').split(',').filter(Boolean);
+                    var visible = !goodsId || !goodsHasAssignedWorkers || allowedDelivery.indexOf(goodsId) !== -1;
                     option.hidden = !visible;
 
                     if (visible && !fallbackValue) {
@@ -672,20 +688,20 @@
                     }
                 }
 
-                if (!serviceId) {
+                if (!goodsId) {
                     workerHelp.textContent = '';
                     return;
                 }
 
-                if (!serviceHasAssignedWorkers) {
+                if (!goodsHasAssignedWorkers) {
                     workerHelp.textContent = visibleCount > 0
-                        ? 'No stylist is assigned to this service yet. Showing all active stylists for first assignment.'
-                        : 'No active stylists are available for the current branch.';
+                        ? 'No delivery person is assigned to these goods yet. Showing all active delivery people for first assignment.'
+                        : 'No active delivery people are available for the current branch.';
                     return;
                 }
 
                 if (visibleCount === 0) {
-                    workerHelp.textContent = 'No assigned stylist is currently available for this service.';
+                    workerHelp.textContent = 'No assigned delivery person is currently available for these goods.';
                     return;
                 }
 
@@ -693,7 +709,7 @@
             }
 
             function fillPrice() {
-                var selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                var selectedOption = goodsSelect.options[goodsSelect.selectedIndex];
                 if (!selectedOption || !selectedOption.dataset.price) {
                     return;
                 }
@@ -704,7 +720,7 @@
                 }
             }
 
-            serviceSelect.addEventListener('change', function () {
+            goodsSelect.addEventListener('change', function () {
                 filterWorkers();
                 fillPrice();
             });

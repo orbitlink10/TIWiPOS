@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Service Visit')
+@section('title', 'Edit Delivery')
 
 @section('header')
     <div class="header-row">
-        <h1>Edit Service Visit</h1>
-        <a class="btn" href="{{ route('services', ['date' => $serviceVisit->service_date?->toDateString()]) }}">Back to Services</a>
+        <h1>Edit Delivery</h1>
+        <a class="btn" href="{{ route('services', ['date' => $serviceVisit->service_date?->toDateString()]) }}">Back to Delivery</a>
     </div>
 @endsection
 
 @section('content')
     <div class="panel">
-        <h2>Visit details</h2>
-        <p style="color: var(--muted); margin-top:6px;">Update the customer, assigned stylist, timing, and completion status.</p>
+        <h2>Delivery details</h2>
+        <p style="color: var(--muted); margin-top:6px;">Update the customer, goods, delivery person, location, timing, and status.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -36,34 +36,42 @@
                     <input name="customer_phone" type="text" value="{{ old('customer_phone', $serviceVisit->customer_phone) }}" inputmode="tel" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Service
-                    <select name="service_id" id="service-visit-edit-service" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                        <option value="">Select service</option>
+                    Delivery location
+                    <input name="delivery_location" type="text" value="{{ old('delivery_location', $serviceVisit->delivery_location) }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                </label>
+                <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                    Reference / order no.
+                    <input name="delivery_reference" type="text" value="{{ old('delivery_reference', $serviceVisit->delivery_reference) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                </label>
+                <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                    Goods
+                    <select name="service_id" id="goods-visit-edit-goods" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                        <option value="">Select goods</option>
                         @foreach($services as $service)
                             <option value="{{ $service->id }}" data-price="{{ number_format((float) $service->price, 2, '.', '') }}" @selected((string) old('service_id', $serviceVisit->service_id) === (string) $service->id)>{{ $service->name }}</option>
                         @endforeach
                     </select>
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Stylist
-                    <select name="service_worker_id" id="service-visit-edit-worker" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                        <option value="">Select stylist</option>
+                    Delivery Person
+                    <select name="service_worker_id" id="goods-visit-edit-worker" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                        <option value="">Select delivery person</option>
                         @foreach($workers as $worker)
-                            <option value="{{ $worker->id }}" data-services="{{ $worker->services->pluck('id')->implode(',') }}" @selected((string) old('service_worker_id', $serviceVisit->service_worker_id) === (string) $worker->id)>{{ $worker->name }} · {{ $worker->title }}</option>
+                            <option value="{{ $worker->id }}" data-services="{{ $worker->services->pluck('id')->implode(',') }}" @selected((string) old('service_worker_id', $serviceVisit->service_worker_id) === (string) $worker->id)>{{ $worker->name }} - {{ $worker->title }}</option>
                         @endforeach
                     </select>
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Visit date
+                    Delivery date
                     <input name="service_date" type="date" value="{{ old('service_date', $serviceVisit->service_date?->toDateString()) }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Visit time
+                    Delivery time
                     <input name="service_time" type="time" value="{{ old('service_time', $serviceVisit->service_time ? substr($serviceVisit->service_time, 0, 5) : null) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Price charged (KES)
-                    <input name="price" id="service-visit-edit-price" type="number" min="0" step="0.01" value="{{ old('price', number_format((float) $serviceVisit->price, 2, '.', '')) }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    Delivery charge (KES)
+                    <input name="price" id="goods-visit-edit-price" type="number" min="0" step="0.01" value="{{ old('price', number_format((float) $serviceVisit->price, 2, '.', '')) }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Status
@@ -91,16 +99,16 @@
 @push('scripts')
     <script>
         (function () {
-            var serviceSelect = document.getElementById('service-visit-edit-service');
-            var workerSelect = document.getElementById('service-visit-edit-worker');
-            var priceInput = document.getElementById('service-visit-edit-price');
+            var goodsSelect = document.getElementById('goods-visit-edit-goods');
+            var workerSelect = document.getElementById('goods-visit-edit-worker');
+            var priceInput = document.getElementById('goods-visit-edit-price');
 
-            if (!serviceSelect || !workerSelect || !priceInput) {
+            if (!goodsSelect || !workerSelect || !priceInput) {
                 return;
             }
 
             function filterWorkers() {
-                var serviceId = serviceSelect.value;
+                var goodsId = goodsSelect.value;
                 var fallbackValue = '';
 
                 for (var i = 0; i < workerSelect.options.length; i += 1) {
@@ -109,8 +117,8 @@
                         continue;
                     }
 
-                    var allowedServices = (option.dataset.services || '').split(',').filter(Boolean);
-                    var visible = !serviceId || allowedServices.indexOf(serviceId) !== -1;
+                    var allowedDelivery = (option.dataset.services || '').split(',').filter(Boolean);
+                    var visible = !goodsId || allowedDelivery.indexOf(goodsId) !== -1;
                     option.hidden = !visible;
 
                     if (visible && !fallbackValue) {
@@ -125,7 +133,7 @@
             }
 
             function fillPrice() {
-                var selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                var selectedOption = goodsSelect.options[goodsSelect.selectedIndex];
                 if (!selectedOption || !selectedOption.dataset.price) {
                     return;
                 }
@@ -136,7 +144,7 @@
                 }
             }
 
-            serviceSelect.addEventListener('change', function () {
+            goodsSelect.addEventListener('change', function () {
                 filterWorkers();
                 fillPrice();
             });

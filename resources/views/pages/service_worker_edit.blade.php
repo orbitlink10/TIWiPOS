@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Stylist')
+@section('title', 'Edit Delivery Person')
 
 @section('header')
     <div class="header-row">
-        <h1>Edit Stylist</h1>
-        <a class="btn" href="{{ route('services') }}">Back to Services</a>
+        <h1>Edit Delivery Person</h1>
+        <a class="btn" href="{{ route('services') }}">Back to Delivery</a>
     </div>
 @endsection
 
 @section('content')
     <div class="panel">
-        <h2>Stylist profile</h2>
-        <p style="color: var(--muted); margin-top:6px;">Update stylist contact details, branch, and salon notes.</p>
+        <h2>Delivery Person profile</h2>
+        <p style="color: var(--muted); margin-top:6px;">Update delivery person contact details, branch, and delivery notes.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -62,7 +62,7 @@
             <label style="display:flex; align-items:center; gap:10px; font-weight:600;">
                 <input type="hidden" name="is_active" value="0">
                 <input type="checkbox" name="is_active" value="1" @checked(old('is_active', (int) $serviceWorker->is_active)) style="width:18px;height:18px;">
-                Active stylist
+                Active delivery person
             </label>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">

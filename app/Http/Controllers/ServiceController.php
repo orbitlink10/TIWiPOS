@@ -100,7 +100,7 @@ class ServiceController extends Controller
     public function create()
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery catalog tables are missing. Run migrations first.');
         }
 
         $categories = ServiceCategory::orderBy('name')->get();
@@ -112,7 +112,7 @@ class ServiceController extends Controller
     public function edit(Service $service)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery catalog tables are missing. Run migrations first.');
         }
 
         $categories = ServiceCategory::orderBy('name')->get();
@@ -129,7 +129,7 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery catalog tables are missing. Run migrations first.');
         }
 
         $businessId = Tenant::businessId();
@@ -180,13 +180,13 @@ class ServiceController extends Controller
 
         $this->syncWorkersForCurrentBranch($service, $data['worker_ids'] ?? []);
 
-        return redirect()->route('services')->with('status', 'Service added successfully.');
+        return redirect()->route('services')->with('status', 'Delivery item added successfully.');
     }
 
     public function update(Request $request, Service $service)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery catalog tables are missing. Run migrations first.');
         }
 
         $businessId = Tenant::businessId();
@@ -237,18 +237,18 @@ class ServiceController extends Controller
 
         $this->syncWorkersForCurrentBranch($service, $data['worker_ids'] ?? []);
 
-        return redirect()->route('services')->with('status', 'Service updated successfully.');
+        return redirect()->route('services')->with('status', 'Delivery item updated successfully.');
     }
 
     public function destroy(Service $service)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Service catalog tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery catalog tables are missing. Run migrations first.');
         }
 
         $service->delete();
 
-        return redirect()->route('services')->with('status', 'Service deleted successfully.');
+        return redirect()->route('services')->with('status', 'Delivery item deleted successfully.');
     }
 
     private function currentBranchWorkers(): Collection

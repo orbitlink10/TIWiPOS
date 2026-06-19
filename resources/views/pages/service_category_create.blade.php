@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Add Service Category')
+@section('title', 'Add Delivery Category')
 
 @section('header')
     <div class="header-row">
-        <h1>Add Service Category</h1>
-        <a class="btn" href="{{ route('services.create') }}">Back to Services</a>
+        <h1>Add Delivery Category</h1>
+        <a class="btn" href="{{ route('services.create') }}">Back to Delivery</a>
     </div>
 @endsection
 
 @section('content')
     <div class="panel">
-        <h2>Service category details</h2>
-        <p style="color: var(--muted); margin-top:6px;">Create categories for the services you want to sell through the POS.</p>
+        <h2>Delivery category details</h2>
+        <p style="color: var(--muted); margin-top:6px;">Create categories for the goods you want to sell through the POS.</p>
 
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
@@ -70,8 +70,8 @@
     </div>
 
     <div class="panel" style="margin-top:16px;">
-        <h2>Manage Service Categories</h2>
-        <p style="color: var(--muted); margin-top:6px;">Deleting a service category also removes the services stored under it.</p>
+        <h2>Manage Delivery Categories</h2>
+        <p style="color: var(--muted); margin-top:6px;">Deleting a delivery category also removes the goods stored under it.</p>
 
         <div style="margin-top:14px; overflow:auto;">
             <table style="width:100%; border-collapse:collapse; border-spacing:0; font-size:14px; min-width:520px;">
@@ -79,7 +79,7 @@
                     <tr style="background:#f7f7fb;">
                         <th style="text-align:left; padding:10px;">Category</th>
                         <th style="text-align:left; padding:10px;">Parent</th>
-                        <th style="text-align:right; padding:10px;">Services</th>
+                        <th style="text-align:right; padding:10px;">Delivery</th>
                         <th style="text-align:center; padding:10px; width:120px;">Action</th>
                     </tr>
                 </thead>
@@ -90,7 +90,7 @@
                             <td style="padding:10px;">{{ optional($category->parent)->name ?? 'None' }}</td>
                             <td style="padding:10px; text-align:right;">{{ $category->services_count }}</td>
                             <td style="padding:10px; text-align:center;">
-                                <form method="POST" action="{{ route('service-categories.destroy', $category) }}" onsubmit="return confirm('Delete this service category and all services under it?');">
+                                <form method="POST" action="{{ route('service-categories.destroy', $category) }}" onsubmit="return confirm('Delete this delivery category and all goods under it?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
@@ -101,7 +101,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" style="padding:12px; text-align:center; color:var(--muted);">No service categories yet.</td>
+                            <td colspan="4" style="padding:12px; text-align:center; color:var(--muted);">No delivery categories yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

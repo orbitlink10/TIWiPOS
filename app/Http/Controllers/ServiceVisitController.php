@@ -31,7 +31,7 @@ class ServiceVisitController extends Controller
     public function edit(ServiceVisit $serviceVisit)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $businessId = Tenant::businessId();
@@ -62,7 +62,7 @@ class ServiceVisitController extends Controller
     public function store(Request $request)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $data = $this->validateVisit($request);
@@ -83,6 +83,8 @@ class ServiceVisitController extends Controller
             'recorded_by_user_id' => auth()->id(),
             'customer_name' => trim((string) $data['customer_name']),
             'customer_phone' => $data['customer_phone'] ?? null,
+            'delivery_location' => $data['delivery_location'] ?? null,
+            'delivery_reference' => $data['delivery_reference'] ?? null,
             'service_date' => $data['service_date'],
             'service_time' => $data['service_time'] ?? null,
             'price' => $data['price'],
@@ -91,13 +93,13 @@ class ServiceVisitController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return redirect()->route('services', ['date' => $data['service_date']])->with('status', 'Service visit recorded successfully.');
+        return redirect()->route('services', ['date' => $data['service_date']])->with('status', 'Delivery recorded successfully.');
     }
 
     public function update(Request $request, ServiceVisit $serviceVisit)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $data = $this->validateVisit($request);
@@ -123,6 +125,8 @@ class ServiceVisitController extends Controller
             'recorded_by_user_id' => auth()->id(),
             'customer_name' => trim((string) $data['customer_name']),
             'customer_phone' => $data['customer_phone'] ?? null,
+            'delivery_location' => $data['delivery_location'] ?? null,
+            'delivery_reference' => $data['delivery_reference'] ?? null,
             'service_date' => $data['service_date'],
             'service_time' => $data['service_time'] ?? null,
             'price' => $data['price'],
@@ -131,13 +135,13 @@ class ServiceVisitController extends Controller
             'notes' => $data['notes'] ?? null,
         ]);
 
-        return redirect()->route('services', ['date' => $data['service_date']])->with('status', 'Service visit updated successfully.');
+        return redirect()->route('services', ['date' => $data['service_date']])->with('status', 'Delivery updated successfully.');
     }
 
     public function status(Request $request, ServiceVisit $serviceVisit)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $data = $request->validate([
@@ -154,7 +158,7 @@ class ServiceVisitController extends Controller
             'recorded_by_user_id' => auth()->id(),
         ]);
 
-        return redirect()->route('services', ['date' => $serviceVisit->service_date?->toDateString()])->with('status', 'Service visit status updated.');
+        return redirect()->route('services', ['date' => $serviceVisit->service_date?->toDateString()])->with('status', 'Delivery status updated.');
     }
 
     private function validateVisit(Request $request): array
@@ -165,6 +169,8 @@ class ServiceVisitController extends Controller
         return $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['nullable', 'string', 'max:50'],
+            'delivery_location' => ['required', 'string', 'max:255'],
+            'delivery_reference' => ['nullable', 'string', 'max:255'],
             'service_id' => [
                 'required',
                 'integer',
@@ -194,7 +200,7 @@ class ServiceVisitController extends Controller
         $assignedWorkersExist = $serviceWorkers->exists();
 
         if (! $assignedWorkersExist) {
-            // First recorded visit can establish the initial stylist mapping for a service.
+            // First recorded delivery can establish the initial delivery person mapping.
             $serviceWorkers->syncWithoutDetaching([$worker->id]);
             return;
         }
@@ -203,7 +209,7 @@ class ServiceVisitController extends Controller
 
         if (! $allowed) {
             throw ValidationException::withMessages([
-                'service_worker_id' => 'The selected stylist is not assigned to this service.',
+                'service_worker_id' => 'The selected delivery person is not assigned to these goods.',
             ]);
         }
     }

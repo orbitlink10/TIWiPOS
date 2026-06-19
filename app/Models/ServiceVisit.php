@@ -25,6 +25,8 @@ class ServiceVisit extends Model
         'recorded_by_user_id',
         'customer_name',
         'customer_phone',
+        'delivery_location',
+        'delivery_reference',
         'service_date',
         'service_time',
         'price',

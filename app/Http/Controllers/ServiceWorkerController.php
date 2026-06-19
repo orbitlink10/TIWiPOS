@@ -27,7 +27,7 @@ class ServiceWorkerController extends Controller
     public function edit(ServiceWorker $serviceWorker)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $branches = Branch::query()
@@ -41,7 +41,7 @@ class ServiceWorkerController extends Controller
     public function store(Request $request)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $businessId = Tenant::businessId();
@@ -71,13 +71,13 @@ class ServiceWorkerController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('services')->with('status', 'Stylist added successfully.');
+        return redirect()->route('services')->with('status', 'Delivery person added successfully.');
     }
 
     public function update(Request $request, ServiceWorker $serviceWorker)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $businessId = Tenant::businessId();
@@ -105,13 +105,13 @@ class ServiceWorkerController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
-        return redirect()->route('services')->with('status', 'Stylist updated successfully.');
+        return redirect()->route('services')->with('status', 'Delivery person updated successfully.');
     }
 
     public function status(Request $request, ServiceWorker $serviceWorker)
     {
         if (! $this->serviceDeskSchemaReady()) {
-            return redirect()->route('services')->with('error', 'Salon service tables are missing. Run migrations first.');
+            return redirect()->route('services')->with('error', 'Delivery tables are missing. Run migrations first.');
         }
 
         $data = $request->validate([
@@ -124,7 +124,7 @@ class ServiceWorkerController extends Controller
 
         return redirect()->route('services')->with(
             'status',
-            $serviceWorker->is_active ? 'Stylist activated successfully.' : 'Stylist deactivated successfully.'
+            $serviceWorker->is_active ? 'Delivery person activated successfully.' : 'Delivery person deactivated successfully.'
         );
     }
 }

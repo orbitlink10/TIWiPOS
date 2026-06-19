@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('recorded_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('customer_name');
             $table->string('customer_phone', 50)->nullable();
+            $table->string('delivery_location')->nullable();
+            $table->string('delivery_reference')->nullable();
             $table->date('service_date');
             $table->time('service_time')->nullable();
             $table->decimal('price', 12, 2)->default(0);

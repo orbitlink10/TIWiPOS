@@ -73,6 +73,8 @@ class ServiceOperationsTest extends TestCase
         $visitResponse = $this->actingAs($manager)->post(route('service-visits.store'), [
             'customer_name' => 'Naomi Client',
             'customer_phone' => '+254711222333',
+            'delivery_location' => 'Westlands, Nairobi',
+            'delivery_reference' => 'ORD-001',
             'service_id' => $service->id,
             'service_worker_id' => $worker->id,
             'service_date' => now()->toDateString(),
@@ -145,6 +147,7 @@ class ServiceOperationsTest extends TestCase
             ->from(route('services', ['date' => now()->toDateString()]))
             ->post(route('service-visits.store'), [
                 'customer_name' => 'Invalid Assignment',
+                'delivery_location' => 'Kilimani, Nairobi',
                 'service_id' => $service->id,
                 'service_worker_id' => $otherWorker->id,
                 'service_date' => now()->toDateString(),
@@ -192,6 +195,7 @@ class ServiceOperationsTest extends TestCase
             ->post(route('service-visits.store'), [
                 'customer_name' => 'Joyce Njeri',
                 'customer_phone' => '0722920728',
+                'delivery_location' => 'CBD, Nairobi',
                 'service_id' => $service->id,
                 'service_worker_id' => $worker->id,
                 'service_date' => now()->toDateString(),
@@ -248,6 +252,7 @@ class ServiceOperationsTest extends TestCase
             ->from(route('services', ['date' => now()->toDateString()]))
             ->post(route('service-visits.store'), [
                 'customer_name' => 'Tenant Leak',
+                'delivery_location' => 'Mombasa Road',
                 'service_id' => $foreignService->id,
                 'service_worker_id' => $foreignWorker->id,
                 'service_date' => now()->toDateString(),
