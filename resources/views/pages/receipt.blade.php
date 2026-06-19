@@ -166,6 +166,12 @@
                     <td class="muted">Tax</td>
                     <td class="right">KES {{ number_format($sale->tax, 2) }}</td>
                 </tr>
+                @if((float) ($sale->installation_amount ?? 0) > 0)
+                    <tr>
+                        <td class="muted">Installation</td>
+                        <td class="right">KES {{ number_format($sale->installation_amount, 2) }}</td>
+                    </tr>
+                @endif
                 <tr class="total-final">
                     <td>Total</td>
                     <td class="right">KES {{ number_format($sale->total, 2) }}</td>

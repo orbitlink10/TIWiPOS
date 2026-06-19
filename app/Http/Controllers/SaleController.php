@@ -218,6 +218,7 @@ class SaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
+            'installation_amount' => 'nullable|numeric|min:0',
         ]);
 
         $branchId = Tenant::branchId();
@@ -257,12 +258,13 @@ class SaleController extends Controller
             ];
         }
 
+        $installationAmount = round((float) ($data['installation_amount'] ?? 0), 2);
         $tax = $request->boolean('apply_tax')
             ? round($subtotal * self::TAX_RATE, 2)
             : 0.0;
-        $total = $subtotal + $tax;
+        $total = $subtotal + $tax + $installationAmount;
 
-        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $lineItems, $branchId) {
+        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $installationAmount, $lineItems, $branchId) {
             $sale = Sale::create([
                 'branch_id' => $branchId,
                 'sale_number' => $saleNumber,
@@ -274,6 +276,7 @@ class SaleController extends Controller
                 'subtotal' => $subtotal,
                 'discount' => 0,
                 'tax' => $tax,
+                'installation_amount' => $installationAmount,
                 'total' => $total,
                 'payment_status' => 'paid',
                 'status' => 'completed',
@@ -363,6 +366,7 @@ class SaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
+            'installation_amount' => 'nullable|numeric|min:0',
         ]);
 
         $branchId = $sale->branch_id ?? Tenant::branchId();
@@ -447,10 +451,11 @@ class SaleController extends Controller
                 ];
             }
 
+            $installationAmount = round((float) ($data['installation_amount'] ?? $sale->installation_amount ?? 0), 2);
             $tax = $request->boolean('apply_tax')
                 ? round($subtotal * self::TAX_RATE, 2)
                 : 0.0;
-            $total = $subtotal + $tax;
+            $total = $subtotal + $tax + $installationAmount;
 
             foreach ($lineItems as $line) {
                 $payload = [
@@ -489,6 +494,7 @@ class SaleController extends Controller
                 'subtotal' => $subtotal,
                 'discount' => 0,
                 'tax' => $tax,
+                'installation_amount' => $installationAmount,
                 'total' => $total,
                 'payment_status' => 'paid',
                 'status' => 'completed',

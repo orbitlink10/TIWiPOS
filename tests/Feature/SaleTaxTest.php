@@ -65,6 +65,32 @@ class SaleTaxTest extends TestCase
         $this->assertSame(232.00, (float) $payment->amount);
     }
 
+    public function test_sale_total_includes_installation_amount(): void
+    {
+        $user = $this->createActiveUser();
+        $product = $this->createProductWithStock($user->business_id, 100.00, 10);
+
+        $response = $this->actingAs($user)->post(route('sale.store'), [
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+            'method' => 'cash',
+            'apply_tax' => 1,
+            'installation_amount' => 50.00,
+        ]);
+
+        $response->assertStatus(302);
+
+        $sale = Sale::firstOrFail();
+        $payment = Payment::where('sale_id', $sale->id)->firstOrFail();
+
+        $this->assertSame(200.00, (float) $sale->subtotal);
+        $this->assertSame(32.00, (float) $sale->tax);
+        $this->assertSame(50.00, (float) $sale->installation_amount);
+        $this->assertSame(282.00, (float) $sale->total);
+        $this->assertSame(282.00, (float) $payment->amount);
+    }
+
     private function createActiveUser(): User
     {
         $slug = 'biz-'.Str::lower(Str::random(8));
@@ -124,4 +150,3 @@ class SaleTaxTest extends TestCase
         return $product;
     }
 }
-

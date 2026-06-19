@@ -24,6 +24,7 @@ class Sale extends Model
         'subtotal',
         'discount',
         'tax',
+        'installation_amount',
         'total',
         'payment_status',
         'status',
@@ -32,6 +33,7 @@ class Sale extends Model
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'installation_amount' => 'decimal:2',
     ];
 
     public function items()

@@ -633,6 +633,10 @@
                         Location for the installation
                         <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
                     </label>
+                    <label class="field">
+                        Installation Amount
+                        <input id="installation_amount" name="installation_amount" class="control" type="number" step="0.01" min="0" value="{{ old('installation_amount') }}" placeholder="KES 0.00">
+                    </label>
                 </div>
 
                 <button class="complete-btn" type="submit">Add Installation</button>
@@ -676,6 +680,11 @@
                             <span>Apply 16% VAT</span>
                         </span>
                         <strong id="tax_text">KES 0.00</strong>
+                    </div>
+
+                    <div class="total-line">
+                        <span>Installation</span>
+                        <strong id="installation_text">KES 0.00</strong>
                     </div>
 
                     <div class="total-divider"></div>
@@ -723,8 +732,10 @@
     const unitInput = document.getElementById('unit_price');
     const subtotalText = document.getElementById('subtotal_text');
     const taxText = document.getElementById('tax_text');
+    const installationText = document.getElementById('installation_text');
     const totalText = document.getElementById('total_text');
     const applyTaxInput = document.getElementById('apply_tax');
+    const installationInput = document.getElementById('installation_amount');
     const stockInfo = document.getElementById('stock_info');
     const cartBody = document.getElementById('cart_body');
     const addBtn = document.getElementById('add_to_cart');
@@ -788,10 +799,12 @@
         });
 
         const tax = applyTaxInput.checked ? (subtotal * 0.16) : 0;
-        const total = subtotal + tax;
+        const installationAmount = Math.max(0, parseMoney(installationInput?.value || 0));
+        const total = subtotal + tax + installationAmount;
 
         subtotalText.textContent = formatKes(subtotal);
         taxText.textContent = formatKes(tax);
+        installationText.textContent = formatKes(installationAmount);
         totalText.textContent = formatKes(total);
         cartCount.textContent = rows.length + (rows.length === 1 ? ' item' : ' items');
     }
@@ -1009,6 +1022,7 @@
     productSelect.addEventListener('change', () => updateTotalsPreview(true));
     qtyInput.addEventListener('input', () => updateTotalsPreview(false));
     applyTaxInput.addEventListener('change', refreshCartTotals);
+    installationInput.addEventListener('input', refreshCartTotals);
 
     unitInput.addEventListener('blur', () => {
         const value = parseFloat(unitInput.value);
