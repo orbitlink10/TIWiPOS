@@ -640,7 +640,7 @@
                     </label>
                 </div>
 
-                <button class="complete-btn" type="submit">Add Installation</button>
+                <button id="add_installation" class="complete-btn" type="button">Add Installation</button>
             </section>
             </div>
 
@@ -756,6 +756,7 @@
     const stockInfo = document.getElementById('stock_info');
     const cartBody = document.getElementById('cart_body');
     const addBtn = document.getElementById('add_to_cart');
+    const addInstallationBtn = document.getElementById('add_installation');
     const form = document.getElementById('sale_form');
     const searchInput = document.getElementById('search_product');
     const barcodeInput = document.getElementById('barcode_search');
@@ -1049,6 +1050,7 @@
     });
 
     addBtn.addEventListener('click', addToCart);
+    addInstallationBtn.addEventListener('click', refreshCartTotals);
 
     form.addEventListener('submit', (event) => {
         if (cartBody.querySelectorAll('tr').length === 0) {

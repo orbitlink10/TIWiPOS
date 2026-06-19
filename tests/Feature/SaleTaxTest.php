@@ -122,6 +122,17 @@ class SaleTaxTest extends TestCase
         $this->assertSame('Westlands', $sale->installation_location);
     }
 
+    public function test_add_installation_button_does_not_submit_sale_form(): void
+    {
+        $user = $this->createActiveUser();
+
+        $response = $this->actingAs($user)->get(route('sale'));
+
+        $response->assertOk();
+        $response->assertSee('id="add_installation" class="complete-btn" type="button"', false);
+        $response->assertSee('<button class="complete-btn" type="submit">Complete Sale</button>', false);
+    }
+
     private function createActiveUser(): User
     {
         $slug = 'biz-'.Str::lower(Str::random(8));
