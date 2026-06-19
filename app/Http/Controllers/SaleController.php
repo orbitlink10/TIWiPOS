@@ -218,6 +218,9 @@ class SaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
+            'technician_name' => 'nullable|string|max:255',
+            'technician_phone' => 'nullable|string|max:50',
+            'installation_location' => 'nullable|string|max:255',
             'installation_amount' => 'nullable|numeric|min:0',
         ]);
 
@@ -272,6 +275,9 @@ class SaleController extends Controller
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
                 'customer_location' => $data['customer_location'] ?? null,
+                'technician_name' => $data['technician_name'] ?? null,
+                'technician_phone' => $data['technician_phone'] ?? null,
+                'installation_location' => $data['installation_location'] ?? null,
                 'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount' => 0,
@@ -366,6 +372,9 @@ class SaleController extends Controller
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
             'customer_location' => 'nullable|string|max:255',
+            'technician_name' => 'nullable|string|max:255',
+            'technician_phone' => 'nullable|string|max:50',
+            'installation_location' => 'nullable|string|max:255',
             'installation_amount' => 'nullable|numeric|min:0',
         ]);
 
@@ -490,6 +499,9 @@ class SaleController extends Controller
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
                 'customer_location' => $data['customer_location'] ?? null,
+                'technician_name' => $data['technician_name'] ?? $sale->technician_name,
+                'technician_phone' => $data['technician_phone'] ?? $sale->technician_phone,
+                'installation_location' => $data['installation_location'] ?? $sale->installation_location,
                 'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount' => 0,

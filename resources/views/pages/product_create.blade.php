@@ -96,8 +96,9 @@
                     <input name="stock_location" type="text" value="main" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Reorder at
-                    <input name="stock_alert" type="number" value="0" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    Date recorded
+                    <input name="recorded_at" type="date" value="{{ old('recorded_at', now()->toDateString()) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="stock_alert" type="hidden" value="0">
                 </label>
             </div>
 

@@ -11,28 +11,29 @@
         --sale-accent-strong: #15803d;
         --sale-accent-soft: #ebf8ef;
         display: grid;
-        gap: 14px;
+        gap: 10px;
         font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
-        line-height: 1.4;
+        line-height: 1.35;
+        font-size: 13px;
     }
 
     .sale-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 380px;
-        gap: 18px;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 14px;
         align-items: start;
     }
 
     .sale-main {
         display: grid;
-        gap: 18px;
+        gap: 12px;
     }
 
     .sale-card {
         background: #f7f9fc;
         border: 1px solid #d7deea;
-        border-radius: 22px;
-        padding: 22px;
+        border-radius: 16px;
+        padding: 16px;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
     }
 
@@ -44,7 +45,7 @@
     .sale-card h2,
     .sale-card h3 {
         margin: 0;
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 800;
         letter-spacing: -0.02em;
         line-height: 1.15;
@@ -53,13 +54,13 @@
     .quick-register h2,
     .checkout h3,
     .installation h2 {
-        font-size: 28px;
+        font-size: 22px;
     }
 
     .sale-lead {
-        margin: 8px 0 0;
+        margin: 5px 0 0;
         color: #607086;
-        font-size: 15px;
+        font-size: 13px;
         font-weight: 500;
         line-height: 1.5;
     }
@@ -92,10 +93,10 @@
     }
 
     .category-pills {
-        margin-top: 16px;
+        margin-top: 12px;
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
     }
 
     .category-pill {
@@ -103,8 +104,8 @@
         background: #fff;
         color: #6a778b;
         border-radius: 999px;
-        padding: 9px 16px;
-        font-size: 14px;
+        padding: 7px 12px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: -0.01em;
         cursor: pointer;
@@ -124,9 +125,9 @@
     }
 
     .field-grid {
-        margin-top: 14px;
+        margin-top: 10px;
         display: grid;
-        gap: 12px;
+        gap: 10px;
     }
 
     .field-grid.two-col {
@@ -136,8 +137,8 @@
     .field {
         display: flex;
         flex-direction: column;
-        gap: 7px;
-        font-size: 12px;
+        gap: 5px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
@@ -145,17 +146,17 @@
     }
 
     .field .control {
-        height: 58px;
+        height: 44px;
         border: 2px solid #d2d9e4;
-        border-radius: 14px;
+        border-radius: 10px;
         background: #fff;
         color: #122033;
-        font-size: 17px;
+        font-size: 14px;
         font-weight: 600;
         letter-spacing: 0;
         text-transform: none;
         font-family: 'Plus Jakarta Sans', 'Manrope', 'Segoe UI', sans-serif;
-        padding: 0 14px;
+        padding: 0 11px;
         line-height: 1.2;
     }
 
@@ -170,16 +171,16 @@
 
     .add-btn {
         width: 100%;
-        margin-top: 14px;
+        margin-top: 12px;
         display: inline-flex;
         justify-content: center;
         align-items: center;
-        height: 60px;
-        border-radius: 14px;
+        height: 48px;
+        border-radius: 11px;
         border: 2px solid #14532d;
         background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
         color: #fff;
-        font-size: 20px;
+        font-size: 17px;
         font-weight: 800;
         letter-spacing: -0.02em;
         cursor: pointer;
@@ -192,9 +193,9 @@
     }
 
     .stock-info {
-        margin-top: 10px;
+        margin-top: 8px;
         color: #5d6d83;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 500;
     }
 
@@ -202,7 +203,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
 
     .cart-count {
@@ -328,9 +329,9 @@
         margin-top: 12px;
         border-top: 1px solid #dfe5ef;
         border-bottom: 1px solid #dfe5ef;
-        padding: 10px 0;
+        padding: 8px 0;
         display: grid;
-        gap: 10px;
+        gap: 8px;
     }
 
     .total-line {
@@ -340,11 +341,11 @@
         gap: 12px;
         color: #2a384d;
         font-weight: 600;
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .total-line strong {
-        font-size: 15px;
+        font-size: 13px;
         letter-spacing: 0.01em;
         font-weight: 700;
     }
@@ -409,20 +410,20 @@
 
     .total-line.total {
         color: #17263b;
-        font-size: 21px;
+        font-size: 17px;
         font-weight: 800;
     }
 
     .total-line.total strong {
         color: var(--sale-accent-strong);
-        font-size: 27px;
+        font-size: 22px;
         font-weight: 800;
         letter-spacing: 0;
         white-space: nowrap;
     }
 
     .checkout-label {
-        margin-top: 14px;
+        margin-top: 12px;
         color: #5d6d82;
         font-size: 11px;
         font-weight: 700;
@@ -452,13 +453,13 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        min-height: 46px;
-        border-radius: 12px;
+        min-height: 40px;
+        border-radius: 10px;
         border: 2px solid #cfd6e2;
         background: #fff;
         color: #57677e;
         font-weight: 700;
-        font-size: 13px;
+        font-size: 12px;
         letter-spacing: -0.01em;
         cursor: pointer;
         transition: all 0.18s ease;
@@ -473,13 +474,13 @@
 
     .complete-btn {
         width: 100%;
-        margin-top: 14px;
-        height: 50px;
+        margin-top: 12px;
+        height: 44px;
         border: none;
         border-radius: 12px;
         background: linear-gradient(135deg, var(--sale-accent) 0%, var(--sale-accent-strong) 100%);
         color: #fff;
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 800;
         letter-spacing: -0.01em;
         cursor: pointer;
@@ -516,7 +517,7 @@
         }
 
         .total-line.total {
-            font-size: 18px;
+            font-size: 15px;
         }
 
         .total-line.total strong {
@@ -623,15 +624,15 @@
                 <div class="field-grid">
                     <label class="field">
                         Technician Name
-                        <input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Technician name">
+                        <input name="technician_name" class="control" type="text" value="{{ old('technician_name') }}" placeholder="Technician name">
                     </label>
                     <label class="field">
                         Phone Number
-                        <input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254...">
+                        <input name="technician_phone" class="control" type="text" value="{{ old('technician_phone') }}" placeholder="+254...">
                     </label>
                     <label class="field">
                         Location for the installation
-                        <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
+                        <input name="installation_location" class="control" type="text" value="{{ old('installation_location') }}" placeholder="City/Area">
                     </label>
                     <label class="field">
                         Installation Amount
@@ -716,6 +717,22 @@
                     <label class="payment-chip">
                         <input type="radio" name="method" value="other" @checked($oldMethod === 'other')>
                         <span>Other</span>
+                    </label>
+                </div>
+
+                <div class="checkout-label">Customer Details</div>
+                <div class="field-grid">
+                    <label class="field">
+                        Customer Name
+                        <input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Walk-in">
+                    </label>
+                    <label class="field">
+                        Customer Phone
+                        <input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254...">
+                    </label>
+                    <label class="field">
+                        Customer Location
+                        <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
                     </label>
                 </div>
 

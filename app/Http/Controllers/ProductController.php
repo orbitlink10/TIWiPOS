@@ -87,6 +87,7 @@ class ProductController extends Controller
             'stock_alert' => 'nullable|integer|min:0',
             'stock' => 'nullable|integer|min:0',
             'stock_location' => 'nullable|string|max:100',
+            'recorded_at' => 'nullable|date',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ], [
@@ -106,6 +107,7 @@ class ProductController extends Controller
             'cost' => $data['cost'] ?? 0,
             'price' => $data['price'],
             'stock_alert' => $data['stock_alert'] ?? 0,
+            'recorded_at' => $data['recorded_at'] ?? now()->toDateString(),
             'is_active' => $request->boolean('is_active'),
             'description' => $data['description'] ?? null,
         ]);
@@ -152,6 +154,7 @@ class ProductController extends Controller
             'stock_alert' => 'nullable|integer|min:0',
             'stock' => 'nullable|integer|min:0',
             'stock_location' => 'nullable|string|max:100',
+            'recorded_at' => 'nullable|date',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ], [
@@ -171,6 +174,7 @@ class ProductController extends Controller
             'cost' => $data['cost'] ?? 0,
             'price' => $data['price'],
             'stock_alert' => $data['stock_alert'] ?? 0,
+            'recorded_at' => $data['recorded_at'] ?? null,
             'is_active' => $request->boolean('is_active'),
             'description' => $data['description'] ?? null,
         ]);

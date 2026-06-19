@@ -21,8 +21,13 @@ class Product extends Model
         'cost',
         'price',
         'stock_alert',
+        'recorded_at',
         'is_active',
         'description',
+    ];
+
+    protected $casts = [
+        'recorded_at' => 'date',
     ];
 
     public function stocks()

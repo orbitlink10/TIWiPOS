@@ -91,6 +91,37 @@ class SaleTaxTest extends TestCase
         $this->assertSame(282.00, (float) $payment->amount);
     }
 
+    public function test_sale_stores_customer_and_technician_details_separately(): void
+    {
+        $user = $this->createActiveUser();
+        $product = $this->createProductWithStock($user->business_id, 100.00, 10);
+
+        $response = $this->actingAs($user)->post(route('sale.store'), [
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+            'method' => 'cash',
+            'customer_name' => 'Jane Customer',
+            'customer_phone' => '+254700000001',
+            'customer_location' => 'Nairobi CBD',
+            'technician_name' => 'John Technician',
+            'technician_phone' => '+254700000002',
+            'installation_location' => 'Westlands',
+            'installation_amount' => 50.00,
+        ]);
+
+        $response->assertStatus(302);
+
+        $sale = Sale::firstOrFail();
+
+        $this->assertSame('Jane Customer', $sale->customer_name);
+        $this->assertSame('+254700000001', $sale->customer_phone);
+        $this->assertSame('Nairobi CBD', $sale->customer_location);
+        $this->assertSame('John Technician', $sale->technician_name);
+        $this->assertSame('+254700000002', $sale->technician_phone);
+        $this->assertSame('Westlands', $sale->installation_location);
+    }
+
     private function createActiveUser(): User
     {
         $slug = 'biz-'.Str::lower(Str::random(8));

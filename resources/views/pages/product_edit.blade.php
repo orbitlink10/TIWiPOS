@@ -81,8 +81,9 @@
                     <input name="stock_location" type="text" value="{{ old('stock_location', $stockLocation) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Reorder at
-                    <input name="stock_alert" type="number" value="{{ old('stock_alert', $product->stock_alert) }}" min="0" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    Date recorded
+                    <input name="recorded_at" type="date" value="{{ old('recorded_at', optional($product->recorded_at)->toDateString()) }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="stock_alert" type="hidden" value="{{ old('stock_alert', $product->stock_alert) }}">
                 </label>
             </div>
 
