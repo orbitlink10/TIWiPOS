@@ -23,6 +23,11 @@
         align-items: start;
     }
 
+    .sale-main {
+        display: grid;
+        gap: 18px;
+    }
+
     .sale-card {
         background: #f7f9fc;
         border: 1px solid #d7deea;
@@ -46,7 +51,8 @@
     }
 
     .quick-register h2,
-    .checkout h3 {
+    .checkout h3,
+    .installation h2 {
         font-size: 28px;
     }
 
@@ -550,6 +556,7 @@
         <form id="sale_form" method="POST" action="{{ route('sale.store') }}" class="sale-layout">
             @csrf
 
+            <div class="sale-main">
             <section class="sale-card quick-register">
                 <h2>Quick Register</h2>
                 <p class="sale-lead">
@@ -609,6 +616,28 @@
                 <button type="button" id="add_to_cart" class="add-btn">+ Add to Cart</button>
                 <div id="stock_info" class="stock-info">Select a product to see availability.</div>
             </section>
+
+            <section class="sale-card installation">
+                <h2>Installation</h2>
+
+                <div class="field-grid">
+                    <label class="field">
+                        Technician Name
+                        <input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Technician name">
+                    </label>
+                    <label class="field">
+                        Phone Number
+                        <input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254...">
+                    </label>
+                    <label class="field">
+                        Location for the installation
+                        <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
+                    </label>
+                </div>
+
+                <button class="complete-btn" type="submit">Add Installation</button>
+            </section>
+            </div>
 
             <section class="sale-card checkout">
                 <div class="checkout-head">
@@ -678,21 +707,6 @@
                     <label class="payment-chip">
                         <input type="radio" name="method" value="other" @checked($oldMethod === 'other')>
                         <span>Other</span>
-                    </label>
-                </div>
-
-                <div class="field-grid" style="margin-top:14px;">
-                    <label class="field">
-                        Customer Name
-                        <input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Walk-in">
-                    </label>
-                    <label class="field">
-                        Phone
-                        <input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254...">
-                    </label>
-                    <label class="field">
-                        Location
-                        <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
                     </label>
                 </div>
 
