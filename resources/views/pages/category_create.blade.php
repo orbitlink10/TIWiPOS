@@ -36,11 +36,11 @@
             @csrf
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Name
-                    <input name="name" type="text" placeholder="Category name" value="{{ old('name') }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    Sub-Category
+                    <input name="name" type="text" placeholder="Sub-category name" value="{{ old('name') }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Parent
+                    Category
                     <select name="parent_id" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                         <option value="">None</option>
                         @foreach($categories as $cat)
@@ -75,8 +75,8 @@
             <table style="width:100%; border-collapse:collapse; border-spacing:0; font-size:14px; min-width:520px;">
                 <thead>
                     <tr style="background:#f7f7fb;">
+                        <th style="text-align:left; padding:10px;">Sub-Category</th>
                         <th style="text-align:left; padding:10px;">Category</th>
-                        <th style="text-align:left; padding:10px;">Parent</th>
                         <th style="text-align:right; padding:10px;">Products</th>
                         <th style="text-align:center; padding:10px; width:120px;">Action</th>
                     </tr>
