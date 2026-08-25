@@ -22,7 +22,7 @@ class CategoryCreationTest extends TestCase
         ]);
 
         $payload = [
-            'name' => 'Starlink KITS',
+            'category_name' => 'Starlink KITS',
             'description' => 'Category for Starlink kits',
             'is_active' => 1,
         ];
@@ -31,14 +31,14 @@ class CategoryCreationTest extends TestCase
             ->from(route('categories.create'))
             ->post(route('categories.store'), $payload);
 
-        $first->assertRedirect(route('products.create'));
+        $first->assertRedirect(route('categories.create'));
 
         $second = $this->actingAs($user)
             ->from(route('categories.create'))
             ->post(route('categories.store'), $payload);
 
         $second->assertRedirect(route('categories.create'));
-        $second->assertSessionHasErrors('name');
+        $second->assertSessionHasErrors('category_name');
         $this->assertSame(1, Category::count());
     }
 
@@ -58,16 +58,16 @@ class CategoryCreationTest extends TestCase
         ]);
 
         $payload = [
-            'name' => 'Starlink KITS',
+            'category_name' => 'Starlink KITS',
             'description' => 'Category for Starlink kits',
             'is_active' => 1,
         ];
 
         $responseOne = $this->actingAs($userOne)->post(route('categories.store'), $payload);
-        $responseOne->assertRedirect(route('products.create'));
+        $responseOne->assertRedirect(route('categories.create'));
 
         $responseTwo = $this->actingAs($userTwo)->post(route('categories.store'), $payload);
-        $responseTwo->assertRedirect(route('products.create'));
+        $responseTwo->assertRedirect(route('categories.create'));
 
         $categories = Category::withoutGlobalScopes()
             ->whereIn('business_id', [$businessOne->id, $businessTwo->id])
@@ -89,13 +89,13 @@ class CategoryCreationTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post(route('categories.store'), [
-                'name' => 'Routers',
                 'category_name' => 'Hardware',
+                'sub_category_name' => 'Routers',
                 'description' => 'Router products',
                 'is_active' => 1,
             ]);
 
-        $response->assertRedirect(route('products.create'));
+        $response->assertRedirect(route('categories.create'));
 
         $parent = Category::where('name', 'Hardware')->first();
         $subCategory = Category::where('name', 'Routers')->first();
@@ -104,6 +104,47 @@ class CategoryCreationTest extends TestCase
         $this->assertNull($parent->parent_id);
         $this->assertNotNull($subCategory);
         $this->assertSame($parent->id, $subCategory->parent_id);
+    }
+
+    public function test_category_page_contains_category_and_sub_category_controls(): void
+    {
+        $business = $this->createActiveBusiness('Biz One', 'biz-one');
+        $user = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => 'owner',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('categories.create'))
+            ->assertOk()
+            ->assertSee('Category')
+            ->assertSee('Sub-Category')
+            ->assertSee('name="category_name"', false)
+            ->assertSee('name="sub_category_name"', false)
+            ->assertSee('nav-sub-link', false);
+    }
+
+    public function test_category_created_from_product_form_can_return_to_product_create(): void
+    {
+        $business = $this->createActiveBusiness('Biz One', 'biz-one');
+        $user = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => 'owner',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('categories.store'), [
+                'category_name' => 'Installations',
+                'redirect_to' => 'products.create',
+                'is_active' => 1,
+            ]);
+
+        $response->assertRedirect(route('products.create'));
+        $this->assertDatabaseHas('categories', [
+            'business_id' => $business->id,
+            'name' => 'Installations',
+            'parent_id' => null,
+        ]);
     }
 
     private function createActiveBusiness(string $name, string $slug): Business

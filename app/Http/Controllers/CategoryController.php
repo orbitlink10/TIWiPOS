@@ -5,58 +5,103 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Support\Tenant;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Models\Product;
 use App\Models\SaleItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
         $categories = Category::with('parent')->withCount('products')->orderBy('name')->get();
+        $redirectTo = $request->query('redirect_to') === 'products.create'
+            ? 'products.create'
+            : 'categories.create';
 
-        return view('pages.category_create', compact('categories'));
+        return view('pages.category_create', compact('categories', 'redirectTo'));
     }
 
     public function store(Request $request)
     {
         $businessId = Tenant::businessId();
+        $categoryName = trim((string) $request->input('category_name'));
+        $subCategoryName = trim((string) $request->input('sub_category_name'));
+        $legacyName = trim((string) $request->input('name'));
+
+        if ($categoryName === '' && $legacyName !== '') {
+            $categoryName = $legacyName;
+        } elseif ($subCategoryName === '' && $legacyName !== '') {
+            $subCategoryName = $legacyName;
+        }
+
         $request->merge([
-            'name' => trim((string) $request->input('name')),
-            'category_name' => trim((string) $request->input('category_name')),
+            'category_name' => $categoryName,
+            'sub_category_name' => $subCategoryName,
         ]);
 
         $data = $request->validate([
-            'name' => [
+            'category_name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('categories', 'name')->where(function ($query) use ($businessId) {
-                    if ($businessId) {
-                        $query->where('business_id', $businessId);
-                    } else {
-                        $query->whereNull('business_id');
-                    }
-                }),
             ],
-            'category_name' => [
+            'sub_category_name' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
+            'redirect_to' => ['nullable', 'in:products.create,categories.create'],
         ]);
 
-        $categoryName = $data['category_name'] ?? '';
-        $parentCategoryId = null;
+        $redirectTo = $data['redirect_to'] ?? 'categories.create';
+        $categoryName = $data['category_name'];
+        $subCategoryName = $data['sub_category_name'] ?? '';
 
-        if ($categoryName !== '') {
-            $parentCategory = $this->findCategoryByName($categoryName, $businessId);
+        if ($subCategoryName === '') {
+            if ($this->findAnyCategoryByName($categoryName, $businessId)) {
+                throw ValidationException::withMessages([
+                    'category_name' => 'The category name has already been taken.',
+                ]);
+            }
 
+            Category::create([
+                'business_id' => $businessId,
+                'name' => $categoryName,
+                'slug' => $this->nextAvailableSlug($this->baseSlug($categoryName)),
+                'description' => $data['description'] ?? null,
+                'parent_id' => null,
+                'is_active' => $request->boolean('is_active'),
+            ]);
+
+            return redirect()->route($redirectTo)->with('status', 'Category added.');
+        }
+
+        if (Str::lower($categoryName) === Str::lower($subCategoryName)) {
+            throw ValidationException::withMessages([
+                'sub_category_name' => 'The sub-category must be different from the category.',
+            ]);
+        }
+
+        $parentCategory = $this->findTopLevelCategoryByName($categoryName, $businessId);
+
+        if (! $parentCategory && $this->findAnyCategoryByName($categoryName, $businessId)) {
+            throw ValidationException::withMessages([
+                'category_name' => 'The category name has already been taken.',
+            ]);
+        }
+
+        if ($this->findAnyCategoryByName($subCategoryName, $businessId)) {
+            throw ValidationException::withMessages([
+                'sub_category_name' => 'The sub-category name has already been taken.',
+            ]);
+        }
+
+        DB::transaction(function () use ($businessId, $categoryName, $subCategoryName, $data, $request, &$parentCategory) {
             if (! $parentCategory) {
                 $parentCategory = Category::create([
                     'business_id' => $businessId,
@@ -68,22 +113,20 @@ class CategoryController extends Controller
                 ]);
             }
 
-            $parentCategoryId = $parentCategory->id;
-        }
+            Category::create([
+                'business_id' => $businessId,
+                'name' => $subCategoryName,
+                'slug' => $this->nextAvailableSlug($this->baseSlug($subCategoryName)),
+                'description' => $data['description'] ?? null,
+                'parent_id' => $parentCategory->id,
+                'is_active' => $request->boolean('is_active'),
+            ]);
+        });
 
-        Category::create([
-            'business_id' => $businessId,
-            'name' => $data['name'],
-            'slug' => $this->nextAvailableSlug($this->baseSlug($data['name'])),
-            'description' => $data['description'] ?? null,
-            'parent_id' => $parentCategoryId,
-            'is_active' => $request->boolean('is_active'),
-        ]);
-
-        return redirect()->route('products.create')->with('status', 'Category added.');
+        return redirect()->route($redirectTo)->with('status', 'Category and sub-category added.');
     }
 
-    private function findCategoryByName(string $name, ?int $businessId): ?Category
+    private function findAnyCategoryByName(string $name, ?int $businessId): ?Category
     {
         $query = Category::withoutGlobalScopes()
             ->whereRaw('LOWER(name) = ?', [Str::lower($name)]);
@@ -95,9 +138,23 @@ class CategoryController extends Controller
         }
 
         return $query
-            ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END')
             ->orderBy('id')
             ->first();
+    }
+
+    private function findTopLevelCategoryByName(string $name, ?int $businessId): ?Category
+    {
+        $query = Category::withoutGlobalScopes()
+            ->whereNull('parent_id')
+            ->whereRaw('LOWER(name) = ?', [Str::lower($name)]);
+
+        if ($businessId) {
+            $query->where('business_id', $businessId);
+        } else {
+            $query->whereNull('business_id');
+        }
+
+        return $query->orderBy('id')->first();
     }
 
     private function baseSlug(string $name): string

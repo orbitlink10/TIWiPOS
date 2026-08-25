@@ -158,6 +158,31 @@
             transform: translateX(2px);
         }
 
+        .nav-group {
+            display: grid;
+            gap: 4px;
+        }
+
+        .nav-sub-link {
+            margin-left: 28px;
+            padding: 8px 12px 8px 22px;
+            font-size: 13px;
+            color: rgba(234,241,255,0.78);
+            position: relative;
+        }
+
+        .nav-sub-link::before {
+            content: "";
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(234,241,255,0.42);
+            transform: translateY(-50%);
+        }
+
         .spacer { flex: 1; }
 
         .sidebar-footer {
@@ -490,7 +515,13 @@
                 <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock*') ? 'active' : '' }}"><span class="nav-icon">ST</span><span>Stock</span></a>
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.*') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Make a Sale</span></a>
                 <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
-                <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('categories.*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
+                <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
+                @if(auth()->user()->canAccessAbility('manage_catalog'))
+                    <div class="nav-group">
+                        <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Category</span></a>
+                        <a href="{{ route('categories.create') }}#sub-category" class="nav-sub-link"><span>Sub-Category</span></a>
+                    </div>
+                @endif
                 <a href="{{ route('services') }}" class="{{ request()->routeIs('services*') || request()->routeIs('service-categories.*') || request()->routeIs('service-workers.*') || request()->routeIs('service-visits.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Delivery</span></a>
                 @if(auth()->user()->canAccessAbility('manage_branches'))
                     <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>

@@ -3,9 +3,10 @@
 @section('title', 'Add Category')
 
 @section('header')
+    @php($returnRoute = ($redirectTo ?? 'categories.create') === 'products.create' ? 'products.create' : 'products')
     <div class="header-row">
         <h1>Add Category</h1>
-        <a class="btn" href="{{ route('products.create') }}">⬅ Back to Products</a>
+        <a class="btn" href="{{ route($returnRoute) }}">Back to Products</a>
     </div>
 @endsection
 
@@ -13,7 +14,7 @@
     @php($canDeleteProducts = auth()->user()->canAccessAbility('delete_products'))
     <div class="panel">
         <h2>Category details</h2>
-        <p style="color: var(--muted); margin-top:6px;">Create a category to group your products.</p>
+        <p style="color: var(--muted); margin-top:6px;">Create a category and optional sub-category to group your products.</p>
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
                 {{ session('status') }}
@@ -35,14 +36,16 @@
 
         <form method="POST" action="{{ route('categories.store') }}" style="margin-top:14px; display:grid; gap:14px;">
             @csrf
+            <input type="hidden" name="redirect_to" value="{{ $redirectTo ?? 'categories.create' }}">
+
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Sub-Category
-                    <input name="name" type="text" placeholder="Sub-category name" value="{{ old('name') }}" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                </label>
-                <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Category
-                    <input name="category_name" type="text" placeholder="Category name" value="{{ old('category_name') }}" autocomplete="off" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="category_name" type="text" placeholder="Category name" value="{{ old('category_name') }}" autocomplete="off" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                </label>
+                <label id="sub-category" style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
+                    Sub-Category
+                    <input name="sub_category_name" type="text" placeholder="Sub-category name" value="{{ old('sub_category_name') }}" autocomplete="off" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
             </div>
 
@@ -57,8 +60,8 @@
             </label>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button class="btn" type="submit">💾 Save Category</button>
-                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('products.create') }}">Cancel</a>
+                <button class="btn" type="submit">Save Category</button>
+                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route($returnRoute) }}">Cancel</a>
             </div>
         </form>
     </div>
@@ -73,8 +76,8 @@
             <table style="width:100%; border-collapse:collapse; border-spacing:0; font-size:14px; min-width:520px;">
                 <thead>
                     <tr style="background:#f7f7fb;">
-                        <th style="text-align:left; padding:10px;">Sub-Category</th>
                         <th style="text-align:left; padding:10px;">Category</th>
+                        <th style="text-align:left; padding:10px;">Sub-Category</th>
                         <th style="text-align:right; padding:10px;">Products</th>
                         @if($canDeleteProducts)
                             <th style="text-align:center; padding:10px; width:120px;">Action</th>
@@ -84,8 +87,8 @@
                 <tbody>
                     @forelse($categories as $cat)
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">{{ $cat->name }}</td>
-                            <td style="padding:10px;">{{ optional($cat->parent)->name ?? 'None' }}</td>
+                            <td style="padding:10px;">{{ optional($cat->parent)->name ?? $cat->name }}</td>
+                            <td style="padding:10px;">{{ $cat->parent ? $cat->name : 'None' }}</td>
                             <td style="padding:10px; text-align:right;">{{ $cat->products_count }}</td>
                             @if($canDeleteProducts)
                                 <td style="padding:10px; text-align:center;">

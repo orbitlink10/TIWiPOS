@@ -63,7 +63,7 @@
                     @if($categories->isEmpty())
                         <small style="color:#b45309; font-weight:500;">
                             No categories available for this business yet.
-                            <a href="{{ route('categories.create') }}" style="color:#0369a1; font-weight:600;">Add a category</a>
+                            <a href="{{ route('categories.create', ['redirect_to' => 'products.create']) }}" style="color:#0369a1; font-weight:600;">Add a category</a>
                         </small>
                     @endif
                 </label>
