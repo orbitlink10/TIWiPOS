@@ -17,9 +17,8 @@ class CategoryController extends Controller
     public function create()
     {
         $categories = Category::with('parent')->withCount('products')->orderBy('name')->get();
-        $parentCategories = Category::whereNull('parent_id')->orderBy('name')->pluck('name');
 
-        return view('pages.category_create', compact('categories', 'parentCategories'));
+        return view('pages.category_create', compact('categories'));
     }
 
     public function store(Request $request)

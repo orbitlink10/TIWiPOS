@@ -41,12 +41,7 @@
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Category
-                    <input name="category_name" type="text" list="category-name-suggestions" placeholder="Category name" value="{{ old('category_name') }}" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                    <datalist id="category-name-suggestions">
-                        @foreach($parentCategories as $categoryName)
-                            <option value="{{ $categoryName }}"></option>
-                        @endforeach
-                    </datalist>
+                    <input name="category_name" type="text" placeholder="Category name" value="{{ old('category_name') }}" autocomplete="off" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
             </div>
 
