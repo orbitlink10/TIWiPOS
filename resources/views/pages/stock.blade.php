@@ -21,6 +21,29 @@
         gap: 12px;
     }
 
+    .stock-search {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .stock-search input {
+        flex: 1 1 280px;
+        min-width: 0;
+        padding: 13px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 15px;
+        color: var(--text);
+        background: #fff;
+    }
+
+    .stock-search button,
+    .stock-search a {
+        min-height: 48px;
+    }
+
     .metric-card {
         border-radius: 14px;
         padding: 14px;
@@ -168,6 +191,20 @@
             <div class="stock-status">{{ session('status') }}</div>
         @endif
 
+        <form class="stock-search" method="GET" action="{{ route('stock') }}">
+            <input
+                type="search"
+                name="q"
+                value="{{ $search ?? '' }}"
+                placeholder="Search sub-category"
+                aria-label="Search sub-category"
+            >
+            <button class="btn" type="submit">Search</button>
+            @if(!empty($search))
+                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('stock') }}">Clear</a>
+            @endif
+        </form>
+
         <div class="stock-metrics">
             <div class="metric-card">
                 <div class="metric-label">Out of stock sub-categories</div>
@@ -183,7 +220,7 @@
             </div>
         </div>
 
-        @if($subCategories->isEmpty() && isset($currentBranch))
+        @if($subCategories->isEmpty() && empty($search) && isset($currentBranch))
             <div style="padding:11px 12px; border-radius:12px; border:1px solid rgba(14,165,233,0.3); background:rgba(14,165,233,0.08); color:#0c4a6e; font-weight:600;">
                 No stock data is visible for <strong>{{ $currentBranch->name }}</strong>. If your stock is in another branch, switch branch from the sidebar.
             </div>
@@ -205,7 +242,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="stock-empty">No sub-categories recorded yet.</td>
+                            <td colspan="2" class="stock-empty">
+                                {{ !empty($search) ? 'No sub-categories match your search.' : 'No sub-categories recorded yet.' }}
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

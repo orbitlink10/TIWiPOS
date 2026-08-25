@@ -84,6 +84,65 @@ class StockSubCategoryListingTest extends TestCase
             ->assertDontSee('<td class="align-right">7</td>', false);
     }
 
+    public function test_stock_page_can_search_a_specific_sub_category(): void
+    {
+        [$business, $branch, $user] = $this->createActiveTenant();
+
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+
+        $routers = Category::create([
+            'business_id' => $business->id,
+            'name' => 'MikroTik Routers',
+            'slug' => 'mikrotik-routers',
+            'parent_id' => $category->id,
+            'is_active' => true,
+        ]);
+
+        $switches = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Switches',
+            'slug' => 'switches',
+            'parent_id' => $category->id,
+            'is_active' => true,
+        ]);
+
+        $routerProduct = $this->createProduct($business, $routers, 'RTR-002', 'SN-RTR-002');
+        ProductStock::create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'product_id' => $routerProduct->id,
+            'location' => 'main',
+            'quantity' => 4,
+        ]);
+
+        $switchProduct = $this->createProduct($business, $switches, 'SWT-001', 'SN-SWT-001');
+        ProductStock::create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'product_id' => $switchProduct->id,
+            'location' => 'main',
+            'quantity' => 9,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('stock', ['q' => 'mikrotik']))
+            ->assertOk()
+            ->assertSee('placeholder="Search sub-category"', false)
+            ->assertSee('value="mikrotik"', false)
+            ->assertSee('<button class="btn" type="submit">Search</button>', false)
+            ->assertSee('<td>MikroTik Routers</td>', false)
+            ->assertSee('<td class="align-right">4</td>', false)
+            ->assertSee('<div class="metric-value total">4</div>', false)
+            ->assertDontSee('<td>Switches</td>', false)
+            ->assertDontSee('<td class="align-right">9</td>', false);
+    }
+
     private function createProduct(Business $business, Category $category, string $sku, string $serialNumber): Product
     {
         return Product::create([

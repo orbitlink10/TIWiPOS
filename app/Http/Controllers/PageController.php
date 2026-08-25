@@ -21,9 +21,10 @@ class PageController extends Controller
         return $query;
     }
 
-    public function stock()
+    public function stock(Request $request)
     {
         $branchId = Tenant::branchId();
+        $search = trim((string) $request->query('q', ''));
         $products = \App\Models\Product::query()
             ->select('id', 'category_id', 'stock_alert')
             ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
@@ -39,6 +40,7 @@ class PageController extends Controller
 
         $subCategories = \App\Models\Category::query()
             ->whereNotNull('parent_id')
+            ->when($search !== '', fn($query) => $query->where('name', 'like', '%' . $search . '%'))
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(function ($subCategory) use ($productsBySubCategory) {
@@ -61,7 +63,7 @@ class PageController extends Controller
         $lowStock = $subCategories->filter(fn($row) => $row['on_hand'] > 0 && $row['reorder_at'] > 0 && $row['on_hand'] <= $row['reorder_at'])->count();
         $totalItems = $subCategories->sum('on_hand');
 
-        return view('pages.stock', compact('subCategories', 'outOfStock', 'lowStock', 'totalItems'));
+        return view('pages.stock', compact('subCategories', 'outOfStock', 'lowStock', 'totalItems', 'search'));
     }
 
     public function sale()
