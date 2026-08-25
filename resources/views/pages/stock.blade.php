@@ -161,7 +161,7 @@
     <div class="panel stock-panel">
         <div>
             <h2>Inventory at a glance</h2>
-            <p class="stock-lead">Category listing with current stock quantity per category.</p>
+            <p class="stock-lead">Sub-category listing with current stock quantity per sub-category.</p>
         </div>
 
         @if (session('status'))
@@ -170,11 +170,11 @@
 
         <div class="stock-metrics">
             <div class="metric-card">
-                <div class="metric-label">Out of stock categories</div>
+                <div class="metric-label">Out of stock sub-categories</div>
                 <div class="metric-value out">{{ $outOfStock }}</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Low stock categories</div>
+                <div class="metric-label">Low stock sub-categories</div>
                 <div class="metric-value low">{{ $lowStock }}</div>
             </div>
             <div class="metric-card">
@@ -183,7 +183,7 @@
             </div>
         </div>
 
-        @if($categories->isEmpty() && isset($currentBranch))
+        @if($subCategories->isEmpty() && isset($currentBranch))
             <div style="padding:11px 12px; border-radius:12px; border:1px solid rgba(14,165,233,0.3); background:rgba(14,165,233,0.08); color:#0c4a6e; font-weight:600;">
                 No stock data is visible for <strong>{{ $currentBranch->name }}</strong>. If your stock is in another branch, switch branch from the sidebar.
             </div>
@@ -193,19 +193,19 @@
             <table class="stock-table">
                 <thead>
                     <tr>
-                        <th>Category</th>
+                        <th>Sub-Category</th>
                         <th class="align-right">Quantity</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($categories as $category)
+                    @forelse($subCategories as $subCategory)
                         <tr>
-                            <td>{{ $category['category_name'] }}</td>
-                            <td class="align-right">{{ $category['on_hand'] }}</td>
+                            <td>{{ $subCategory['sub_category_name'] }}</td>
+                            <td class="align-right">{{ $subCategory['on_hand'] }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="stock-empty">No categories recorded yet.</td>
+                            <td colspan="2" class="stock-empty">No sub-categories recorded yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

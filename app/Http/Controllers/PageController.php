@@ -33,34 +33,35 @@ class PageController extends Controller
         }], 'quantity')
             ->get();
 
-        $productsByCategory = $products
+        $productsBySubCategory = $products
             ->filter(fn($product) => !empty($product->category_id))
             ->groupBy('category_id');
 
-        $categories = \App\Models\Category::query()
+        $subCategories = \App\Models\Category::query()
+            ->whereNotNull('parent_id')
             ->orderBy('name')
             ->get(['id', 'name'])
-            ->map(function ($category) use ($productsByCategory) {
-                $rows = $productsByCategory->get($category->id, collect());
+            ->map(function ($subCategory) use ($productsBySubCategory) {
+                $rows = $productsBySubCategory->get($subCategory->id, collect());
                 $onHand = (int) $rows->sum(fn($p) => (int) ($p->stock_on_hand ?? 0));
                 $reorderAt = (int) $rows->sum(fn($p) => (int) ($p->stock_alert ?? 0));
 
                 return [
-                    'category_id' => (int) $category->id,
-                    'category_name' => $category->name,
+                    'sub_category_id' => (int) $subCategory->id,
+                    'sub_category_name' => $subCategory->name,
                     'products_count' => $rows->count(),
                     'on_hand' => $onHand,
                     'reorder_at' => $reorderAt,
                 ];
             })
-            ->sortBy('category_name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->sortBy('sub_category_name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values();
 
-        $outOfStock = $categories->filter(fn($row) => $row['on_hand'] <= 0)->count();
-        $lowStock = $categories->filter(fn($row) => $row['on_hand'] > 0 && $row['reorder_at'] > 0 && $row['on_hand'] <= $row['reorder_at'])->count();
-        $totalItems = $categories->sum('on_hand');
+        $outOfStock = $subCategories->filter(fn($row) => $row['on_hand'] <= 0)->count();
+        $lowStock = $subCategories->filter(fn($row) => $row['on_hand'] > 0 && $row['reorder_at'] > 0 && $row['on_hand'] <= $row['reorder_at'])->count();
+        $totalItems = $subCategories->sum('on_hand');
 
-        return view('pages.stock', compact('categories', 'outOfStock', 'lowStock', 'totalItems'));
+        return view('pages.stock', compact('subCategories', 'outOfStock', 'lowStock', 'totalItems'));
     }
 
     public function sale()
