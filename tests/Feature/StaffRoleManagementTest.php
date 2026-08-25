@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Business;
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +17,7 @@ class StaffRoleManagementTest extends TestCase
 
     public function test_owner_can_update_staff_role(): void
     {
-        [$business, $branch] = $this->createActiveTenant();
+        [$business, $branch, $owner] = $this->createActiveTenant();
 
         $staff = User::factory()->create([
             'business_id' => $business->id,
@@ -86,6 +88,109 @@ class StaffRoleManagementTest extends TestCase
         $response = $this->actingAs($staff)->get(route('products.create'));
 
         $response->assertOk();
+    }
+
+    public function test_staff_can_edit_product_but_cannot_delete_product(): void
+    {
+        [$business, $branch] = $this->createActiveTenant();
+
+        $staff = User::factory()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'business_id' => $business->id,
+            'name' => 'Router',
+            'sku' => 'RTR-001',
+            'serial_number' => 'SN-RTR-001',
+            'category_id' => $category->id,
+            'cost' => 1000,
+            'price' => 1500,
+            'stock_alert' => 0,
+            'recorded_at' => now()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('products.edit', $product))
+            ->assertOk();
+
+        $this->actingAs($staff)
+            ->put(route('products.update', $product), [
+                'name' => 'Updated Router',
+                'sku' => 'RTR-001',
+                'serial_number' => 'SN-RTR-001',
+                'category_id' => $category->id,
+                'cost' => 1000,
+                'price' => 1600,
+                'stock_alert' => 0,
+                'stock' => 0,
+                'stock_location' => 'main',
+                'recorded_at' => now()->toDateString(),
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('products'));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'name' => 'Updated Router',
+            'price' => 1600,
+        ]);
+
+        $this->actingAs($staff)
+            ->delete(route('products.destroy', $product))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+        ]);
+    }
+
+    public function test_staff_product_list_hides_delete_action_but_keeps_edit_action(): void
+    {
+        [$business, $branch] = $this->createActiveTenant();
+
+        $staff = User::factory()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'business_id' => $business->id,
+            'name' => 'Router',
+            'sku' => 'RTR-002',
+            'serial_number' => 'SN-RTR-002',
+            'category_id' => $category->id,
+            'cost' => 1000,
+            'price' => 1500,
+            'stock_alert' => 0,
+            'recorded_at' => now()->toDateString(),
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($staff)
+            ->get(route('products'))
+            ->assertOk()
+            ->assertSee(route('products.edit', $product), false)
+            ->assertDontSee('action="' . route('products.destroy', $product) . '"', false)
+            ->assertDontSee('Delete');
     }
 
     public function test_manager_can_access_catalog_management_routes(): void

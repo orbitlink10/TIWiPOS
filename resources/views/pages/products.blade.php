@@ -13,6 +13,7 @@
 
 @section('content')
     @php($canManageCatalog = auth()->user()->canAccessAbility('manage_catalog'))
+    @php($canDeleteProducts = auth()->user()->canAccessAbility('delete_products'))
     @php($canViewFinancials = auth()->user()->canViewFinancials())
     @php($columnCount = 5 + ($canViewFinancials ? 1 : 0) + ($canManageCatalog ? 1 : 0))
     <div class="panel">
@@ -74,13 +75,15 @@
                                         <a href="{{ route('products.edit', $product) }}" style="border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; border-radius:8px; padding:6px 12px; font-weight:700; text-decoration:none;">
                                             Edit
                                         </a>
-                                        <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        @if($canDeleteProducts)
+                                            <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             @endif

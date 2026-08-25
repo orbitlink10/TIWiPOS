@@ -172,6 +172,7 @@ class User extends Authenticatable
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),
             'manage_profile' => $this->isOwner() || $this->isManager(),
+            'delete_products' => $this->isOwner() || $this->isManager(),
             'manage_catalog', 'view_stock', 'add_stock', 'adjust_stock' => $canManageInventory,
             'edit_sales' => $canEditSales,
             'view_profit' => $this->canViewProfit(),

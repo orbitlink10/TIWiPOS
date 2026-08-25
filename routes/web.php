@@ -73,7 +73,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/products', [ProductController::class, 'store'])->middleware('role.ability:manage_catalog')->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('role.ability:manage_catalog')->name('products.update');
     Route::patch('/products/{product}/status', [ProductController::class, 'status'])->middleware('role.ability:manage_catalog')->name('products.status');
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('products.destroy');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('role.ability:delete_products')->name('products.destroy');
     Route::get('/delivery/create', [ServiceController::class, 'create'])->middleware('role.ability:manage_catalog')->name('services.create');
     Route::get('/delivery/{service}/edit', [ServiceController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('services.edit');
     Route::post('/delivery', [ServiceController::class, 'store'])->middleware('role.ability:manage_catalog')->name('services.store');
@@ -93,7 +93,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('categories.store');
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:manage_catalog')->name('categories.destroy');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:delete_products')->name('categories.destroy');
 
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');

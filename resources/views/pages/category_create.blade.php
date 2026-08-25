@@ -10,6 +10,7 @@
 @endsection
 
 @section('content')
+    @php($canDeleteProducts = auth()->user()->canAccessAbility('delete_products'))
     <div class="panel">
         <h2>Category details</h2>
         <p style="color: var(--muted); margin-top:6px;">Create a category to group your products.</p>
@@ -64,7 +65,9 @@
 
     <div class="panel" style="margin-top:16px;">
         <h2>Manage Categories</h2>
-        <p style="color: var(--muted); margin-top:6px;">Delete categories you no longer need. Products under the category are removed too.</p>
+        <p style="color: var(--muted); margin-top:6px;">
+            {{ $canDeleteProducts ? 'Delete categories you no longer need. Products under the category are removed too.' : 'Review the categories available for your products.' }}
+        </p>
 
         <div style="margin-top:14px; overflow:auto;">
             <table style="width:100%; border-collapse:collapse; border-spacing:0; font-size:14px; min-width:520px;">
@@ -73,7 +76,9 @@
                         <th style="text-align:left; padding:10px;">Sub-Category</th>
                         <th style="text-align:left; padding:10px;">Category</th>
                         <th style="text-align:right; padding:10px;">Products</th>
-                        <th style="text-align:center; padding:10px; width:120px;">Action</th>
+                        @if($canDeleteProducts)
+                            <th style="text-align:center; padding:10px; width:120px;">Action</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -82,19 +87,21 @@
                             <td style="padding:10px;">{{ $cat->name }}</td>
                             <td style="padding:10px;">{{ optional($cat->parent)->name ?? 'None' }}</td>
                             <td style="padding:10px; text-align:right;">{{ $cat->products_count }}</td>
-                            <td style="padding:10px; text-align:center;">
-                                <form method="POST" action="{{ route('categories.destroy', $cat) }}" onsubmit="return confirm('Delete this category and all products under it?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
-                                        Delete
-                                    </button>
-                                </form>
-                            </td>
+                            @if($canDeleteProducts)
+                                <td style="padding:10px; text-align:center;">
+                                    <form method="POST" action="{{ route('categories.destroy', $cat) }}" onsubmit="return confirm('Delete this category and all products under it?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" style="padding:12px; text-align:center; color:var(--muted);">No categories yet.</td>
+                            <td colspan="{{ $canDeleteProducts ? 4 : 3 }}" style="padding:12px; text-align:center; color:var(--muted);">No categories yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
