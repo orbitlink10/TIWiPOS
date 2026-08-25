@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -166,6 +168,53 @@ class CategoryCreationTest extends TestCase
             ->assertSee('value="' . $category->id . '"', false)
             ->assertSee('Hardware')
             ->assertSee('Sub-Category');
+    }
+
+    public function test_sub_category_page_shows_total_quantity_per_sub_category(): void
+    {
+        $business = $this->createActiveBusiness('Biz One', 'biz-one');
+        $user = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => 'owner',
+        ]);
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+        $subCategory = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Routers',
+            'slug' => 'routers',
+            'parent_id' => $category->id,
+            'is_active' => true,
+        ]);
+        $product = Product::create([
+            'business_id' => $business->id,
+            'name' => 'Router',
+            'sku' => 'RTR-001',
+            'serial_number' => 'SN-RTR-001',
+            'category_id' => $subCategory->id,
+            'cost' => 1000,
+            'price' => 1500,
+            'stock_alert' => 0,
+            'recorded_at' => now()->toDateString(),
+            'is_active' => true,
+        ]);
+        ProductStock::create([
+            'business_id' => $business->id,
+            'product_id' => $product->id,
+            'location' => 'main',
+            'quantity' => 5,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sub-categories.create'))
+            ->assertOk()
+            ->assertSee('Total Quantity')
+            ->assertSee('<td style="padding:10px; text-align:right;">5</td>', false);
     }
 
     public function test_category_created_from_product_form_can_return_to_product_create(): void

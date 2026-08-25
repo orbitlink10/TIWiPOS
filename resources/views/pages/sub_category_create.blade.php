@@ -89,7 +89,7 @@
                     <tr style="background:#f7f7fb;">
                         <th style="text-align:left; padding:10px;">Category</th>
                         <th style="text-align:left; padding:10px;">Sub-Category</th>
-                        <th style="text-align:right; padding:10px;">Products</th>
+                        <th style="text-align:right; padding:10px;">Total Quantity</th>
                         @if($canDeleteProducts)
                             <th style="text-align:center; padding:10px; width:120px;">Action</th>
                         @endif
@@ -100,7 +100,7 @@
                         <tr style="border-top:1px solid #e5e7eb;">
                             <td style="padding:10px;">{{ optional($subCategory->parent)->name ?? 'None' }}</td>
                             <td style="padding:10px;">{{ $subCategory->name }}</td>
-                            <td style="padding:10px; text-align:right;">{{ $subCategory->products_count }}</td>
+                            <td style="padding:10px; text-align:right;">{{ $subCategory->stock_total }}</td>
                             @if($canDeleteProducts)
                                 <td style="padding:10px; text-align:center;">
                                     <form method="POST" action="{{ route('categories.destroy', $subCategory) }}" onsubmit="return confirm('Delete this sub-category?');">

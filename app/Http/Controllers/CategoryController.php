@@ -73,8 +73,27 @@ class CategoryController extends Controller
 
     public function createSubCategory(Request $request)
     {
+        $branchId = Tenant::branchId();
         $categories = Category::whereNull('parent_id')->orderBy('name')->get();
-        $subCategories = Category::with('parent')->whereNotNull('parent_id')->withCount('products')->orderBy('name')->get();
+        $stockTotalsBySubCategory = Product::query()
+            ->select('id', 'category_id')
+            ->withSum(['stocks as stock_on_hand' => function ($query) use ($branchId) {
+                if ($branchId) {
+                    $query->where('branch_id', $branchId);
+                }
+            }], 'quantity')
+            ->get()
+            ->filter(fn ($product) => ! empty($product->category_id))
+            ->groupBy('category_id')
+            ->map(fn ($products) => (int) $products->sum(fn ($product) => (int) ($product->stock_on_hand ?? 0)));
+
+        $subCategories = Category::with('parent')
+            ->whereNotNull('parent_id')
+            ->orderBy('name')
+            ->get()
+            ->each(function ($subCategory) use ($stockTotalsBySubCategory) {
+                $subCategory->setAttribute('stock_total', $stockTotalsBySubCategory->get($subCategory->id, 0));
+            });
         $redirectTo = $request->query('redirect_to') === 'products.create'
             ? 'products.create'
             : 'sub-categories.create';
