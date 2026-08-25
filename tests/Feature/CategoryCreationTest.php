@@ -79,49 +79,93 @@ class CategoryCreationTest extends TestCase
         $this->assertNotSame($categories[0]->slug, $categories[1]->slug);
     }
 
-    public function test_typed_category_name_creates_parent_for_sub_category(): void
+    public function test_sub_category_page_creates_sub_category_under_selected_category(): void
     {
         $business = $this->createActiveBusiness('Biz One', 'biz-one');
         $user = User::factory()->create([
             'business_id' => $business->id,
             'role' => 'owner',
         ]);
+        $parent = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
 
         $response = $this->actingAs($user)
-            ->post(route('categories.store'), [
-                'category_name' => 'Hardware',
+            ->post(route('sub-categories.store'), [
+                'parent_id' => $parent->id,
                 'sub_category_name' => 'Routers',
                 'description' => 'Router products',
                 'is_active' => 1,
             ]);
 
-        $response->assertRedirect(route('categories.create'));
+        $response->assertRedirect(route('sub-categories.create'));
 
-        $parent = Category::where('name', 'Hardware')->first();
         $subCategory = Category::where('name', 'Routers')->first();
 
-        $this->assertNotNull($parent);
-        $this->assertNull($parent->parent_id);
         $this->assertNotNull($subCategory);
         $this->assertSame($parent->id, $subCategory->parent_id);
     }
 
-    public function test_category_page_contains_category_and_sub_category_controls(): void
+    public function test_category_page_only_contains_category_controls(): void
     {
         $business = $this->createActiveBusiness('Biz One', 'biz-one');
         $user = User::factory()->create([
             'business_id' => $business->id,
             'role' => 'owner',
+        ]);
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+        Category::create([
+            'business_id' => $business->id,
+            'name' => 'Routers',
+            'slug' => 'routers',
+            'parent_id' => $category->id,
+            'is_active' => true,
         ]);
 
         $this->actingAs($user)
             ->get(route('categories.create'))
             ->assertOk()
             ->assertSee('Category')
-            ->assertSee('Sub-Category')
+            ->assertSee('Hardware')
+            ->assertDontSee('Routers')
             ->assertSee('name="category_name"', false)
+            ->assertDontSee('name="sub_category_name"', false)
+            ->assertDontSee('<select name="parent_id"', false);
+    }
+
+    public function test_sub_category_page_uses_category_dropdown(): void
+    {
+        $business = $this->createActiveBusiness('Biz One', 'biz-one');
+        $user = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => 'owner',
+        ]);
+        $category = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sub-categories.create'))
+            ->assertOk()
+            ->assertSee('<select name="parent_id"', false)
             ->assertSee('name="sub_category_name"', false)
-            ->assertSee('nav-sub-link', false);
+            ->assertSee('value="' . $category->id . '"', false)
+            ->assertSee('Hardware')
+            ->assertSee('Sub-Category');
     }
 
     public function test_category_created_from_product_form_can_return_to_product_create(): void

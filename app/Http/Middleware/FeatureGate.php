@@ -72,6 +72,8 @@ class FeatureGate
             'service-visits.status',
             'categories.create',
             'categories.store',
+            'sub-categories.create',
+            'sub-categories.store',
             'suppliers.create',
             'suppliers.store',
             'sales.index',

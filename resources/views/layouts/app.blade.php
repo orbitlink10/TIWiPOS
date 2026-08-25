@@ -519,7 +519,7 @@
                 @if(auth()->user()->canAccessAbility('manage_catalog'))
                     <div class="nav-group">
                         <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Category</span></a>
-                        <a href="{{ route('categories.create') }}#sub-category" class="nav-sub-link"><span>Sub-Category</span></a>
+                        <a href="{{ route('sub-categories.create') }}" class="nav-sub-link {{ request()->routeIs('sub-categories.*') ? 'active' : '' }}"><span>Sub-Category</span></a>
                     </div>
                 @endif
                 <a href="{{ route('services') }}" class="{{ request()->routeIs('services*') || request()->routeIs('service-categories.*') || request()->routeIs('service-workers.*') || request()->routeIs('service-visits.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Delivery</span></a>

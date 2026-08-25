@@ -93,6 +93,8 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
 
     Route::get('/categories/create', [CategoryController::class, 'create'])->middleware('role.ability:manage_catalog')->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->middleware('role.ability:manage_catalog')->name('categories.store');
+    Route::get('/sub-categories/create', [CategoryController::class, 'createSubCategory'])->middleware('role.ability:manage_catalog')->name('sub-categories.create');
+    Route::post('/sub-categories', [CategoryController::class, 'storeSubCategory'])->middleware('role.ability:manage_catalog')->name('sub-categories.store');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:delete_products')->name('categories.destroy');
 
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
