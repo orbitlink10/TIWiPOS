@@ -100,12 +100,7 @@ class StaffRoleManagementTest extends TestCase
             'role' => User::ROLE_STAFF,
         ]);
 
-        $category = Category::create([
-            'business_id' => $business->id,
-            'name' => 'Hardware',
-            'slug' => 'hardware',
-            'is_active' => true,
-        ]);
+        $category = $this->createSubCategory($business);
 
         $product = Product::create([
             'business_id' => $business->id,
@@ -165,12 +160,7 @@ class StaffRoleManagementTest extends TestCase
             'role' => User::ROLE_STAFF,
         ]);
 
-        $category = Category::create([
-            'business_id' => $business->id,
-            'name' => 'Hardware',
-            'slug' => 'hardware',
-            'is_active' => true,
-        ]);
+        $category = $this->createSubCategory($business);
 
         $product = Product::create([
             'business_id' => $business->id,
@@ -247,5 +237,24 @@ class StaffRoleManagementTest extends TestCase
         ]);
 
         return [$business, $branch, $owner];
+    }
+
+    private function createSubCategory(Business $business): Category
+    {
+        $parent = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Hardware',
+            'slug' => 'hardware-' . uniqid(),
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+
+        return Category::create([
+            'business_id' => $business->id,
+            'name' => 'Routers',
+            'slug' => 'routers-' . uniqid(),
+            'parent_id' => $parent->id,
+            'is_active' => true,
+        ]);
     }
 }

@@ -102,10 +102,19 @@ class TenantSalesIsolationTest extends TestCase
         [$firstBusiness, , $firstOwner] = $this->createActiveTenant('Catalog One', 'catalog-one@example.com');
         [$secondBusiness] = $this->createActiveTenant('Catalog Two', 'catalog-two@example.com');
 
-        $foreignCategory = Category::create([
+        $foreignParentCategory = Category::create([
             'business_id' => $secondBusiness->id,
             'name' => 'Foreign Category',
             'slug' => 'foreign-category',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
+
+        $foreignCategory = Category::create([
+            'business_id' => $secondBusiness->id,
+            'name' => 'Foreign Sub-Category',
+            'slug' => 'foreign-sub-category',
+            'parent_id' => $foreignParentCategory->id,
             'is_active' => true,
         ]);
 

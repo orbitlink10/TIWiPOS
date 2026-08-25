@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Support\Tenant;
@@ -24,6 +25,26 @@ class ProductController extends Controller
         return $normalized !== '' ? $normalized : 'main';
     }
 
+    private function subCategoriesForSelection()
+    {
+        return Category::with('parent')
+            ->whereNotNull('parent_id')
+            ->orderBy('name');
+    }
+
+    private function subCategoryExistsRule(?int $businessId)
+    {
+        return Rule::exists('categories', 'id')->where(function ($query) use ($businessId) {
+            $query->whereNotNull('parent_id');
+
+            if ($businessId) {
+                $query->where('business_id', $businessId);
+            } else {
+                $query->whereNull('business_id');
+            }
+        });
+    }
+
     public function index()
     {
         $branchId = Tenant::branchId();
@@ -39,7 +60,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = \App\Models\Category::orderBy('name')->get();
+        $categories = $this->subCategoriesForSelection()->get();
         $suppliers = \App\Models\Supplier::orderBy('name')->get();
         $productNames = \App\Models\Product::orderBy('name')->pluck('name');
         return view('pages.product_create', compact('categories', 'suppliers', 'productNames'));
@@ -48,7 +69,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $branchId = Tenant::branchId();
-        $categories = \App\Models\Category::orderBy('name')->get();
+        $categories = $this->subCategoriesForSelection()->get();
         $suppliers = \App\Models\Supplier::orderBy('name')->get();
 
         $stockRow = $product->stocks()
@@ -75,7 +96,7 @@ class ProductController extends Controller
             'category_id' => [
                 'required',
                 'integer',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+                $this->subCategoryExistsRule($businessId),
             ],
             'supplier_id' => [
                 'nullable',
@@ -142,7 +163,7 @@ class ProductController extends Controller
             'category_id' => [
                 'required',
                 'integer',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+                $this->subCategoryExistsRule($businessId),
             ],
             'supplier_id' => [
                 'nullable',

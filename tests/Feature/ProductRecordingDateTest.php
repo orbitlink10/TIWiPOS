@@ -82,9 +82,18 @@ class ProductRecordingDateTest extends TestCase
             'business_id' => $business->id,
             'name' => 'Installations',
             'slug' => 'installations-' . uniqid(),
+            'parent_id' => null,
             'is_active' => true,
         ]);
 
-        return [$user, $category];
+        $subCategory = Category::create([
+            'business_id' => $business->id,
+            'name' => 'Router Installations',
+            'slug' => 'router-installations-' . uniqid(),
+            'parent_id' => $category->id,
+            'is_active' => true,
+        ]);
+
+        return [$user, $subCategory];
     }
 }

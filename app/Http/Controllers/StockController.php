@@ -37,9 +37,29 @@ class StockController extends Controller
         return $normalized !== '' ? $normalized : 'main';
     }
 
+    private function subCategoriesForSelection()
+    {
+        return Category::with('parent')
+            ->whereNotNull('parent_id')
+            ->orderBy('name');
+    }
+
+    private function subCategoryExistsRule(?int $businessId)
+    {
+        return Rule::exists('categories', 'id')->where(function ($query) use ($businessId) {
+            $query->whereNotNull('parent_id');
+
+            if ($businessId) {
+                $query->where('business_id', $businessId);
+            } else {
+                $query->whereNull('business_id');
+            }
+        });
+    }
+
     public function adjustForm()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = $this->subCategoriesForSelection()->get();
         $selectedCategoryId = request()->integer('category_id');
         return view('pages.stock_adjust', compact('categories', 'selectedCategoryId'));
     }
@@ -51,7 +71,7 @@ class StockController extends Controller
         $data = $request->validate([
             'category_id' => [
                 'required',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+                $this->subCategoryExistsRule($businessId),
             ],
             'serial_numbers' => 'required|string',
             'location' => 'nullable|string|max:100',
@@ -75,7 +95,7 @@ class StockController extends Controller
         $category = Category::find($data['category_id']);
         if (!$category) {
             return back()->withErrors([
-                'category_id' => 'Selected category was not found.',
+                'category_id' => 'Selected sub-category was not found.',
             ])->withInput();
         }
 
@@ -94,7 +114,7 @@ class StockController extends Controller
 
         if (!empty($mismatchedSerials)) {
             return back()->withErrors([
-                'serial_numbers' => 'These serial numbers already belong to another category: ' . implode(', ', $mismatchedSerials),
+                'serial_numbers' => 'These serial numbers already belong to another sub-category: ' . implode(', ', $mismatchedSerials),
             ])->withInput();
         }
 

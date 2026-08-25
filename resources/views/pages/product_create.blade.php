@@ -53,17 +53,17 @@
                     <input name="barcode" type="text" placeholder="Scan or type" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Category
+                    Sub-Category
                     <select name="category_id" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                        <option value="" disabled @selected(!old('category_id'))>Select category</option>
+                        <option value="" disabled @selected(!old('category_id'))>Select sub-category</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>
+                            <option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->parent ? $category->parent->name . ' - ' : '' }}{{ $category->name }}</option>
                         @endforeach
                     </select>
                     @if($categories->isEmpty())
                         <small style="color:#b45309; font-weight:500;">
-                            No categories available for this business yet.
-                            <a href="{{ route('categories.create', ['redirect_to' => 'products.create']) }}" style="color:#0369a1; font-weight:600;">Add a category</a>
+                            No sub-categories available for this business yet.
+                            <a href="{{ route('sub-categories.create', ['redirect_to' => 'products.create']) }}" style="color:#0369a1; font-weight:600;">Add a sub-category</a>
                         </small>
                     @endif
                 </label>

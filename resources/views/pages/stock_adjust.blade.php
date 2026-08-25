@@ -11,8 +11,8 @@
 
 @section('content')
     <div class="panel">
-        <h2>Update stock by category + serial numbers</h2>
-        <p style="color: var(--muted); margin-top:6px;">Select a category and enter product serial numbers. Stock increases by the number of serial numbers entered. New serials are auto-added as products under the selected category.</p>
+        <h2>Update stock by sub-category + serial numbers</h2>
+        <p style="color: var(--muted); margin-top:6px;">Select a sub-category and enter product serial numbers. Stock increases by the number of serial numbers entered. New serials are auto-added as products under the selected sub-category.</p>
 
         @if ($errors->any())
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.08); color:#b91c1c;">
@@ -31,13 +31,19 @@
         <form method="POST" action="{{ route('stock.adjust.store') }}" style="margin-top:14px; display:grid; gap:14px;">
             @csrf
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                Category
+                Sub-Category
                 <select name="category_id" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
-                    <option value="">Select category</option>
+                    <option value="">Select sub-category</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" @selected((string) old('category_id', $selectedCategoryId ?? '') === (string) $category->id)>{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" @selected((string) old('category_id', $selectedCategoryId ?? '') === (string) $category->id)>{{ $category->parent ? $category->parent->name . ' - ' : '' }}{{ $category->name }}</option>
                     @endforeach
                 </select>
+                @if($categories->isEmpty())
+                    <small style="color:#b45309; font-weight:500;">
+                        No sub-categories available for this business yet.
+                        <a href="{{ route('sub-categories.create') }}" style="color:#0369a1; font-weight:600;">Add a sub-category</a>
+                    </small>
+                @endif
             </label>
 
             <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
