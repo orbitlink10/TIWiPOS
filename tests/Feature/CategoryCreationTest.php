@@ -79,6 +79,33 @@ class CategoryCreationTest extends TestCase
         $this->assertNotSame($categories[0]->slug, $categories[1]->slug);
     }
 
+    public function test_typed_category_name_creates_parent_for_sub_category(): void
+    {
+        $business = $this->createActiveBusiness('Biz One', 'biz-one');
+        $user = User::factory()->create([
+            'business_id' => $business->id,
+            'role' => 'owner',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->post(route('categories.store'), [
+                'name' => 'Routers',
+                'category_name' => 'Hardware',
+                'description' => 'Router products',
+                'is_active' => 1,
+            ]);
+
+        $response->assertRedirect(route('products.create'));
+
+        $parent = Category::where('name', 'Hardware')->first();
+        $subCategory = Category::where('name', 'Routers')->first();
+
+        $this->assertNotNull($parent);
+        $this->assertNull($parent->parent_id);
+        $this->assertNotNull($subCategory);
+        $this->assertSame($parent->id, $subCategory->parent_id);
+    }
+
     private function createActiveBusiness(string $name, string $slug): Business
     {
         $business = Business::create([

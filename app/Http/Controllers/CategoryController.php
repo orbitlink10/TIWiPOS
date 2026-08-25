@@ -17,12 +17,18 @@ class CategoryController extends Controller
     public function create()
     {
         $categories = Category::with('parent')->withCount('products')->orderBy('name')->get();
-        return view('pages.category_create', compact('categories'));
+        $parentCategories = Category::whereNull('parent_id')->orderBy('name')->pluck('name');
+
+        return view('pages.category_create', compact('categories', 'parentCategories'));
     }
 
     public function store(Request $request)
     {
         $businessId = Tenant::businessId();
+        $request->merge([
+            'name' => trim((string) $request->input('name')),
+            'category_name' => trim((string) $request->input('category_name')),
+        ]);
 
         $data = $request->validate([
             'name' => [
@@ -37,35 +43,69 @@ class CategoryController extends Controller
                     }
                 }),
             ],
-            'parent_id' => [
+            'category_name' => [
                 'nullable',
-                'integer',
-                Rule::exists('categories', 'id')->where(function ($query) use ($businessId) {
-                    if ($businessId) {
-                        $query->where('business_id', $businessId);
-                    } else {
-                        $query->whereNull('business_id');
-                    }
-                }),
+                'string',
+                'max:255',
             ],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        $baseSlug = Str::slug($data['name']);
-        if ($baseSlug === '') {
-            $baseSlug = 'category';
+        $categoryName = $data['category_name'] ?? '';
+        $parentCategoryId = null;
+
+        if ($categoryName !== '') {
+            $parentCategory = $this->findCategoryByName($categoryName, $businessId);
+
+            if (! $parentCategory) {
+                $parentCategory = Category::create([
+                    'business_id' => $businessId,
+                    'name' => $categoryName,
+                    'slug' => $this->nextAvailableSlug($this->baseSlug($categoryName)),
+                    'description' => null,
+                    'parent_id' => null,
+                    'is_active' => true,
+                ]);
+            }
+
+            $parentCategoryId = $parentCategory->id;
         }
 
         Category::create([
+            'business_id' => $businessId,
             'name' => $data['name'],
-            'slug' => $this->nextAvailableSlug($baseSlug),
+            'slug' => $this->nextAvailableSlug($this->baseSlug($data['name'])),
             'description' => $data['description'] ?? null,
-            'parent_id' => $data['parent_id'] ?? null,
+            'parent_id' => $parentCategoryId,
             'is_active' => $request->boolean('is_active'),
         ]);
 
         return redirect()->route('products.create')->with('status', 'Category added.');
+    }
+
+    private function findCategoryByName(string $name, ?int $businessId): ?Category
+    {
+        $query = Category::withoutGlobalScopes()
+            ->whereRaw('LOWER(name) = ?', [Str::lower($name)]);
+
+        if ($businessId) {
+            $query->where('business_id', $businessId);
+        } else {
+            $query->whereNull('business_id');
+        }
+
+        return $query
+            ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END')
+            ->orderBy('id')
+            ->first();
+    }
+
+    private function baseSlug(string $name): string
+    {
+        $baseSlug = Str::slug($name);
+
+        return $baseSlug !== '' ? $baseSlug : 'category';
     }
 
     private function nextAvailableSlug(string $baseSlug): string
