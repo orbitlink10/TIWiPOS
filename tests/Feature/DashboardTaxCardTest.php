@@ -17,6 +17,44 @@ class DashboardTaxCardTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_manager_sees_stock_value_for_current_branch_only(): void
+    {
+        $user = $this->createActiveOwner();
+        $user->update(['role' => User::ROLE_MANAGER]);
+        $product = $this->createProductWithStock($user->business_id, $user->branch_id);
+        $this->createProductWithStock($user->business_id, $user->branch_id);
+        $otherBranch = Branch::create([
+            'business_id' => $user->business_id,
+            'name' => 'Other Branch',
+            'code' => 'OTHER',
+        ]);
+        ProductStock::create([
+            'business_id' => $user->business_id,
+            'branch_id' => $otherBranch->id,
+            'product_id' => $product->id,
+            'location' => 'other',
+            'quantity' => 50,
+        ]);
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertOk()
+            ->assertSee('Stock Value')
+            ->assertSee('KES 4,000.00')
+            ->assertViewHas('stats', fn (array $stats) => (float) $stats['stock_value'] === 4000.0);
+    }
+
+    public function test_staff_cannot_see_stock_value(): void
+    {
+        $user = $this->createActiveOwner();
+        $user->update(['role' => User::ROLE_STAFF]);
+        $this->createProductWithStock($user->business_id, $user->branch_id);
+
+        $this->actingAs($user)->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('Stock Value')
+            ->assertViewHas('stats', fn (array $stats) => $stats['stock_value'] === null);
+    }
+
     public function test_dashboard_shows_today_tax_total_for_taxed_sales(): void
     {
         $user = $this->createActiveOwner();

@@ -73,6 +73,7 @@ class HomeController extends Controller
 
         $products = Product::query()
             ->select('id', 'stock_alert')
+            ->when($canViewFinancials, fn ($query) => $query->addSelect('price'))
             ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
                 if ($branchId) {
                     $q->where('branch_id', $branchId);
@@ -81,6 +82,9 @@ class HomeController extends Controller
             ->get();
 
         $outOfStock = $products->filter(fn($p) => (int) ($p->stock_on_hand ?? 0) <= 0)->count();
+        $stockValue = $canViewFinancials
+            ? $products->sum(fn ($product) => max(0, (int) ($product->stock_on_hand ?? 0)) * (float) $product->price)
+            : null;
         $lowStock = $products->filter(function ($p) {
             $stock = (int) ($p->stock_on_hand ?? 0);
             $alert = (int) ($p->stock_alert ?? 0);
@@ -145,6 +149,7 @@ class HomeController extends Controller
             'month_sales' => $monthSales,
             'out_of_stock' => $outOfStock,
             'low_stock' => $lowStock,
+            'stock_value' => $stockValue,
             'this_month' => $monthSales,
             'this_week' => $weekSales,
             'today' => $todaySales,

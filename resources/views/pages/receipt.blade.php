@@ -159,6 +159,10 @@
 
             <table class="totals">
                 <tr>
+                    <td class="muted">Total Items Sold</td>
+                    <td class="right">{{ number_format($sale->items->sum('quantity')) }}</td>
+                </tr>
+                <tr>
                     <td class="muted">Subtotal</td>
                     <td class="right">KES {{ number_format($sale->subtotal, 2) }}</td>
                 </tr>

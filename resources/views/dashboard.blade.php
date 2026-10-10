@@ -149,6 +149,13 @@
                 <div class="stat-value">{{ $stats['out_of_stock'] }}</div>
                 <div class="badge-soft" style="background:#fef3c7;color:#92400e;">Unavailable</div>
             </div>
+            @if($canViewFinancials ?? false)
+                <div class="stat-card">
+                    <div class="stat-label">Stock Value</div>
+                    <div class="stat-value">KES {{ number_format($stats['stock_value'], 2) }}</div>
+                    <div class="badge-soft" style="background:#e4f7ec;color:#117a39;">At selling price</div>
+                </div>
+            @endif
         </div>
 
         @if($canViewFinancials ?? false)
