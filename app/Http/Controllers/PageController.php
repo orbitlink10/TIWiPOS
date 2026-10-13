@@ -26,7 +26,7 @@ class PageController extends Controller
         $branchId = Tenant::branchId();
         $search = trim((string) $request->query('q', ''));
         $products = \App\Models\Product::query()
-            ->select('id', 'category_id', 'stock_alert')
+            ->select('id', 'category_id', 'stock_alert', 'cost')
             ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
             if ($branchId) {
                 $q->where('branch_id', $branchId);
@@ -53,6 +53,7 @@ class PageController extends Controller
                     'sub_category_name' => $subCategory->name,
                     'products_count' => $rows->count(),
                     'on_hand' => $onHand,
+                    'stock_value' => $rows->sum(fn($p) => (int) ($p->stock_on_hand ?? 0) * (float) ($p->cost ?? 0)),
                     'reorder_at' => $reorderAt,
                 ];
             })

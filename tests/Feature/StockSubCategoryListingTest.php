@@ -79,6 +79,9 @@ class StockSubCategoryListingTest extends TestCase
             ->assertSee('<div class="metric-value total">3</div>', false)
             ->assertSee('<td>Routers</td>', false)
             ->assertSee('<td class="align-right">3</td>', false)
+            ->assertSee('Stock value (KES)')
+            ->assertSee('<td class="align-right">3,000.00</td>', false)
+            ->assertSee('<td class="align-right">0.00</td>', false)
             ->assertSee('<td>Switches</td>', false)
             ->assertDontSee('Standalone Stock')
             ->assertDontSee('<td class="align-right">7</td>', false);
@@ -138,6 +141,7 @@ class StockSubCategoryListingTest extends TestCase
             ->assertSee('<button class="btn" type="submit">Search</button>', false)
             ->assertSee('<td>MikroTik Routers</td>', false)
             ->assertSee('<td class="align-right">4</td>', false)
+            ->assertSee('<td class="align-right">4,000.00</td>', false)
             ->assertSee('<div class="metric-value total">4</div>', false)
             ->assertDontSee('<td>Switches</td>', false)
             ->assertDontSee('<td class="align-right">9</td>', false);

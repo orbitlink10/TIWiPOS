@@ -185,6 +185,7 @@
         <div>
             <h2>Inventory at a glance</h2>
             <p class="stock-lead">Sub-category listing with current stock quantity per sub-category.</p>
+            <p class="stock-lead">Stock value is the quantity on hand multiplied by each product's cost price (KES).</p>
         </div>
 
         @if (session('status'))
@@ -232,6 +233,7 @@
                     <tr>
                         <th>Sub-Category</th>
                         <th class="align-right">Quantity</th>
+                        <th class="align-right">Stock value (KES)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -239,10 +241,11 @@
                         <tr>
                             <td>{{ $subCategory['sub_category_name'] }}</td>
                             <td class="align-right">{{ $subCategory['on_hand'] }}</td>
+                            <td class="align-right">{{ number_format($subCategory['stock_value'], 2) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="stock-empty">
+                            <td colspan="3" class="stock-empty">
                                 {{ !empty($search) ? 'No sub-categories match your search.' : 'No sub-categories recorded yet.' }}
                             </td>
                         </tr>
