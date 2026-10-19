@@ -239,7 +239,7 @@
                 <tbody>
                     @forelse($subCategories as $subCategory)
                         <tr>
-                            <td>{{ $subCategory['sub_category_name'] }}</td>
+                            <td><a href="{{ route('products', ['category_id' => $subCategory['sub_category_id']]) }}" style="display:block; color:#175cd3; font-weight:700; text-decoration:underline;">{{ $subCategory['sub_category_name'] }}</a></td>
                             <td class="align-right">{{ $subCategory['on_hand'] }}</td>
                             <td class="align-right">{{ number_format($subCategory['stock_value'], 2) }}</td>
                         </tr>

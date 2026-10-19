@@ -77,14 +77,25 @@ class StockSubCategoryListingTest extends TestCase
             ->assertSee('Out of stock sub-categories')
             ->assertSee('<div class="metric-value out">1</div>', false)
             ->assertSee('<div class="metric-value total">3</div>', false)
-            ->assertSee('<td>Routers</td>', false)
+            ->assertSee(route('products', ['category_id' => $subCategory->id]), false)
+            ->assertSee('Routers')
             ->assertSee('<td class="align-right">3</td>', false)
             ->assertSee('Stock value (KES)')
             ->assertSee('<td class="align-right">3,000.00</td>', false)
             ->assertSee('<td class="align-right">0.00</td>', false)
-            ->assertSee('<td>Switches</td>', false)
+            ->assertSee('Switches')
             ->assertDontSee('Standalone Stock')
             ->assertDontSee('<td class="align-right">7</td>', false);
+
+        $this->get(route('products', ['category_id' => $subCategory->id]))
+            ->assertOk()
+            ->assertSee('Routers products')
+            ->assertSee('SN-RTR-001')
+            ->assertDontSee('SN-TOP-001')
+            ->assertSee('View all products');
+
+        $this->get(route('products', ['category_id' => $topLevelOnlyCategory->id]))
+            ->assertNotFound();
     }
 
     public function test_stock_page_can_search_a_specific_sub_category(): void
@@ -139,11 +150,11 @@ class StockSubCategoryListingTest extends TestCase
             ->assertSee('placeholder="Search sub-category"', false)
             ->assertSee('value="mikrotik"', false)
             ->assertSee('<button class="btn" type="submit">Search</button>', false)
-            ->assertSee('<td>MikroTik Routers</td>', false)
+            ->assertSee('MikroTik Routers')
             ->assertSee('<td class="align-right">4</td>', false)
             ->assertSee('<td class="align-right">4,000.00</td>', false)
             ->assertSee('<div class="metric-value total">4</div>', false)
-            ->assertDontSee('<td>Switches</td>', false)
+            ->assertDontSee('Switches')
             ->assertDontSee('<td class="align-right">9</td>', false);
     }
 

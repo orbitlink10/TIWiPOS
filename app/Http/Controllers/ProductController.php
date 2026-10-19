@@ -48,14 +48,24 @@ class ProductController extends Controller
     public function index()
     {
         $branchId = Tenant::branchId();
+        $businessId = Tenant::businessId();
+        $selectedSubCategory = null;
+        if (request()->filled('category_id')) {
+            $selectedSubCategory = Category::query()
+                ->where('business_id', $businessId)
+                ->whereNotNull('parent_id')
+                ->findOrFail(request()->query('category_id'));
+        }
 
-        $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
+        $products = Product::where('business_id', $businessId)
+            ->when($selectedSubCategory, fn ($query) => $query->where('category_id', $selectedSubCategory->id))
+            ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
         }], 'quantity')->latest()->get();
 
-        return view('pages.products', compact('products'));
+        return view('pages.products', compact('products', 'selectedSubCategory'));
     }
 
     public function create()

@@ -17,7 +17,13 @@
     @php($canViewFinancials = auth()->user()->canViewFinancials())
     @php($columnCount = 5 + ($canViewFinancials ? 1 : 0) + ($canManageCatalog ? 1 : 0))
     <div class="panel">
-        <h2>Catalog</h2>
+        <h2>{{ isset($selectedSubCategory) ? $selectedSubCategory->name . ' products' : 'Catalog' }}</h2>
+        @if(isset($selectedSubCategory))
+            <div style="display:flex; gap:16px; margin-top:10px;">
+                <a href="{{ route('stock') }}">Back to Stock</a>
+                <a href="{{ route('products') }}">View all products</a>
+            </div>
+        @endif
         <p style="color: var(--muted); margin-top:6px;">Manage items available for sale.</p>
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
