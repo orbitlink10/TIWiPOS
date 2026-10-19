@@ -50,12 +50,18 @@ class TodoListTest extends TestCase
         $this->withoutMiddleware(FeatureGate::class);
         $owner = $this->journalUser();
         $colleague = User::factory()->create(['business_id' => $owner->business_id]);
+        $anotherOwner = User::factory()->create([
+            'business_id' => $owner->business_id, 'role' => 'owner',
+        ]);
+        $superAdmin = User::factory()->create([
+            'business_id' => $owner->business_id, 'is_super_admin' => true,
+        ]);
         $outsider = $this->journalUser();
         $item = TodoItem::create([
             'business_id' => $owner->business_id, 'user_id' => $owner->id,
             'activity' => 'Private journal entry', 'activity_date' => '2026-10-19',
         ]);
-        foreach ([$colleague, $outsider] as $user) {
+        foreach ([$colleague, $anotherOwner, $superAdmin, $outsider] as $user) {
             $this->actingAs($user)->get(route('todos.index', ['date' => '2026-10-19']))
                 ->assertOk()->assertDontSee('Private journal entry');
             $this->patch(route('todos.update', $item), ['is_completed' => 1])->assertNotFound();
