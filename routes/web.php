@@ -25,6 +25,7 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Admin\TenantController;
+use App\Http\Controllers\TodoItemController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/site', [HomeController::class, 'landing'])->name('site.home');
@@ -45,6 +46,9 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
+    Route::get('/to-do-list', [TodoItemController::class, 'index'])->name('todos.index');
+    Route::post('/to-do-list', [TodoItemController::class, 'store'])->name('todos.store');
+    Route::patch('/to-do-list/{todo}', [TodoItemController::class, 'update'])->whereNumber('todo')->name('todos.update');
     Route::get('/content', [PostController::class, 'index'])->middleware('super.admin')->name('content.index');
     Route::get('/content/create', [PostController::class, 'create'])->middleware('super.admin')->name('content.create');
     Route::post('/content', [PostController::class, 'store'])->middleware('super.admin')->name('content.store');
