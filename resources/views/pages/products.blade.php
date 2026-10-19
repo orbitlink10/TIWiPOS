@@ -19,6 +19,7 @@
     <div class="panel">
         <h2>{{ isset($selectedSubCategory) ? $selectedSubCategory->name . ' products' : 'Catalog' }}</h2>
         @if(isset($selectedSubCategory))
+            <p style="color:var(--muted); margin-top:6px;">Showing only products currently in stock in the selected branch.</p>
             <div style="display:flex; gap:16px; margin-top:10px;">
                 <a href="{{ route('stock') }}">Back to Stock</a>
                 <a href="{{ route('products') }}">View all products</a>
@@ -96,7 +97,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $columnCount }}" style="padding:12px; text-align:center; color:var(--muted);">No products yet.</td>
+                            <td colspan="{{ $columnCount }}" style="padding:12px; text-align:center; color:var(--muted);">{{ isset($selectedSubCategory) ? 'No products currently in stock in this sub-category for the selected branch.' : 'No products yet.' }}</td>
                         </tr>
                     @endforelse
                 </tbody>

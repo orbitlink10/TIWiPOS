@@ -87,12 +87,39 @@ class StockSubCategoryListingTest extends TestCase
             ->assertDontSee('Standalone Stock')
             ->assertDontSee('<td class="align-right">7</td>', false);
 
+        $soldProduct = $this->createProduct($business, $subCategory, 'SOLD-001', 'SN-SOLD-001');
+        ProductStock::create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'product_id' => $soldProduct->id,
+            'location' => 'main',
+            'quantity' => 0,
+        ]);
+        $otherBranch = Branch::create([
+            'business_id' => $business->id, 'name' => 'Other Branch', 'code' => 'OTHER',
+        ]);
+        ProductStock::create([
+            'business_id' => $business->id,
+            'branch_id' => $otherBranch->id,
+            'product_id' => $soldProduct->id,
+            'location' => 'other',
+            'quantity' => 1,
+        ]);
+
         $this->get(route('products', ['category_id' => $subCategory->id]))
             ->assertOk()
             ->assertSee('Routers products')
             ->assertSee('SN-RTR-001')
             ->assertDontSee('SN-TOP-001')
+            ->assertDontSee('SN-SOLD-001')
             ->assertSee('View all products');
+
+        $this->get(route('products'))->assertOk()->assertSee('SN-SOLD-001');
+
+        $subCategoryProduct->stocks()->where('branch_id', $branch->id)->update(['quantity' => 0]);
+        $this->get(route('products', ['category_id' => $subCategory->id]))
+            ->assertOk()
+            ->assertSee('No products currently in stock in this sub-category for the selected branch.');
 
         $this->get(route('products', ['category_id' => $topLevelOnlyCategory->id]))
             ->assertNotFound();

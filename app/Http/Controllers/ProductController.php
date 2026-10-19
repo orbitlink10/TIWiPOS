@@ -65,6 +65,10 @@ class ProductController extends Controller
             }
         }], 'quantity')->latest()->get();
 
+        if ($selectedSubCategory) {
+            $products = $products->filter(fn (Product $product) => (int) $product->stock_on_hand > 0)->values();
+        }
+
         return view('pages.products', compact('products', 'selectedSubCategory'));
     }
 
