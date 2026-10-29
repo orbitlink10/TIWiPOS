@@ -516,6 +516,7 @@
                 <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.*') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Make a Sale</span></a>
                 <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
                 <a href="{{ route('todos.index') }}" class="{{ request()->routeIs('todos.*') ? 'active' : '' }}"><span class="nav-icon">TD</span><span>To Do List</span></a>
+                <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}"><span class="nav-icon">QT</span><span>Quotation</span></a>
                 <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') || request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
                 @if(auth()->user()->canAccessAbility('manage_catalog'))
                     <div class="nav-group">

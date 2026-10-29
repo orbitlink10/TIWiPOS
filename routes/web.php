@@ -46,6 +46,7 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
+    Route::resource('quotations', \App\Http\Controllers\QuotationController::class)->except('destroy')->whereNumber('quotation');
     Route::get('/to-do-list', [TodoItemController::class, 'index'])->name('todos.index');
     Route::post('/to-do-list', [TodoItemController::class, 'store'])->name('todos.store');
     Route::patch('/to-do-list/{todo}', [TodoItemController::class, 'update'])->whereNumber('todo')->name('todos.update');
