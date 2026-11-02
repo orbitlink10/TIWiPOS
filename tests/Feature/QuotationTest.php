@@ -216,9 +216,76 @@ class QuotationTest extends TestCase
         $this->get(route('quotations.inbox'))->assertOk()->assertSee('Could not connect to your inbox.')->assertDontSee('private-secret');
     }
 
+    public function test_outbox_preserves_sent_email_and_attachment_and_isolates_access(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        \Illuminate\Support\Facades\Mail::fake();
+        config(['mail.default' => 'smtp']);
+        $owner = $this->owner();
+        $this->actingAs($owner)->post(route('quotations.store'), $this->payload());
+        $quote = Quotation::sole();
+        $this->get(route('quotations.outbox'))->assertOk()->assertSee('No email attempts yet');
+        $this->post(route('quotations.email', $quote), ['email' => 'customer@example.com'])->assertSessionHasNoErrors();
+        $email = \App\Models\QuotationEmail::sole();
+        $this->assertSame('sent', $email->status);
+        $this->assertNotNull($email->sent_at);
+        $this->assertStringNotContainsString('Dear', $email->getRawOriginal('content'));
+        $original = base64_decode($email->content['pdf']);
+        $this->assertStringStartsWith('%PDF-', $original);
+        $data = $this->payload();
+        $data['number'] = 'QT-CHANGED';
+        $data['customer_name'] = 'Changed Customer';
+        $this->put(route('quotations.update', $quote), $data)->assertSessionHasNoErrors();
+        $this->get(route('quotations.outbox'))->assertOk()->assertSee('customer@example.com')->assertSee('Quotation QT-100');
+        $this->get(route('quotations.outbox.show', $email))->assertOk()->assertSee('Customer Limited')->assertDontSee('Changed Customer')
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertSame($original, $this->get(route('quotations.outbox.download', $email))->assertOk()->assertDownload('Quotation-qt-100.pdf')->getContent());
+        $otherBranch = Branch::create(['business_id' => $owner->business_id, 'name' => 'Other', 'code' => 'OTHER']);
+        $this->withSession(['branch_id' => $otherBranch->id])->get(route('quotations.outbox'))->assertDontSee('customer@example.com');
+        $this->get(route('quotations.outbox.show', $email))->assertNotFound();
+        $this->get(route('quotations.outbox.download', $email))->assertNotFound();
+        $this->actingAs($this->owner())->get(route('quotations.outbox'))->assertDontSee('customer@example.com');
+        $this->get(route('quotations.outbox.show', $email))->assertNotFound();
+        $this->get(route('quotations.outbox.download', $email))->assertNotFound();
+        $staff = User::factory()->create(['business_id' => $owner->business_id, 'role' => 'staff']);
+        $this->actingAs($staff)->get(route('quotations.outbox'))->assertForbidden();
+        $this->get(route('quotations.outbox.show', $email))->assertForbidden();
+        $this->get(route('quotations.outbox.download', $email))->assertForbidden();
+    }
+
+    public function test_outbox_records_failures_without_exposing_transport_secrets(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $this->actingAs($this->owner())->post(route('quotations.store'), $this->payload());
+        $quote = Quotation::sole();
+        $this->mock(\App\Support\QuotationSender::class, function ($mock) {
+            $mock->shouldReceive('send')->once()->andThrow(new \RuntimeException('SMTP private-credential'));
+        });
+        $this->post(route('quotations.email', $quote), ['email' => 'customer@example.com'])->assertSessionHasErrors('email');
+        $email = \App\Models\QuotationEmail::sole();
+        $this->assertSame('failed', $email->status);
+        $this->assertNull($email->sent_at);
+        $this->get(route('quotations.outbox.show', $email))->assertOk()->assertSee('This attempt failed')->assertDontSee('private-credential');
+    }
+
+    public function test_outbox_does_not_label_log_mail_as_sent(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        \Illuminate\Support\Facades\Mail::fake();
+        config(['mail.default' => 'log']);
+        $this->actingAs($this->owner())->post(route('quotations.store'), $this->payload());
+        $this->post(route('quotations.email', Quotation::sole()), ['email' => 'customer@example.com'])->assertSessionHasNoErrors();
+        $email = \App\Models\QuotationEmail::sole();
+        $this->assertSame('recorded', $email->status);
+        $this->assertNull($email->sent_at);
+    }
+
     public function test_guests_cannot_access_quotations(): void
     {
         $this->get(route('quotations.index'))->assertRedirect(route('login'));
+        $this->get(route('quotations.outbox'))->assertRedirect(route('login'));
+        $this->get(route('quotations.outbox.show', 1))->assertRedirect(route('login'));
+        $this->get(route('quotations.outbox.download', 1))->assertRedirect(route('login'));
         $this->post(route('quotations.store'), $this->payload())->assertRedirect(route('login'));
         $this->get(route('quotations.download', 1))->assertRedirect(route('login'));
         $this->post(route('quotations.email', 1), ['email' => 'customer@example.com'])->assertRedirect(route('login'));

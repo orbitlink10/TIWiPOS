@@ -8,6 +8,7 @@
     @if(auth()->user()->canAccessAbility('manage_profile'))
     <a class="btn" href="{{ route('quotations.settings.edit') }}">Settings</a>
     <a class="btn" href="{{ route('quotations.inbox') }}">Inbox</a>
+    <a class="btn" href="{{ route('quotations.outbox') }}">Outbox</a>
     @endif
     <table style="width:100%; border-collapse:collapse; margin-top:24px;">
         <thead><tr><th scope="col">Quotation No.</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">Valid Until</th><th scope="col">Total</th><th scope="col">Actions</th></tr></thead>

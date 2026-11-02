@@ -136,15 +136,37 @@ class QuotationController extends Controller
         $quotation = $this->quotations()->findOrFail($quotation);
         $data = $request->validate(['email' => ['required', 'email', 'max:254']]);
 
+        $business = Business::findOrFail(Tenant::businessId());
+        $attempt = \App\Models\QuotationEmail::create([
+            'business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(),
+            'quotation_id' => $quotation->id, 'recipient' => $data['email'],
+            'sender' => $business->quotation_mail['from_address'] ?? config('mail.from.address'),
+            'subject' => 'Quotation '.$quotation->number, 'status' => 'sending',
+        ]);
+
         try {
+            $attachment = $pdf->render($quotation);
+            $filename = $pdf->filename($quotation);
+            $attempt->update(['content' => [
+                'body' => html_entity_decode(strip_tags(view('quotations.email', compact('quotation'))->render()), ENT_QUOTES, 'UTF-8'),
+                'pdf' => base64_encode($attachment), 'filename' => $filename,
+            ]]);
             app(\App\Support\QuotationSender::class)->send(
-                Business::findOrFail(Tenant::businessId()), $data['email'],
-                new QuotationMail($quotation, $pdf->render($quotation), $pdf->filename($quotation))
+                $business, $data['email'], new QuotationMail($quotation, $attachment, $filename)
             );
         } catch (\Throwable $exception) {
+            $attempt->update(['status' => 'failed']);
             report($exception);
 
             return back()->withInput()->withErrors(['email' => 'The quotation could not be emailed. Please try again or download the PDF.']);
+        }
+
+        $recordedOnly = empty($business->quotation_mail['from_address'])
+            && in_array(config('mail.default'), ['log', 'array'], true);
+        $attempt->update(['status' => $recordedOnly ? 'recorded' : 'sent', 'sent_at' => $recordedOnly ? null : now()]);
+
+        if ($recordedOnly) {
+            return redirect()->route('quotations.show', $quotation)->with('status', 'Email recorded only. Configure SMTP in Quotation Settings to send emails.');
         }
 
         return redirect()->route('quotations.show', $quotation)->with('status', 'Quotation emailed to '.$data['email'].'.');
