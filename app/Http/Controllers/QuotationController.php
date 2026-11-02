@@ -42,6 +42,8 @@ class QuotationController extends Controller
             'items' => [['description' => '', 'quantity' => 1, 'unit' => 'PCS', 'unit_price' => '0.00']],
         ];
 
+        $document = array_replace($document, $business->quotation_defaults ?? []);
+
         return view('quotations.form', compact('quotation', 'document'));
     }
 
@@ -109,6 +111,10 @@ class QuotationController extends Controller
         $document = collect($data)->except(['number', 'customer_name', 'quotation_date', 'valid_until'])->all();
         $document += ['subtotal_cents' => $subtotal, 'discount_cents' => $discount, 'vat_cents' => $vat, 'total_cents' => $subtotal - $discount + $vat];
         $quotation->fill(collect($data)->only(['number', 'customer_name', 'quotation_date', 'valid_until'])->all());
+        // Keep the original logo on edits; new quotations snapshot the current default.
+        $document['logo_path'] = $quotation->exists
+            ? ($quotation->document['logo_path'] ?? null)
+            : (Business::findOrFail(Tenant::businessId())->quotation_defaults['logo_path'] ?? null);
         $quotation->document = $document;
         $quotation->save();
 

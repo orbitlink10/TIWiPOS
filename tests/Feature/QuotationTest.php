@@ -94,6 +94,45 @@ class QuotationTest extends TestCase
         $this->post(route('quotations.store'), $this->payload())->assertSessionHasErrors('number');
     }
 
+    public function test_business_defaults_and_logo_are_saved_and_snapshotted(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $owner = $this->owner();
+        $this->actingAs($owner)->get(route('quotations.index'))->assertSee('Settings');
+        $settings = ['issuer_name' => 'Default Company', 'currency' => 'KES', 'vat_rate' => 16,
+            'terms' => 'Payment within 30 days.', 'bank_details' => 'Bank account 12345'];
+        $this->put(route('quotations.settings.update'), $settings + [
+            'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 120, 80),
+        ])->assertSessionHasNoErrors()->assertRedirect(route('quotations.settings.edit'));
+        $defaults = Business::findOrFail($owner->business_id)->quotation_defaults;
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($defaults['logo_path']);
+        $this->get(route('quotations.settings.edit'))->assertOk()->assertSee('Current business logo');
+        $this->get(route('quotations.create'))->assertOk()->assertSee('Default Company')->assertSee('Payment within 30 days.')->assertSee('Bank account 12345');
+        $this->post(route('quotations.store'), array_replace($this->payload(), $settings))->assertRedirect();
+        $quote = Quotation::sole();
+        $this->assertSame($defaults['logo_path'], $quote->document['logo_path']);
+        $this->get(route('quotations.show', $quote))->assertOk()->assertSee('data:image/png;base64,', false);
+        $this->get(route('quotations.download', $quote))->assertOk()->assertDownload();
+        $this->put(route('quotations.settings.update'), array_replace($settings, ['terms' => 'New terms', 'remove_logo' => 1]))->assertSessionHasNoErrors();
+        $this->put(route('quotations.update', $quote), array_replace($this->payload(), $settings))->assertRedirect();
+        $this->assertSame($defaults['logo_path'], $quote->fresh()->document['logo_path']);
+        $this->assertSame('Payment within 30 days.', $quote->fresh()->document['terms']);
+        $this->actingAs($this->owner())->get(route('quotations.create'))->assertDontSee('Default Company')->assertDontSee('Bank account 12345');
+        $staff = User::factory()->create(['business_id' => $owner->business_id, 'role' => 'staff']);
+        $this->actingAs($staff)->get(route('quotations.settings.edit'))->assertForbidden();
+        $this->put(route('quotations.settings.update'), $settings)->assertForbidden();
+    }
+
+    public function test_quotation_settings_reject_invalid_logo_and_defaults(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $this->actingAs($this->owner())->put(route('quotations.settings.update'), [
+            'issuer_name' => '', 'currency' => 'INVALID', 'vat_rate' => 101,
+            'logo' => \Illuminate\Http\UploadedFile::fake()->create('logo.svg', 1, 'image/svg+xml'),
+        ])->assertSessionHasErrors(['issuer_name', 'currency', 'vat_rate', 'logo']);
+    }
+
     public function test_guests_cannot_access_quotations(): void
     {
         $this->get(route('quotations.index'))->assertRedirect(route('login'));

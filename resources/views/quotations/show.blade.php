@@ -69,7 +69,7 @@
 </div>
 @endunless
 <main class="sheet">
-    <header class="letterhead"><div class="business-name">{{ $document['issuer_name'] }}</div><div class="issuer multiline">{{ $document['issuer_details'] ?? '' }}</div></header>
+    <header class="letterhead"><div class="business-name">@if($logo = \App\Support\QuotationPdf::logoData($document['logo_path'] ?? null))<img src="{{ $logo }}" alt="Business logo" style="display:block;max-width:150px;max-height:75px;margin-bottom:10px">@endif{{ $document['issuer_name'] }}</div><div class="issuer multiline">{{ $document['issuer_details'] ?? '' }}</div></header>
     <h1>QUOTATION</h1>
     <section class="details">
         <div class="customer"><div>QUOTATION FOR</div><strong>{{ $quotation->customer_name }}</strong><div class="multiline">{{ $document['customer_details'] ?? '' }}</div></div>

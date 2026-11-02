@@ -26,6 +26,7 @@ class Business extends Model
     ];
 
     protected $casts = [
+        'quotation_defaults' => 'array',
         'current_period_start' => 'date',
         'current_period_end' => 'date',
         'last_payment_at' => 'datetime',
