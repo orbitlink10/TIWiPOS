@@ -41,7 +41,7 @@
     </div></fieldset>
     <fieldset><legend>Customer and Quotation Details</legend><div class="quote-fields">
         <label>Customer Name<input name="customer_name" required maxlength="255" value="{{ old('customer_name', $quotation->customer_name) }}"></label>
-        <label>Quotation No.<input name="number" required maxlength="80" value="{{ old('number', $quotation->number ?? 'QT-'.now('Africa/Nairobi')->format('Ymd').'-'.strtoupper(\Illuminate\Support\Str::random(6))) }}"></label>
+        <label>Quotation No.<input name="number" required maxlength="80" value="{{ old('number', $quotation->number ?? 'QT-'.now('Africa/Nairobi')->format('Ymd-Hi')) }}"></label>
         <label>Date<input type="date" name="quotation_date" required value="{{ old('quotation_date', $quotation->quotation_date?->format('Y-m-d') ?? now('Africa/Nairobi')->toDateString()) }}"></label>
         <label>Valid Until<input type="date" name="valid_until" required value="{{ old('valid_until', $quotation->valid_until?->format('Y-m-d') ?? now('Africa/Nairobi')->addDays(14)->toDateString()) }}"></label>
         <label>Customer Address, Registration / Tax No. and Attention<textarea name="customer_details" maxlength="2000">{{ $value('customer_details') }}</textarea></label>
