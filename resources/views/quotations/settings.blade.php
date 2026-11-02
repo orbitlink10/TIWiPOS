@@ -37,4 +37,21 @@
 @endif
 <div><button class="btn primary" type="submit">Save Settings</button> <a class="btn" href="{{ route('quotations.index') }}">Back to Quotations</a></div>
 </form>
+<h2 style="margin-top:28px">Send Quotations by Email</h2>
+<p>Connect the mailbox you want to send quotations from. Use the SMTP details supplied by your email provider. The sender address must be allowed by that mailbox.</p>
+@php($mail = $business->quotation_mail ?? [])
+<form class="defaults-form" method="POST" action="{{ route('quotations.settings.email') }}">
+@csrf @method('PUT')
+<div class="defaults-fields">
+<label>Sender Email<input type="email" name="from_address" required maxlength="254" value="{{ old('from_address', $mail['from_address'] ?? '') }}" placeholder="sales@yourbusiness.co.ke"></label>
+<label>Sender Name<input name="from_name" required maxlength="255" value="{{ old('from_name', $mail['from_name'] ?? $business->name) }}"></label>
+<label>SMTP Host<input name="host" required maxlength="253" value="{{ old('host', $mail['host'] ?? '') }}" placeholder="mail.yourbusiness.co.ke"></label>
+<label>SMTP Port<select name="port"><option value="465" @selected(old('port', $mail['port'] ?? 465) == 465)>465 ? SSL/TLS</option><option value="587" @selected(old('port', $mail['port'] ?? 465) == 587)>587 ? STARTTLS</option></select></label>
+<label>SMTP Username<input name="username" required maxlength="255" autocomplete="off" value="{{ old('username', $mail['username'] ?? '') }}" placeholder="Usually your full email address"></label>
+<label>Mailbox / App Password<input type="password" name="mail_password" maxlength="1000" autocomplete="new-password" placeholder="{{ isset($mail['password']) ? 'Saved ? leave blank to keep' : 'Enter password' }}"></label>
+</div>
+<p>Your password is stored encrypted. For Gmail or providers using two-step verification, use an app password if required by your provider. On cPanel, find the SMTP details under Email Accounts ? Connect Devices.</p>
+<button class="btn primary" type="submit">Save Email Settings</button>
+<p>To send, open a quotation and select Send via Email. The quotation PDF will be attached.</p>
+</form>
 @endsection

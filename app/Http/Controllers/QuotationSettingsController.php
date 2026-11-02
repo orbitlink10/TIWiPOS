@@ -15,6 +15,27 @@ class QuotationSettingsController extends Controller
         $business = $this->business();
         return view('quotations.settings', ['defaults' => $business->quotation_defaults ?? [], 'business' => $business]);
     }
+    public function updateEmail(Request $request)
+    {
+        $business = $this->business();
+        $data = $request->validate([
+            'from_address' => ['required', 'email', 'max:254'],
+            'from_name' => ['required', 'string', 'max:255'],
+            'host' => ['required', 'string', 'max:253', 'regex:/^[a-zA-Z0-9.-]+$/'],
+            'port' => ['required', 'integer', 'in:465,587'],
+            'username' => ['required', 'string', 'max:255'],
+            'mail_password' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $data['password'] = $data['mail_password'] ?? ($business->quotation_mail['password'] ?? null);
+        unset($data['mail_password']);
+        if (!$data['password']) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['mail_password' => 'Enter the mailbox password or app password.']);
+        }
+        $business->quotation_mail = $data;
+        $business->save();
+        return redirect()->route('quotations.settings.edit')->with('status', 'Quotation email settings saved.');
+    }
+
     public function update(Request $request)
     {
         $business = $this->business();

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use App\Mail\QuotationMail;
 use App\Support\QuotationPdf;
-use Illuminate\Support\Facades\Mail;
 use App\Models\Quotation;
 use App\Support\Tenant;
 use Illuminate\Http\Request;
@@ -138,7 +137,10 @@ class QuotationController extends Controller
         $data = $request->validate(['email' => ['required', 'email', 'max:254']]);
 
         try {
-            Mail::to($data['email'])->send(new QuotationMail($quotation, $pdf->render($quotation), $pdf->filename($quotation)));
+            app(\App\Support\QuotationSender::class)->send(
+                Business::findOrFail(Tenant::businessId()), $data['email'],
+                new QuotationMail($quotation, $pdf->render($quotation), $pdf->filename($quotation))
+            );
         } catch (\Throwable $exception) {
             report($exception);
 

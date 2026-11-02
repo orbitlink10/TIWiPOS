@@ -133,6 +133,45 @@ class QuotationTest extends TestCase
         ])->assertSessionHasErrors(['issuer_name', 'currency', 'vat_rate', 'logo']);
     }
 
+    public function test_mailbox_settings_are_encrypted_and_used_for_quotation_sending(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $owner = $this->owner();
+        $settings = ['from_address' => 'sales@example.com', 'from_name' => 'Sales Team',
+            'host' => 'mail.example.com', 'port' => 465, 'username' => 'sales@example.com', 'mail_password' => 'secret-app-password'];
+        $this->actingAs($owner)->put(route('quotations.settings.email'), $settings)->assertSessionHasNoErrors();
+        $business = Business::findOrFail($owner->business_id);
+        $this->assertSame('secret-app-password', $business->quotation_mail['password']);
+        $this->assertStringNotContainsString('secret-app-password', $business->getRawOriginal('quotation_mail'));
+        $this->get(route('quotations.settings.edit'))->assertOk()->assertDontSee('secret-app-password');
+        $settings['mail_password'] = '';
+        $this->put(route('quotations.settings.email'), $settings)->assertSessionHasNoErrors();
+        $this->assertSame('secret-app-password', $business->fresh()->quotation_mail['password']);
+        $this->post(route('quotations.store'), $this->payload())->assertRedirect();
+        $pending = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pending->shouldReceive('send')->once()->withArgs(function ($mail) {
+            return $mail->from[0]['address'] === 'sales@example.com'
+                && $mail->replyTo[0]['address'] === 'sales@example.com'
+                && str_starts_with($mail->pdf, '%PDF-');
+        });
+        $mailer = \Mockery::mock(\Illuminate\Mail\Mailer::class);
+        $mailer->shouldReceive('to')->once()->with('customer@example.com')->andReturn($pending);
+        \Illuminate\Support\Facades\Mail::shouldReceive('build')->once()->withArgs(fn ($config) =>
+            $config['host'] === 'mail.example.com' && $config['scheme'] === 'smtps'
+            && $config['password'] === 'secret-app-password' && $config['require_tls'] === true
+        )->andReturn($mailer);
+        $this->post(route('quotations.email', Quotation::sole()), ['email' => 'customer@example.com'])->assertSessionHasNoErrors();
+        $this->actingAs($this->owner())->get(route('quotations.settings.edit'))->assertDontSee('sales@example.com');
+    }
+
+    public function test_mailbox_password_is_not_flashed_on_validation_failure(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $this->actingAs($this->owner())->put(route('quotations.settings.email'), [
+            'from_address' => 'invalid', 'mail_password' => 'never-flash-this',
+        ])->assertSessionHasErrors('from_address')->assertSessionMissing('_old_input.mail_password');
+    }
+
     public function test_guests_cannot_access_quotations(): void
     {
         $this->get(route('quotations.index'))->assertRedirect(route('login'));

@@ -25,7 +25,10 @@ class Business extends Model
         'canceled_at',
     ];
 
+    protected $hidden = ['quotation_mail'];
+
     protected $casts = [
+        'quotation_mail' => 'encrypted:array',
         'quotation_defaults' => 'array',
         'current_period_start' => 'date',
         'current_period_end' => 'date',

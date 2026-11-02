@@ -46,6 +46,7 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
+    Route::put('/quotations/settings/email', [\App\Http\Controllers\QuotationSettingsController::class, 'updateEmail'])->middleware('role.ability:manage_profile')->name('quotations.settings.email');
     Route::get('/quotations/settings', [\App\Http\Controllers\QuotationSettingsController::class, 'edit'])->middleware('role.ability:manage_profile')->name('quotations.settings.edit');
     Route::put('/quotations/settings', [\App\Http\Controllers\QuotationSettingsController::class, 'update'])->middleware('role.ability:manage_profile')->name('quotations.settings.update');
     Route::get('/quotations/{quotation}/download', [\App\Http\Controllers\QuotationController::class, 'download'])->whereNumber('quotation')->name('quotations.download');
