@@ -36,16 +36,38 @@
         @page {size:A4; margin:14mm}
         @media print {body {background:white; font-size:11px} .toolbar {display:none} .sheet {margin:0; padding:0; max-width:none; box-shadow:none} h1 {font-size:25px} .business-name {font-size:23px} .letterhead {padding-bottom:18px} .items {font-size:10px} th,td {padding:4px 6px} h2 {font-size:14px} .totals {margin-top:14px} .approvals>div {min-height:95px} footer {font-size:10px} * {-webkit-print-color-adjust:exact; print-color-adjust:exact}}
         @media screen and (max-width:650px) {.sheet {padding:22px 16px} .details {grid-template-columns:1fr; gap:12px} .items {font-size:11px} th,td {padding:4px} .business-name {font-size:20px}}
+        @if($pdf ?? false)
+        body {background:white; font-size:11px}
+        .sheet {margin:0; padding:0; max-width:none; box-shadow:none}
+        .letterhead,.approvals {display:table; width:100%; table-layout:fixed}
+        .letterhead>div,.approvals>div {display:table-cell; width:50%; max-width:none; vertical-align:top}
+        .details {display:block; margin-top:8px} .customer {border:0; padding-left:0}
+        .business-name {font-size:23px} .items {font-size:10px}
+        .approvals {page-break-inside:avoid} tr {page-break-inside:avoid}
+        @endif
     </style>
 </head>
 <body>
 @php($money = fn($cents) => $document['currency'].' '.number_format($cents / 100, 2))
+@unless($pdf ?? false)
 <div class="toolbar">
     <a href="{{ route('quotations.index') }}">Back to Quotations</a>
     <a href="{{ route('quotations.edit', $quotation) }}">Edit Quotation</a>
     <button type="button" onclick="window.print()">Print / Save as PDF</button>
+    <a href="{{ route('quotations.download', $quotation) }}">Download PDF</a>
+    <details @if($errors->any()) open @endif>
+        <summary>Send via Email</summary>
+        <form method="POST" action="{{ route('quotations.email', $quotation) }}" style="margin-top:10px">
+            @csrf
+            <label for="recipient-email">Recipient email</label>
+            <input id="recipient-email" type="email" name="email" value="{{ old('email') }}" required maxlength="254" placeholder="customer@example.com" style="padding:10px;max-width:100%">
+            <button type="submit">Send PDF</button>
+            @error('email')<p role="alert" style="color:#b91c1c">{{ $message }}</p>@enderror
+        </form>
+    </details>
     @if(session('status'))<span role="status">{{ session('status') }}</span>@endif
 </div>
+@endunless
 <main class="sheet">
     <header class="letterhead"><div class="business-name">{{ $document['issuer_name'] }}</div><div class="issuer multiline">{{ $document['issuer_details'] ?? '' }}</div></header>
     <h1>QUOTATION</h1>

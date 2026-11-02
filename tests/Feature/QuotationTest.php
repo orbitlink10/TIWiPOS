@@ -98,5 +98,34 @@ class QuotationTest extends TestCase
     {
         $this->get(route('quotations.index'))->assertRedirect(route('login'));
         $this->post(route('quotations.store'), $this->payload())->assertRedirect(route('login'));
+        $this->get(route('quotations.download', 1))->assertRedirect(route('login'));
+        $this->post(route('quotations.email', 1), ['email' => 'customer@example.com'])->assertRedirect(route('login'));
+    }
+
+    public function test_download_and_email_pdf_with_tenant_isolation(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->actingAs($this->owner())->post(route('quotations.store'), $this->payload())->assertRedirect();
+        $quote = Quotation::sole();
+        $response = $this->get(route('quotations.download', $quote))->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertDownload('Quotation-qt-100.pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->post(route('quotations.email', $quote), ['email' => 'invalid'])->assertSessionHasErrors('email');
+        $this->post(route('quotations.email', $quote), ['email' => 'customer@example.com'])
+            ->assertRedirect(route('quotations.show', $quote))->assertSessionHasNoErrors();
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\QuotationMail::class, function ($mail) {
+            $mail->build();
+            return $mail->hasTo('customer@example.com')
+                && str_starts_with($mail->pdf, '%PDF-')
+                && $mail->hasAttachedData($mail->pdf, 'Quotation-qt-100.pdf', ['mime' => 'application/pdf']);
+        });
+        $branch = Branch::create(['business_id' => $quote->business_id, 'name' => 'Other', 'code' => 'OTHER']);
+        $this->withSession(['branch_id' => $branch->id])->get(route('quotations.download', $quote))->assertNotFound();
+        $this->post(route('quotations.email', $quote), ['email' => 'customer@example.com'])->assertNotFound();
+        $this->actingAs($this->owner())->get(route('quotations.download', $quote))->assertNotFound();
+        $this->post(route('quotations.email', $quote), ['email' => 'customer@example.com'])->assertNotFound();
+        \Illuminate\Support\Facades\Mail::assertSentCount(1);
     }
 }

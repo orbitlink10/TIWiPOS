@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Mail\QuotationMail;
+use App\Support\QuotationPdf;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Quotation;
 use App\Support\Tenant;
 use Illuminate\Http\Request;
@@ -110,6 +113,33 @@ class QuotationController extends Controller
         $quotation->save();
 
         return redirect()->route('quotations.show', $quotation)->with('status', 'Quotation saved.');
+    }
+
+    public function download(int $quotation, QuotationPdf $pdf)
+    {
+        $quotation = $this->quotations()->findOrFail($quotation);
+
+        return response($pdf->render($quotation), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$pdf->filename($quotation).'"',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    public function email(Request $request, int $quotation, QuotationPdf $pdf)
+    {
+        $quotation = $this->quotations()->findOrFail($quotation);
+        $data = $request->validate(['email' => ['required', 'email', 'max:254']]);
+
+        try {
+            Mail::to($data['email'])->send(new QuotationMail($quotation, $pdf->render($quotation), $pdf->filename($quotation)));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return back()->withInput()->withErrors(['email' => 'The quotation could not be emailed. Please try again or download the PDF.']);
+        }
+
+        return redirect()->route('quotations.show', $quotation)->with('status', 'Quotation emailed to '.$data['email'].'.');
     }
 
     public function show(int $quotation)

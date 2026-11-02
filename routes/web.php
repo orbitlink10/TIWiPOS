@@ -46,6 +46,8 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
+    Route::get('/quotations/{quotation}/download', [\App\Http\Controllers\QuotationController::class, 'download'])->whereNumber('quotation')->name('quotations.download');
+    Route::post('/quotations/{quotation}/email', [\App\Http\Controllers\QuotationController::class, 'email'])->whereNumber('quotation')->middleware('throttle:10,1')->name('quotations.email');
     Route::resource('quotations', \App\Http\Controllers\QuotationController::class)->except('destroy')->whereNumber('quotation');
     Route::get('/to-do-list', [TodoItemController::class, 'index'])->name('todos.index');
     Route::post('/to-do-list', [TodoItemController::class, 'store'])->name('todos.store');
