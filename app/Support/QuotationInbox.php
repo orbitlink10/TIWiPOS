@@ -10,8 +10,9 @@ class QuotationInbox
         imap_timeout(IMAP_READTIMEOUT, 15);
         $connection = @imap_open('{'.$settings['host'].':993/imap/ssl/validate-cert/norsh}INBOX', $settings['username'], $settings['password'], OP_READONLY, 1, ['DISABLE_AUTHENTICATOR' => 'GSSAPI']);
         if (!$connection) {
-            imap_errors(); imap_alerts();
-            throw new RuntimeException('Could not connect to your inbox. Check the incoming mail host, username, password and hosting IMAP access.');
+            $errors = imap_errors() ?: [];
+            imap_alerts();
+            throw new RuntimeException($this->connectionError($errors));
         }
         try {
             if ($uid !== null) {
@@ -29,6 +30,25 @@ class QuotationInbox
             imap_close($connection);
             imap_errors(); imap_alerts();
         }
+    }
+
+    public function connectionError(array $errors): string
+    {
+        // Classify errors rather than exposing raw server responses or credentials.
+        $error = strtolower(implode(' ', $errors));
+        if (preg_match('/certificate|peer name|self.signed|unable to get.*issuer/', $error)) {
+            return 'The incoming mail server SSL certificate could not be verified. In cPanel > Email Accounts > Connect Devices, copy the Incoming Server from Secure SSL/TLS Settings into the POS IMAP Host. Your host may use its server hostname instead of mail.yourdomain. If it still fails, ask your hosting provider to check the mail certificate.';
+        }
+        if (preg_match('/authentication|authenticate|login failed|invalid credentials|authorization|password|login denied/', $error)) {
+            return 'The mail server rejected the login. Use your full mailbox email address as the username and its mailbox password. Verify that the same details work in cPanel Webmail, then re-enter the password in Incoming Email settings.';
+        }
+        if (preg_match('/resolve|name or service|no such host|host not found|nodename|unknown host/', $error)) {
+            return 'The incoming mail hostname could not be found. Copy the secure Incoming Server hostname from cPanel > Email Accounts > Connect Devices. Enter only the hostname, without https://, a port or a path.';
+        }
+        if (preg_match('/timed out|timeout|refused|unreachable|connect|network/', $error)) {
+            return 'The POS could not reach the incoming mail server on IMAP port 993. Check the secure Incoming Server hostname in cPanel, then ask your hosting provider to confirm that IMAP is enabled and connections from this website to port 993 are allowed.';
+        }
+        return 'Could not open the inbox. Check the secure Incoming Server hostname and mailbox login in cPanel > Email Accounts > Connect Devices. If they are correct, ask your hosting provider to check IMAP access on port 993.';
     }
 
     private function summary(object $header): array
