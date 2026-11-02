@@ -15,6 +15,23 @@ class QuotationSettingsController extends Controller
         $business = $this->business();
         return view('quotations.settings', ['defaults' => $business->quotation_defaults ?? [], 'business' => $business]);
     }
+    public function updateIncoming(Request $request)
+    {
+        $business = $this->business();
+        $data = $request->validate([
+            'incoming_host' => ['required', 'string', 'max:253', 'regex:/^[a-zA-Z0-9.-]+$/'],
+            'incoming_username' => ['required', 'email', 'max:254'],
+            'incoming_password' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $mail = $business->quotation_mail ?? [];
+        $password = $data['incoming_password'] ?? ($mail['incoming']['password'] ?? null);
+        if (!$password) { throw \Illuminate\Validation\ValidationException::withMessages(['incoming_password' => 'Enter the incoming mailbox password.']); }
+        $mail['incoming'] = ['host' => $data['incoming_host'], 'username' => $data['incoming_username'], 'password' => $password];
+        $business->quotation_mail = $mail;
+        $business->save();
+        return redirect()->route('quotations.settings.edit')->with('status', 'Incoming email settings saved. Open Inbox to check the connection.');
+    }
+
     public function updateEmail(Request $request)
     {
         $business = $this->business();
@@ -31,6 +48,7 @@ class QuotationSettingsController extends Controller
         if (!$data['password']) {
             throw \Illuminate\Validation\ValidationException::withMessages(['mail_password' => 'Enter the mailbox password or app password.']);
         }
+        if (isset($business->quotation_mail['incoming'])) { $data['incoming'] = $business->quotation_mail['incoming']; }
         $business->quotation_mail = $data;
         $business->save();
         return redirect()->route('quotations.settings.edit')->with('status', 'Quotation email settings saved.');

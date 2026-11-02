@@ -172,6 +172,50 @@ class QuotationTest extends TestCase
         ])->assertSessionHasErrors('from_address')->assertSessionMissing('_old_input.mail_password');
     }
 
+    public function test_incoming_mail_is_encrypted_isolated_and_rendered_as_text(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $owner = $this->owner();
+        $settings = ['incoming_host' => 'mail.example.com', 'incoming_username' => 'sales@example.com', 'incoming_password' => 'inbox-secret'];
+        $this->actingAs($owner)->put(route('quotations.settings.incoming'), $settings)->assertSessionHasNoErrors();
+        $business = Business::findOrFail($owner->business_id);
+        $this->assertSame('inbox-secret', $business->quotation_mail['incoming']['password']);
+        $this->assertStringNotContainsString('inbox-secret', $business->getRawOriginal('quotation_mail'));
+        $this->get(route('quotations.settings.edit'))->assertOk()->assertDontSee('inbox-secret');
+        $settings['incoming_password'] = '';
+        $this->put(route('quotations.settings.incoming'), $settings)->assertSessionHasNoErrors();
+        $this->assertSame('inbox-secret', $business->fresh()->quotation_mail['incoming']['password']);
+        $incoming = $business->fresh()->quotation_mail['incoming'];
+        $summary = ['uid' => 17, 'subject' => 'Re: QT-100', 'from' => 'Customer <customer@example.com>', 'date' => 'Today', 'unread' => true];
+        $this->mock(\App\Support\QuotationInbox::class, function ($mock) use ($incoming, $summary) {
+            $mock->shouldReceive('read')->once()->with($incoming, null)->andReturn(['messages' => [$summary], 'message' => null]);
+            $mock->shouldReceive('read')->once()->with($incoming, 17)->andReturn(['messages' => [], 'message' => $summary + ['body' => '<script>alert(1)</script>Reply text']]);
+        });
+        $this->get(route('quotations.inbox'))->assertOk()->assertSee('Re: QT-100')->assertSee('Unread')->assertHeader('Cache-Control', 'no-store, private');
+        $this->get(route('quotations.inbox.show', 17))->assertOk()->assertSee('Reply text')->assertDontSee('<script>alert(1)</script>', false);
+        $this->actingAs($this->owner())->get(route('quotations.inbox'))->assertOk()->assertSee('Configure Incoming Email');
+        $staff = User::factory()->create(['business_id' => $owner->business_id, 'role' => 'staff']);
+        $this->actingAs($staff)->get(route('quotations.inbox'))->assertForbidden();
+        $this->get(route('quotations.inbox.show', 17))->assertForbidden();
+        $this->put(route('quotations.settings.incoming'), $settings)->assertForbidden();
+    }
+
+    public function test_inbox_connection_errors_are_displayed_and_password_is_not_flashed(): void
+    {
+        $this->withoutMiddleware(FeatureGate::class);
+        $owner = $this->owner();
+        $this->actingAs($owner)->put(route('quotations.settings.incoming'), [
+            'incoming_host' => 'bad/host', 'incoming_password' => 'private-secret',
+        ])->assertSessionHasErrors('incoming_host')->assertSessionMissing('_old_input.incoming_password');
+        $this->put(route('quotations.settings.incoming'), [
+            'incoming_host' => 'mail.example.com', 'incoming_username' => 'sales@example.com', 'incoming_password' => 'private-secret',
+        ])->assertSessionHasNoErrors();
+        $this->mock(\App\Support\QuotationInbox::class, function ($mock) {
+            $mock->shouldReceive('read')->once()->andThrow(new \RuntimeException('Could not connect to your inbox.'));
+        });
+        $this->get(route('quotations.inbox'))->assertOk()->assertSee('Could not connect to your inbox.')->assertDontSee('private-secret');
+    }
+
     public function test_guests_cannot_access_quotations(): void
     {
         $this->get(route('quotations.index'))->assertRedirect(route('login'));

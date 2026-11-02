@@ -8,7 +8,7 @@ class QuotationSender
     public function send(Business $business, string $recipient, QuotationMail $message): void
     {
         $settings = $business->quotation_mail;
-        if (!$settings) {
+        if (empty($settings['from_address'])) {
             Mail::to($recipient)->send($message);
             return;
         }

@@ -46,6 +46,9 @@ Route::post('/password/reset', [ResetPasswordController::class, 'store'])->name(
 
 // Authenticated-only pages
 Route::middleware(['auth', 'subscription.gate'])->group(function () {
+    Route::get('/quotations/inbox', [\App\Http\Controllers\QuotationInboxController::class, 'index'])->middleware(['role.ability:manage_profile', 'throttle:30,1'])->name('quotations.inbox');
+    Route::get('/quotations/inbox/{message}', [\App\Http\Controllers\QuotationInboxController::class, 'index'])->whereNumber('message')->middleware(['role.ability:manage_profile', 'throttle:30,1'])->name('quotations.inbox.show');
+    Route::put('/quotations/settings/incoming', [\App\Http\Controllers\QuotationSettingsController::class, 'updateIncoming'])->middleware('role.ability:manage_profile')->name('quotations.settings.incoming');
     Route::put('/quotations/settings/email', [\App\Http\Controllers\QuotationSettingsController::class, 'updateEmail'])->middleware('role.ability:manage_profile')->name('quotations.settings.email');
     Route::get('/quotations/settings', [\App\Http\Controllers\QuotationSettingsController::class, 'edit'])->middleware('role.ability:manage_profile')->name('quotations.settings.edit');
     Route::put('/quotations/settings', [\App\Http\Controllers\QuotationSettingsController::class, 'update'])->middleware('role.ability:manage_profile')->name('quotations.settings.update');

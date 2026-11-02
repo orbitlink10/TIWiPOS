@@ -54,4 +54,16 @@
 <button class="btn primary" type="submit">Save Email Settings</button>
 <p>To send, open a quotation and select Send via Email. The quotation PDF will be attached.</p>
 </form>
+<h2 style="margin-top:28px">Incoming Email</h2>
+<p>Connect your cPanel mailbox to read incoming emails inside the POS. Use the same mailbox as your Sender Email to see client replies. Owners and managers can view this mailbox's latest 50 messages across the business.</p>
+@php($incoming = $mail['incoming'] ?? [])
+<form class="defaults-form" method="POST" action="{{ route('quotations.settings.incoming') }}">
+@csrf @method('PUT')
+<label>Incoming IMAP Host<input name="incoming_host" required maxlength="253" value="{{ old('incoming_host', $incoming['host'] ?? '') }}" placeholder="mail.yourbusiness.co.ke"></label>
+<p>Connection: IMAP, port 993, SSL/TLS. Find your secure incoming server under cPanel ? Email Accounts ? Connect Devices.</p>
+<label>Mailbox Email<input type="email" name="incoming_username" required maxlength="254" value="{{ old('incoming_username', $incoming['username'] ?? $mail['from_address'] ?? '') }}"></label>
+<label>Mailbox Password<input type="password" name="incoming_password" maxlength="1000" autocomplete="new-password" placeholder="{{ isset($incoming['password']) ? 'Saved - leave blank to keep' : 'Enter mailbox password' }}"></label>
+<p>Credentials are stored encrypted. Your hosting PHP must have the IMAP extension enabled.</p>
+<div><button class="btn primary" type="submit">Save Incoming Email Settings</button> <a class="btn" href="{{ route('quotations.inbox') }}">Open Inbox</a></div>
+</form>
 @endsection
