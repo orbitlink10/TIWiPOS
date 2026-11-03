@@ -36,9 +36,12 @@
 </div>
 <div class="supplier-scroll"><table><thead><tr><th>Product / serial</th><th>Quantity</th><th>Unit cost (KES)</th><th></th></tr></thead><tbody id="supply-items">
 @foreach(old('items', [['product_id' => '', 'quantity' => 1, 'unit_cost' => '']]) as $index => $item)
-<tr><td style="min-width:240px"><select name="items[{{ $index }}][product_id]" required><option value="">Select product</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected((string)($item['product_id'] ?? '') === (string)$product->id)>{{ $product->name }}{{ $product->serial_number ? ' - ' . $product->serial_number : '' }}</option>@endforeach</select></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
+<tr><td style="min-width:240px">@php($selectedProduct = $products->firstWhere('id', $item['product_id'] ?? null))
+<input type="text" name="items[{{ $index }}][product_search]" class="supplier-product-search" list="supplier-products" placeholder="Type product name or serial" aria-label="Product name or serial" autocomplete="off" value="{{ $item['product_search'] ?? ($selectedProduct ? $selectedProduct->name . ($selectedProduct->serial_number ? ' - ' . $selectedProduct->serial_number : '') . ' (' . $selectedProduct->sku . ')' : '') }}" required>
+<input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item['product_id'] ?? '' }}"></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
 @endforeach
 </tbody></table></div>
+<datalist id="supplier-products">@foreach($products as $product)<option value="{{ $product->name }}{{ $product->serial_number ? ' - ' . $product->serial_number : '' }} ({{ $product->sku }})" data-product-id="{{ $product->id }}"></option>@endforeach</datalist>
 <div class="supplier-actions" style="margin:12px 0"><button type="button" id="add-item" class="btn">Add product row</button><strong>Invoice total: KES <span id="supply-total">0.00</span></strong></div>
 <div class="supplier-grid">
 <label class="supplier-field">Amount paid now (0 if unpaid)<input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', '0') }}" required></label>
@@ -83,19 +86,30 @@
 (() => {
 const body = document.getElementById('supply-items');
 if (!body) return;
-let next = Math.max(...Array.from(body.querySelectorAll('select')).map(el => Number(el.name.match(/\[(\d+)\]/)[1]))) + 1;
+let next = Math.max(...Array.from(body.querySelectorAll('input[type=hidden]')).map(el => Number(el.name.match(/\[(\d+)\]/)[1]))) + 1;
 const calculate = () => {
 let cents = 0;
-body.querySelectorAll('tr').forEach(row => { const inputs = row.querySelectorAll('input'); cents += Number(inputs[0].value || 0) * Math.round(Number(inputs[1].value || 0) * 100); });
+body.querySelectorAll('tr').forEach(row => { const quantity = row.querySelector('input[name$="[quantity]"]'); const cost = row.querySelector('input[name$="[unit_cost]"]'); cents += Number(quantity.value || 0) * Math.round(Number(cost.value || 0) * 100); });
 document.getElementById('supply-total').textContent = (cents / 100).toLocaleString('en-KE', {minimumFractionDigits:2, maximumFractionDigits:2});
 };
 document.getElementById('add-item').addEventListener('click', () => {
 const row = body.firstElementChild.cloneNode(true);
-row.querySelectorAll('input,select').forEach(el => { el.name = el.name.replace(/\[\d+\]/, `[${next}]`); el.value = el.name.endsWith('[quantity]') ? '1' : ''; });
+row.querySelectorAll('input,select').forEach(el => { el.name = el.name.replace(/\[\d+\]/, `[${next}]`); el.value = el.name.endsWith('[quantity]') ? '1' : ''; el.setCustomValidity(''); });
 next++; body.appendChild(row); calculate();
 });
 body.addEventListener('click', event => { if(event.target.classList.contains('remove-item') && body.children.length > 1) { event.target.closest('tr').remove(); calculate(); } });
-body.addEventListener('input', calculate); calculate();
+const options = Array.from(document.querySelectorAll('#supplier-products option'));
+const resolveProduct = input => {
+const match = options.find(option => option.value.toLowerCase() === input.value.trim().toLowerCase());
+input.closest('td').querySelector('input[type=hidden]').value = match ? match.dataset.productId : '';
+input.setCustomValidity(match ? '' : 'Choose a matching product from the suggestions.');
+};
+body.addEventListener('input', event => {
+if (event.target.matches('.supplier-product-search')) resolveProduct(event.target);
+calculate();
+});
+body.querySelectorAll('.supplier-product-search').forEach(resolveProduct);
+calculate();
 })();
 </script>
 @endsection
