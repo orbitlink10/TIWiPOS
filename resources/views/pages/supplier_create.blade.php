@@ -5,7 +5,7 @@
 @section('header')
     <div class="header-row">
         <h1>Add Supplier</h1>
-        <a class="btn" href="{{ route('products.create') }}">⬅ Back to Products</a>
+        <a class="btn" href="{{ (auth()->user()->canViewFinancials() ? route('suppliers.index') : route('products.create')) }}">⬅ Back to Supplier</a>
     </div>
 @endsection
 
@@ -27,45 +27,45 @@
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Supplier name
-                    <input name="name" type="text" placeholder="Supplier" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="name" value="{{ old('name') }}" type="text" placeholder="Supplier" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Contact person
-                    <input name="contact_name" type="text" placeholder="Contact" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="contact_name" value="{{ old('contact_name') }}" type="text" placeholder="Contact" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Phone
-                    <input name="phone" type="text" placeholder="+254..." style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="phone" value="{{ old('phone') }}" type="text" placeholder="+254..." style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Email
-                    <input name="email" type="email" placeholder="supplier@example.com" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="email" value="{{ old('email') }}" type="email" placeholder="supplier@example.com" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
             </div>
 
             <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Address
-                    <input name="address" type="text" placeholder="Street" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="address" value="{{ old('address') }}" type="text" placeholder="Street" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     City
-                    <input name="city" type="text" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="city" value="{{ old('city') }}" type="text" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Country
-                    <input name="country" type="text" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    <input name="country" value="{{ old('country') }}" type="text" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
             </div>
 
             <label style="display:flex; align-items:center; gap:10px; font-weight:600;">
                 <input type="hidden" name="is_active" value="0">
-                <input type="checkbox" name="is_active" value="1" checked style="width:18px;height:18px;"> Active
+                <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true)) style="width:18px;height:18px;"> Active
             </label>
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn" type="submit">💾 Save Supplier</button>
-                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('products.create') }}">Cancel</a>
+                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ (auth()->user()->canViewFinancials() ? route('suppliers.index') : route('products.create')) }}">Cancel</a>
             </div>
         </form>
     </div>

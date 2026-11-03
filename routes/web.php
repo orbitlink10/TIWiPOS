@@ -113,7 +113,12 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/sub-categories', [CategoryController::class, 'storeSubCategory'])->middleware('role.ability:manage_catalog')->name('sub-categories.store');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:delete_products')->name('categories.destroy');
 
+    Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('role.ability:manage_catalog')->name('suppliers.index');
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
+    Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.show');
+    Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.update');
+    Route::post('/suppliers/{supplier}/invoices', [SupplierController::class, 'supply'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.supply');
+    Route::post('/suppliers/{supplier}/invoices/{invoice}/payments', [SupplierController::class, 'pay'])->whereNumber(['supplier', 'invoice'])->middleware('role.ability:manage_catalog')->name('suppliers.pay');
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');
 
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
