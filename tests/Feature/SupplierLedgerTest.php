@@ -87,6 +87,38 @@ class SupplierLedgerTest extends TestCase
         $this->post(route('suppliers.supply', $supplier->id), $this->supplyData($product))->assertForbidden();
     }
 
+    public function test_typed_names_save_with_existing_products_without_creating_stock(): void
+    {
+        [, , , $supplier, $product] = $this->setupSupplier();
+        $data = $this->supplyData($product);
+        $data['items'][] = ['product_id' => '', 'product_search' => 'RB4001', 'quantity' => 3, 'unit_cost' => '25000'];
+        $data['items'][] = ['product_id' => '', 'product_search' => 'Another router', 'quantity' => 1, 'unit_cost' => '100'];
+        $this->post(route('suppliers.supply', $supplier->id), $data)->assertSessionHasNoErrors();
+        $invoice = SupplierInvoice::firstOrFail();
+        $this->assertEquals(7530100, $invoice->total_cents);
+        $this->assertDatabaseHas('supplier_invoice_items', ['supplier_invoice_id' => $invoice->id, 'product_id' => null, 'product_name' => 'RB4001', 'quantity' => 3]);
+        $this->assertDatabaseCount('products', 1);
+        $this->assertDatabaseCount('stock_movements', 0);
+        $this->get(route('suppliers.show', $supplier->id))->assertOk()->assertSee('RB4001');
+    }
+
+    public function test_typed_names_work_without_a_catalog_and_require_a_name(): void
+    {
+        [, , , $supplier, $product] = $this->setupSupplier();
+        $data = $this->supplyData($product);
+        $product->delete();
+        $this->get(route('suppliers.show', $supplier->id))->assertOk()->assertSee('supply-form', false);
+        $data['items'] = [['product_search' => 'RB4001', 'quantity' => 3, 'unit_cost' => '25000']];
+        $this->post(route('suppliers.supply', $supplier->id), $data + ['receive_stock' => 1])->assertSessionHasErrors('receive_stock');
+        $this->assertDatabaseCount('supplier_invoices', 0);
+        $blank = $data;
+        $blank['items'][0]['product_search'] = '   ';
+        $this->post(route('suppliers.supply', $supplier->id), $blank)->assertSessionHasErrors('items.0.product_search');
+        $this->post(route('suppliers.supply', $supplier->id), $data)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('supplier_invoice_items', ['product_id' => null, 'product_name' => 'RB4001']);
+        $this->assertDatabaseCount('products', 0);
+    }
+
     private function createActiveTenant(): array
     {
         $business = Business::create([

@@ -25,8 +25,7 @@
 </div>
 @if($supplier->is_active)
 <div class="panel supplier-no-print" id="record-supply"><h2>Record supplied products</h2>
-<p class="supplier-muted">Record one supplier invoice or delivery note with all its products. Register new products in Products first. Invoice references must be unique for this supplier.</p>
-@if($products->isEmpty())<p><a href="{{ route('products.create') }}">Add a product</a> before recording a supply.</p>@else
+<p class="supplier-muted">Record one supplier invoice or delivery note with all its products. Type product names directly, or choose suggestions to link existing products. Invoice references must be unique for this supplier.</p>
 <form method="POST" action="{{ route('suppliers.supply', $supplier->id) }}" id="supply-form">@csrf
 <div class="supplier-grid">
 <label class="supplier-field">Invoice / delivery reference<input name="reference" value="{{ old('reference') }}" required maxlength="100"></label>
@@ -37,7 +36,7 @@
 <div class="supplier-scroll"><table><thead><tr><th>Product / serial</th><th>Quantity</th><th>Unit cost (KES)</th><th></th></tr></thead><tbody id="supply-items">
 @foreach(old('items', [['product_id' => '', 'quantity' => 1, 'unit_cost' => '']]) as $index => $item)
 <tr><td style="min-width:240px">@php($selectedProduct = $products->firstWhere('id', $item['product_id'] ?? null))
-<input type="text" name="items[{{ $index }}][product_search]" class="supplier-product-search" list="supplier-products" placeholder="Type product name or serial" aria-label="Product name or serial" autocomplete="off" value="{{ $item['product_search'] ?? ($selectedProduct ? $selectedProduct->name . ($selectedProduct->serial_number ? ' - ' . $selectedProduct->serial_number : '') . ' (' . $selectedProduct->sku . ')' : '') }}" required>
+<input type="text" name="items[{{ $index }}][product_search]" class="supplier-product-search" list="supplier-products" placeholder="Type product name or serial" aria-label="Product name or serial" autocomplete="off" maxlength="255" value="{{ $item['product_search'] ?? ($selectedProduct ? $selectedProduct->name . ($selectedProduct->serial_number ? ' - ' . $selectedProduct->serial_number : '') . ' (' . $selectedProduct->sku . ')' : '') }}" required>
 <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item['product_id'] ?? '' }}"></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
 @endforeach
 </tbody></table></div>
@@ -50,10 +49,10 @@
 </div>
 <label class="supplier-field">Notes / delivery details<textarea name="notes" maxlength="2000">{{ old('notes') }}</textarea></label>
 @if(auth()->user()->canAccessAbility('add_stock'))
-<p><label><input type="checkbox" name="receive_stock" value="1" @checked(old('receive_stock'))> Add these quantities to the selected branch's main stock</label><br><span class="supplier-muted">Leave unchecked if the stock was already entered. Saving with this option increases stock immediately.</span></p>
+<p><label><input type="checkbox" name="receive_stock" value="1" @checked(old('receive_stock'))> Add these quantities to the selected branch's main stock</label><br><span class="supplier-muted">Stock additions require a registered product in every row. Leave unchecked to save typed names or if stock was already entered. Saving with this option increases stock immediately.</span></p>
 @endif
 <button class="btn" style="margin-top:12px">Save supplier invoice</button>
-</form>@endif</div>
+</form></div>
 @endif
 <div class="panel"><div class="supplier-actions"><h2>Supply and payment history</h2><button type="button" class="btn supplier-no-print" onclick="window.print()">Print account</button></div>
 <p class="supplier-muted">Expand an invoice to view products, payment references and notes. Payments are recorded against individual invoices.</p>
@@ -102,7 +101,7 @@ const options = Array.from(document.querySelectorAll('#supplier-products option'
 const resolveProduct = input => {
 const match = options.find(option => option.value.toLowerCase() === input.value.trim().toLowerCase());
 input.closest('td').querySelector('input[type=hidden]').value = match ? match.dataset.productId : '';
-input.setCustomValidity(match ? '' : 'Choose a matching product from the suggestions.');
+input.setCustomValidity('');
 };
 body.addEventListener('input', event => {
 if (event.target.matches('.supplier-product-search')) resolveProduct(event.target);

@@ -113,7 +113,8 @@ class SupplierController extends Controller
             'due_at' => 'nullable|required_if:terms,credit|date|after_or_equal:supplied_at',
             'notes' => 'nullable|string|max:2000', 'receive_stock' => 'nullable|boolean',
             'items' => 'required|array|min:1|max:100',
-            'items.*.product_id' => ['required', 'integer', 'distinct', Rule::exists('products', 'id')->where('business_id', Tenant::businessId())],
+            'items.*.product_id' => ['nullable', 'integer', 'distinct', Rule::exists('products', 'id')->where('business_id', Tenant::businessId())],
+            'items.*.product_search' => 'nullable|required_without:items.*.product_id|string|max:255',
             'items.*.quantity' => 'required|integer|min:1|max:1000000',
             'items.*.unit_cost' => ['required', 'regex:/^\d{1,8}(\.\d{1,2})?$/'],
             'amount' => ['required', 'regex:/^\d{1,14}(\.\d{1,2})?$/'],
@@ -133,8 +134,13 @@ class SupplierController extends Controller
                 'terms' => $data['terms'], 'total_cents' => $total, 'stock_received' => $receive, 'notes' => $data['notes'] ?? null, 'user_id' => auth()->id(),
             ]);
             foreach ($data['items'] as $item) {
-                $product = Product::where('business_id', Tenant::businessId())->lockForUpdate()->findOrFail($item['product_id']);
-                $invoice->items()->create(['product_id' => $product->id, 'product_name' => $product->name, 'serial_number' => $product->serial_number,
+                $product = ! empty($item['product_id'])
+                    ? Product::where('business_id', Tenant::businessId())->lockForUpdate()->findOrFail($item['product_id'])
+                    : null;
+                if ($receive && ! $product) {
+                    throw ValidationException::withMessages(['receive_stock' => 'To add stock, choose a registered product for every row. Otherwise, uncheck Add these quantities to save typed names on the invoice.']);
+                }
+                $invoice->items()->create(['product_id' => $product?->id, 'product_name' => $product?->name ?? trim($item['product_search']), 'serial_number' => $product?->serial_number,
                     'quantity' => $item['quantity'], 'unit_cost_cents' => $this->cents($item['unit_cost'])]);
                 if ($receive) {
                     $stock = ProductStock::firstOrCreate(['business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'product_id' => $product->id, 'location' => 'main'], ['quantity' => 0]);
