@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $supplier->name . ' — Supplier')
+@section('title', $supplier->name . ' - Supplier')
 @section('header')
 <div class="header-row"><h1>{{ $supplier->name }}</h1><a class="btn" href="{{ route('suppliers.index') }}">Back to Supplier</a></div>
 @endsection
@@ -7,7 +7,7 @@
 <div class="supplier-area">
 @include('pages.suppliers.style')
 <div class="panel">
-<div class="supplier-actions"><span class="supplier-badge">{{ $supplier->is_active ? 'Active' : 'Inactive' }}</span><span>{{ $supplier->contact_name }} · {{ $supplier->phone }} · {{ $supplier->email }}</span></div>
+<div class="supplier-actions"><span class="supplier-badge">{{ $supplier->is_active ? 'Active' : 'Inactive' }}</span><span>{{ $supplier->contact_name }} &middot; {{ $supplier->phone }} &middot; {{ $supplier->email }}</span></div>
 <p class="supplier-muted">{{ collect([$supplier->address, $supplier->city, $supplier->country])->filter()->implode(', ') }}</p>
 <details class="supplier-no-print"><summary>Edit supplier contact details</summary>
 <form method="POST" action="{{ route('suppliers.update', $supplier->id) }}">@csrf @method('PUT')
@@ -17,7 +17,7 @@
 <input type="hidden" name="is_active" value="0"><label><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $supplier->is_active))> Active supplier</label>
 <button class="btn">Save details</button></form></details>
 </div>
-<p class="supplier-muted">Account for the selected branch · All amounts in KES</p>
+<p class="supplier-muted">Account for the selected branch &middot; All amounts in KES</p>
 <div class="supplier-grid">
 @foreach(['Total supplied' => $invoices->sum('total_cents'), 'Total paid' => $invoices->sum('paid_cents'), 'Outstanding' => $invoices->sum('balance_cents'), 'Overdue' => $invoices->where('status', 'Overdue')->sum('balance_cents')] as $label => $amount)
 <div class="panel"><div class="supplier-muted">{{ $label }}</div><div class="supplier-metric">{{ number_format($amount / 100, 2) }}</div></div>
@@ -36,7 +36,7 @@
 </div>
 <div class="supplier-scroll"><table><thead><tr><th>Product / serial</th><th>Quantity</th><th>Unit cost (KES)</th><th></th></tr></thead><tbody id="supply-items">
 @foreach(old('items', [['product_id' => '', 'quantity' => 1, 'unit_cost' => '']]) as $index => $item)
-<tr><td style="min-width:240px"><select name="items[{{ $index }}][product_id]" required><option value="">Select product</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected((string)($item['product_id'] ?? '') === (string)$product->id)>{{ $product->name }}{{ $product->serial_number ? ' · ' . $product->serial_number : '' }}</option>@endforeach</select></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
+<tr><td style="min-width:240px"><select name="items[{{ $index }}][product_id]" required><option value="">Select product</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected((string)($item['product_id'] ?? '') === (string)$product->id)>{{ $product->name }}{{ $product->serial_number ? ' - ' . $product->serial_number : '' }}</option>@endforeach</select></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
 @endforeach
 </tbody></table></div>
 <div class="supplier-actions" style="margin:12px 0"><button type="button" id="add-item" class="btn">Add product row</button><strong>Invoice total: KES <span id="supply-total">0.00</span></strong></div>
@@ -56,15 +56,15 @@
 <p class="supplier-muted">Expand an invoice to view products, payment references and notes. Payments are recorded against individual invoices.</p>
 @forelse($invoices as $invoice)
 <details open style="border-bottom:1px solid #cbd5e1;padding-bottom:14px;margin-bottom:16px">
-<summary>{{ $invoice->reference }} · {{ $invoice->supplied_at->format('d M Y') }} · <span class="supplier-badge {{ $invoice->status === 'Overdue' ? 'overdue' : '' }}">{{ $invoice->status }}</span></summary>
-<p>{{ ucfirst($invoice->terms) }} · Due: {{ $invoice->due_at?->format('d M Y') ?? '—' }} · {{ $invoice->stock_received ? 'Added to branch stock' : 'Ledger only; stock not changed' }}</p>
+<summary>{{ $invoice->reference }} &middot; {{ $invoice->supplied_at->format('d M Y') }} &middot; <span class="supplier-badge {{ $invoice->status === 'Overdue' ? 'overdue' : '' }}">{{ $invoice->status }}</span></summary>
+<p>{{ ucfirst($invoice->terms) }} &middot; Due: {{ $invoice->due_at?->format('d M Y') ?? '-' }} &middot; {{ $invoice->stock_received ? 'Added to branch stock' : 'Ledger only; stock not changed' }}</p>
 <div class="supplier-scroll"><table><thead><tr><th>Product</th><th>Serial</th><th>Quantity</th><th>Unit cost</th><th>Line total</th></tr></thead><tbody>
-@foreach($invoice->items as $item)<tr><td>{{ $item->product_name }}</td><td>{{ $item->serial_number ?: '—' }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_cost_cents / 100, 2) }}</td><td>{{ number_format($item->quantity * $item->unit_cost_cents / 100, 2) }}</td></tr>@endforeach
+@foreach($invoice->items as $item)<tr><td>{{ $item->product_name }}</td><td>{{ $item->serial_number ?: '-' }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_cost_cents / 100, 2) }}</td><td>{{ number_format($item->quantity * $item->unit_cost_cents / 100, 2) }}</td></tr>@endforeach
 </tbody></table></div>
-<p><strong>Total: {{ number_format($invoice->total_cents / 100, 2) }} · Paid: {{ number_format($invoice->paid_cents / 100, 2) }} · Balance: {{ number_format($invoice->balance_cents / 100, 2) }}</strong></p>
+<p><strong>Total: {{ number_format($invoice->total_cents / 100, 2) }} &middot; Paid: {{ number_format($invoice->paid_cents / 100, 2) }} &middot; Balance: {{ number_format($invoice->balance_cents / 100, 2) }}</strong></p>
 @if($invoice->notes)<p style="white-space:pre-wrap">{{ $invoice->notes }}</p>@endif
 <div class="supplier-scroll"><table><thead><tr><th>Payment date</th><th>Method</th><th>Reference</th><th>Amount</th><th>Notes</th></tr></thead><tbody>
-@forelse($invoice->payments->sortBy('paid_at') as $payment)<tr><td>{{ $payment->paid_at->format('d M Y') }}</td><td>{{ $payment->method === 'mpesa' ? 'M-Pesa' : ucfirst($payment->method) }}</td><td>{{ $payment->reference ?: '—' }}</td><td>{{ number_format($payment->amount_cents / 100, 2) }}</td><td>{{ $payment->notes }}</td></tr>@empty<tr><td colspan="5">No payments recorded.</td></tr>@endforelse
+@forelse($invoice->payments->sortBy('paid_at') as $payment)<tr><td>{{ $payment->paid_at->format('d M Y') }}</td><td>{{ $payment->method === 'mpesa' ? 'M-Pesa' : ucfirst($payment->method) }}</td><td>{{ $payment->reference ?: '-' }}</td><td>{{ number_format($payment->amount_cents / 100, 2) }}</td><td>{{ $payment->notes }}</td></tr>@empty<tr><td colspan="5">No payments recorded.</td></tr>@endforelse
 </tbody></table></div>
 @if($invoice->balance_cents > 0)
 <details class="supplier-no-print"><summary>Record payment for {{ $invoice->reference }}</summary>
