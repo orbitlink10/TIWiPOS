@@ -167,14 +167,13 @@ class User extends Authenticatable
         }
 
         $canManageInventory = $this->isOwner() || $this->isManagerLevel();
-        $canEditSales = $this->isOwner() || $this->isManagerLevel();
 
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),
             'manage_profile' => $this->isOwner() || $this->isManager(),
             'delete_products' => $this->isOwner() || $this->isManager(),
             'manage_catalog', 'view_stock', 'add_stock', 'adjust_stock' => $canManageInventory,
-            'edit_sales' => $canEditSales,
+            'edit_sales' => $this->isOwner(),
             'view_profit' => $this->canViewProfit(),
             default => false,
         };

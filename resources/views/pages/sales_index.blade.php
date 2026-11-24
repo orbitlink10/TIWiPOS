@@ -15,7 +15,7 @@
 @section('content')
     <div class="panel">
         <h2>All sales</h2>
-        <p style="color: var(--muted); margin-top:6px;">Search, view, reprint, or edit past sales.</p>
+        <p style="color: var(--muted); margin-top:6px;">{{ auth()->user()->canAccessAbility('edit_sales') ? 'Search, view, reprint, or edit past sales.' : 'Search, view, or reprint past sales.' }}</p>
         @if($showingOwnSalesOnly ?? false)
             <div style="margin-top:8px; color:#0f766e; font-weight:700;">
                 Showing your sales only.
@@ -48,7 +48,7 @@
                         @endif
                         <th style="text-align:left; padding:10px;">Payment</th>
                         <th style="text-align:left; padding:10px;">Date</th>
-                        <th style="text-align:right; padding:10px;">Receipt</th>
+                        <th style="text-align:right; padding:10px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,6 +68,9 @@
                             <td style="padding:10px;">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
                             <td style="padding:10px; text-align:right;">
                                 <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
+                                @if(auth()->user()->canAccessAbility('edit_sales') && (!isset($currentBusiness) || $currentBusiness->subscription_status === 'active'))
+                                    <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sales.edit', $sale) }}">Edit</a>
+                                @endif
                             </td>
                         </tr>
                     @empty

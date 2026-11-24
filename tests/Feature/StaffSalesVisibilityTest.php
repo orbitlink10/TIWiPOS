@@ -48,7 +48,44 @@ class StaffSalesVisibilityTest extends TestCase
 
         $this->actingAs($staffOne)
             ->get(route('sales.edit', $staffTwoSale))
-            ->assertNotFound();
+            ->assertForbidden();
+    }
+
+    public function test_only_admins_can_edit_completed_sales(): void
+    {
+        [$owner, $staff] = $this->createTenantUsers();
+        $product = $this->createProductWithStock($owner->business_id, $owner->branch_id);
+        $sale = $this->createSaleForUser($staff, $product->id, 'Original Customer');
+        $payload = [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'method' => 'cash',
+            'customer_name' => 'Updated Customer',
+            'apply_tax' => 0,
+        ];
+
+        foreach ([User::ROLE_STAFF, User::ROLE_MANAGER] as $role) {
+            $staff->update(['role' => $role]);
+            $this->actingAs($staff)->get(route('sales.index'))
+                ->assertOk()->assertDontSee(route('sales.edit', $sale));
+            $this->get(route('sales.edit', $sale))->assertForbidden();
+            $this->put(route('sales.update', $sale), $payload)->assertForbidden();
+            $this->assertSame('Original Customer', $sale->fresh()->customer_name);
+            $this->assertEquals(19, $product->stocks()->sum('quantity'));
+        }
+
+        $this->actingAs($owner)->get(route('sales.index'))
+            ->assertOk()->assertSee(route('sales.edit', $sale));
+        $this->get(route('sales.edit', $sale))->assertOk();
+        $this->put(route('sales.update', $sale), $payload)
+            ->assertRedirect(route('sale.receipt', $sale));
+        $this->assertSame('Updated Customer', $sale->fresh()->customer_name);
+        $this->assertEquals(200, $sale->fresh()->total);
+        $this->assertEquals(18, $product->stocks()->sum('quantity'));
+
+        $staff->update(['is_super_admin' => true]);
+        $this->actingAs($staff)->get(route('sales.edit', $sale))->assertOk();
+        $this->put(route('sales.update', $sale), $payload)
+            ->assertRedirect(route('sale.receipt', $sale));
     }
 
     public function test_owner_still_sees_team_sales(): void
