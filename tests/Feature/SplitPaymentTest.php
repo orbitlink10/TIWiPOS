@@ -10,6 +10,47 @@ class SplitPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_cash_mobile_split_receipt_and_shift_closing_totals(): void
+    {
+        [$user, $product, $shift] = $this->fixture();
+        $product->update(['price' => 3000]);
+        $this->actingAs($user)->post(route('sale.store'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'split_payment' => 1, 'payments' => ['cash' => '1000.00', 'mobile' => '2000.00'],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $sale = Sale::sole();
+        $this->assertSame($shift->id, $sale->cashier_shift_id);
+        $this->assertEquals(3000, $sale->total);
+        $this->assertSame(2, $sale->payments()->count());
+        $this->assertEquals(3000, $sale->payments()->sum('amount'));
+        $this->get(route('sale.receipt', $sale))->assertOk()->assertSee('Split payment')
+            ->assertSee('CASH · KES 1,000.00')->assertSee('MOBILE · KES 2,000.00')
+            ->assertSee('KES 3,000.00');
+
+        $expected = [
+            'sales_total_cents' => 300000, 'sales_count' => 1,
+            'payments' => ['cash' => 100000, 'mobile' => 200000],
+            'expected_cash_cents' => 105000,
+        ];
+        $this->assertSame($expected, $shift->summary());
+        $this->get(route('shifts.show', $shift))->assertOk()->assertViewHas('summary', $expected)
+            ->assertSee('1,050.00')->assertSee('3,000.00');
+
+        $this->post(route('shifts.close', $shift), [
+            'counted_cash' => '1050.00', 'confirmation' => 1,
+            'expected_sales_count' => 1, 'expected_cash_cents' => 105000,
+        ])->assertSessionHasNoErrors()->assertRedirect(route('shifts.show', $shift));
+        $shift->refresh();
+        $this->assertSame('closed', $shift->status);
+        $this->assertEquals(0, $shift->cash_variance_cents);
+        $this->assertSame($expected, $shift->summary());
+        $this->get(route('shifts.show', $shift))->assertOk()->assertViewHas('summary', $expected)
+            ->assertSee('Cash balanced');
+        $this->get(route('sale.receipt', $sale))->assertOk()
+            ->assertSee('CASH · KES 1,000.00')->assertSee('MOBILE · KES 2,000.00');
+    }
+
     public function test_split_payment_covers_tax_installation_receipt_history_and_shift_cash(): void
     {
         [$user, $product, $shift] = $this->fixture();
