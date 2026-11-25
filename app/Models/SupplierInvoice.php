@@ -8,6 +8,15 @@ class SupplierInvoice extends Model
 {
     protected $guarded = ['id'];
 
+    protected static function booted(): void
+    {
+        static::creating(function (SupplierInvoice $invoice) {
+            if (blank($invoice->reference)) {
+                $invoice->reference = 'PUR-'.\Illuminate\Support\Str::ulid();
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return ['supplied_at' => 'date', 'due_at' => 'date', 'stock_received' => 'boolean'];
