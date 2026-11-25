@@ -108,6 +108,7 @@
                     <span style="color:var(--muted);">Total</span>
                     <span style="font-weight:700;" id="total_text">KES 0.00</span>
                 </div>
+                <div data-single-payment>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600; margin-top:12px;">
                     Payment method
                     @php $existingMethod = optional($sale->payments->first())->method ?? 'cash'; @endphp
@@ -119,6 +120,8 @@
                         <option value="other" {{ $existingMethod === 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                 </label>
+                </div>
+                @include('partials.split-payments')
                 <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-top:12px;">
                     <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                         Customer name
@@ -173,7 +176,8 @@
             subtotal += line;
         });
         const tax = applyTaxInput.checked ? (subtotal * 0.16) : 0;
-        const total = subtotal + tax;
+        const total = subtotal + tax + @json((float) ($sale->installation_amount ?? 0));
+        window.updateSplitPaymentTotal(total);
         subtotalText.textContent = 'KES ' + subtotal.toFixed(2);
         taxText.textContent = 'KES ' + tax.toFixed(2);
         totalText.textContent = 'KES ' + total.toFixed(2);

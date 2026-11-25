@@ -756,6 +756,7 @@
                 <div class="payment-dialog-head"><div><p class="terminal-caption">CHECKOUT</p><h3 id="payment_title">Complete payment</h3></div><button type="button" id="close_payment" class="payment-close" aria-label="Close payment">&times;</button></div>
                 <div class="payment-amount"><span>Amount due</span><strong id="payment_total">KES 0.00</strong></div>
                 <p id="payment_summary" class="sale-lead"></p>
+                <div data-single-payment>
                 <div class="checkout-label">Payment Method</div>
                 <div class="payment-grid">
                     <label class="payment-chip">
@@ -780,6 +781,8 @@
                     </label>
                 </div>
 
+                </div>
+                @include('partials.split-payments')
                 <button class="complete-btn" type="submit">Complete Sale</button>
                 </dialog>
             </section>
@@ -883,6 +886,7 @@
         taxText.textContent = formatKes(tax);
         installationText.textContent = formatKes(installationAmount);
         totalText.textContent = formatKes(total);
+        window.updateSplitPaymentTotal(total);
         document.getElementById('pay_total').textContent = formatKes(total);
         document.getElementById('payment_total').textContent = formatKes(total);
         const quantity = rows.reduce((sum, row) => sum + Number(row.dataset.qty), 0);

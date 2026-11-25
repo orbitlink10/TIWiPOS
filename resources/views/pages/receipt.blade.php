@@ -103,7 +103,6 @@
     </style>
 </head>
 <body>
-    @php($payment = $sale->payments->first())
     <div class="receipt-wrap">
         <div class="actions">
             <button type="button" class="btn" onclick="window.print()">Print Receipt</button>
@@ -121,8 +120,12 @@
                     <div class="muted">{{ $sale->created_at->format('Y-m-d H:i') }}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div class="muted">Payment method</div>
-                    <div style="font-weight:700;">{{ strtoupper($payment->method ?? 'N/A') }}</div>
+                    <div class="muted">{{ $sale->payments->count() > 1 ? 'Split payment' : 'Payment method' }}</div>
+                    @forelse($sale->payments as $payment)
+                        <div style="font-weight:700;">{{ strtoupper($payment->method) }} · KES {{ number_format($payment->amount, 2) }}</div>
+                    @empty
+                        <div>N/A</div>
+                    @endforelse
                 </div>
             </div>
 

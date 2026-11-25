@@ -204,6 +204,47 @@ class SaleController extends Controller
         return view('pages.sale', compact('products', 'categories', 'cashierShift'));
     }
 
+    private function paymentRules(): array
+    {
+        return [
+            'method' => 'required_without:payments|in:cash,card,bank,mobile,other',
+            'split_payment' => 'nullable|boolean',
+            'payments' => 'nullable|array:cash,card,bank,mobile,other',
+            'payments.*' => 'nullable|numeric|min:0|max:999999999.99|decimal:0,2',
+        ];
+    }
+
+    private function resolvePayments(array $data, float $total): array
+    {
+        if (empty($data['split_payment']) && !array_key_exists('payments', $data)) {
+            return [$data['method'] => round($total, 2)];
+        }
+
+        $payments = array_filter($data['payments'] ?? [], fn ($amount) => (float) $amount > 0);
+        if (count($payments) < 2) {
+            throw ValidationException::withMessages(['payments' => 'Enter amounts for at least two payment methods.']);
+        }
+        $paidCents = array_sum(array_map(fn ($amount) => (int) round((float) $amount * 100), $payments));
+        if ($paidCents !== (int) round($total * 100)) {
+            throw ValidationException::withMessages(['payments' => 'Payment amounts must add up exactly to the sale total.']);
+        }
+
+        return array_map(fn ($amount) => round((float) $amount, 2), $payments);
+    }
+
+    private function savePayments(Sale $sale, array $payments, ?int $branchId): void
+    {
+        foreach ($payments as $method => $amount) {
+            $sale->payments()->withoutGlobalScope('branch')->updateOrCreate(['method' => $method], [
+                'business_id' => $sale->business_id,
+                'branch_id' => $branchId,
+                'amount' => $amount,
+                'paid_at' => now(),
+            ]);
+        }
+        $sale->payments()->withoutGlobalScope('branch')->whereNotIn('method', array_keys($payments))->delete();
+    }
+
     public function store(Request $request)
     {
         $businessId = Tenant::businessId();
@@ -216,7 +257,7 @@ class SaleController extends Controller
             ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'nullable|numeric|min:0',
-            'method' => 'required|in:cash,card,bank,mobile,other',
+            ...$this->paymentRules(),
             'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
@@ -270,7 +311,9 @@ class SaleController extends Controller
             : 0.0;
         $total = $subtotal + $tax + $installationAmount;
 
-        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $installationAmount, $lineItems, $branchId) {
+        $payments = $this->resolvePayments($data, $total);
+
+        DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $installationAmount, $lineItems, $branchId, $payments) {
             $shift = CashierShift::currentQuery()->lockForUpdate()->first();
             if (!$shift) throw ValidationException::withMessages(['shift' => 'Your shift is closed. Open a new shift before completing this sale.']);
             $sale = Sale::create([
@@ -324,15 +367,7 @@ class SaleController extends Controller
                 );
             }
 
-            Payment::create([
-                'business_id' => $sale->business_id,
-                'branch_id' => $branchId,
-                'sale_id' => $sale->id,
-                'method' => $data['method'],
-                'amount' => $total,
-                'reference' => null,
-                'paid_at' => now(),
-            ]);
+            $this->savePayments($sale, $payments, $branchId);
 
             $this->lastSaleId = $sale->id;
         });
@@ -376,7 +411,7 @@ class SaleController extends Controller
                 Rule::exists('products', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
             ],
             'items.*.quantity' => 'required|integer|min:1',
-            'method' => 'required|in:cash,card,bank,mobile,other',
+            ...$this->paymentRules(),
             'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:50',
@@ -479,6 +514,7 @@ class SaleController extends Controller
                 ? round($subtotal * self::TAX_RATE, 2)
                 : 0.0;
             $total = $subtotal + $tax + $installationAmount;
+            $payments = $this->resolvePayments($data, $total);
 
             foreach ($lineItems as $line) {
                 $payload = [
@@ -528,25 +564,7 @@ class SaleController extends Controller
                 'branch_id' => $branchId,
             ]);
 
-            $payment = $sale->payments()->first();
-            if ($payment) {
-                $payment->update([
-                    'method' => $data['method'],
-                    'amount' => $total,
-                    'branch_id' => $branchId,
-                    'paid_at' => now(),
-                ]);
-            } else {
-                Payment::create([
-                    'business_id' => $sale->business_id,
-                    'branch_id' => $branchId,
-                    'sale_id' => $sale->id,
-                    'method' => $data['method'],
-                    'amount' => $total,
-                    'reference' => null,
-                    'paid_at' => now(),
-                ]);
-            }
+            $this->savePayments($sale, $payments, $branchId);
         });
 
         return redirect()->route('sale.receipt', $sale->id)->with('status', 'Sale updated.');

@@ -52,7 +52,6 @@
                 </thead>
                 <tbody>
                     @forelse($sales as $sale)
-                        @php $payment = $sale->payments->first(); @endphp
                         <tr style="border-top:1px solid #e5e7eb;">
                             <td style="padding:10px; font-weight:700;">{{ $sale->sale_number }}</td>
                             <td style="padding:10px;">{{ $sale->customer_name ?? 'Walk-in' }}</td>
@@ -63,7 +62,11 @@
                                     KES {{ number_format((float) ($sale->profit_total ?? 0), 2) }}
                                 </td>
                             @endif
-                            <td style="padding:10px;">{{ $payment->method ?? 'N/A' }}</td>
+                            <td style="padding:10px;">
+                                @forelse($sale->payments as $payment)
+                                    <div>{{ ucfirst($payment->method) }}@if($sale->payments->count() > 1) · KES {{ number_format($payment->amount, 2) }}@endif</div>
+                                @empty N/A @endforelse
+                            </td>
                             <td style="padding:10px;">{{ $sale->created_at->format('Y-m-d H:i') }}</td>
                             <td style="padding:10px; text-align:right;">
                                 <a class="btn" style="padding:8px 12px; font-size:13px;" href="{{ route('sale.receipt', $sale) }}">Receipt</a>
