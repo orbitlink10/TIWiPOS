@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -288,7 +289,7 @@ class SaleController extends Controller
             }
         }
 
-        $saleNumber = 'S' . now()->format('YmdHis');
+        $saleNumber = 'S' . Str::ulid();
         $subtotal = 0;
         $lineItems = [];
 

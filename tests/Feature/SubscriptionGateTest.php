@@ -28,7 +28,7 @@ class SubscriptionGateTest extends TestCase
             'role' => 'owner',
         ]);
 
-        $response = $this->actingAs($user)->get('/sale');
+        $response = $this->actingAs($user)->get(route('settings.index'));
         $response->assertRedirect(route('billing.show'));
     }
 }

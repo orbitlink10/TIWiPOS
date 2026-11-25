@@ -44,7 +44,7 @@ class ProductRecordingDateTest extends TestCase
 
         $response->assertRedirect(route('products'));
 
-        $product = Product::where('sku', 'ROUTER-001')->firstOrFail();
+        $product = Product::where('name', 'Install Router')->firstOrFail();
         $this->assertSame('2026-06-19', $product->recorded_at->toDateString());
     }
 
@@ -94,6 +94,6 @@ class ProductRecordingDateTest extends TestCase
             'is_active' => true,
         ]);
 
-        return [$user, $subCategory];
+        return [$user, $category];
     }
 }

@@ -54,7 +54,7 @@ class QuotationTest extends TestCase
         $this->put(route('quotations.update', $quote), $data)->assertSessionHasNoErrors()->assertRedirect();
         $this->get(route('quotations.show', $quote))->assertOk()->assertSee('USD 810.00')
             ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)->assertDontSee('<script>alert(1)</script>', false);
-        $this->get(route('quotations.index'))->assertOk()->assertSeeInOrder(['To Do List', 'Quotation']);
+        $this->get(route('quotations.index'))->assertOk()->assertSeeInOrder(['To-do List', 'Quotation']);
     }
 
     public function test_quotations_are_isolated_by_business_and_branch(): void

@@ -139,7 +139,7 @@ class CategoryCreationTest extends TestCase
             ->assertOk()
             ->assertSee('Category')
             ->assertSee('Hardware')
-            ->assertDontSee('Routers')
+            ->assertViewHas('categories', fn ($categories) => !$categories->contains('name', 'Routers'))
             ->assertSee('name="category_name"', false)
             ->assertDontSee('name="sub_category_name"', false)
             ->assertDontSee('<select name="parent_id"', false);

@@ -27,6 +27,7 @@ class TenantSalesIsolationTest extends TestCase
         $firstProduct = $this->createProductWithStock($firstBusiness->id, $firstBranch->id, 'alpha');
         $secondProduct = $this->createProductWithStock($secondBusiness->id, $secondBranch->id, 'beta');
 
+        $this->openTestShift($firstOwner);
         $this->actingAs($firstOwner)->post(route('sale.store'), [
             'items' => [
                 ['product_id' => $firstProduct->id, 'quantity' => 1],
@@ -38,6 +39,7 @@ class TenantSalesIsolationTest extends TestCase
 
         $this->travel(1)->seconds();
 
+        $this->openTestShift($secondOwner);
         $this->actingAs($secondOwner)->post(route('sale.store'), [
             'items' => [
                 ['product_id' => $secondProduct->id, 'quantity' => 1],
@@ -79,6 +81,7 @@ class TenantSalesIsolationTest extends TestCase
 
         $foreignProduct = $this->createProductWithStock($secondBusiness->id, $secondBranch->id, 'foreign');
 
+        $this->openTestShift($firstOwner);
         $response = $this->actingAs($firstOwner)
             ->from(route('sale'))
             ->post(route('sale.store'), [

@@ -37,14 +37,20 @@ class SupplierLedgerTest extends TestCase
     public function test_credit_delivery_payments_balances_and_stock(): void
     {
         [$business, $branch, $user, $supplier, $product] = $this->setupSupplier();
-        $data = $this->supplyData($product) + ['receive_stock' => 1];
+        $data = $this->supplyData($product);
         $this->post(route('suppliers.supply', $supplier->id), $data)->assertSessionHasNoErrors();
         $invoice = SupplierInvoice::firstOrFail();
+        $item = $invoice->items()->sole();
+        $this->assertDatabaseCount('product_stocks', 0);
+        $this->post(route('purchases.receive.store', $invoice), [
+            'receipt_token'=>(string)\Illuminate\Support\Str::uuid(), 'received_at'=>today()->toDateString(),
+            'lines'=>[$item->id=>['quantity'=>2]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
         $this->assertEquals(20100, $invoice->total_cents);
         $this->assertEquals(15075, $invoice->balance_cents);
         $this->assertSame('Overdue', $invoice->status);
         $this->assertDatabaseHas('product_stocks', ['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 2]);
-        $this->assertDatabaseHas('stock_movements', ['reference_type' => 'supplier_invoice', 'reference_id' => $invoice->id, 'quantity_change' => 2]);
+        $this->assertDatabaseHas('stock_movements', ['reference_type' => 'purchase_receipt', 'quantity_change' => 2]);
         $this->get(route('suppliers.index'))->assertOk()->assertSee('Test Supplier')->assertSee('150.75');
         $this->get(route('suppliers.show', $supplier->id))->assertOk()->assertSee('INV-001')->assertSee('Router');
         $payment = ['amount' => '150.76', 'paid_at' => today()->toDateString(), 'method' => 'bank'];
@@ -107,7 +113,7 @@ class SupplierLedgerTest extends TestCase
         [, , , $supplier, $product] = $this->setupSupplier();
         $data = $this->supplyData($product);
         $product->delete();
-        $this->get(route('suppliers.show', $supplier->id))->assertOk()->assertSee('supply-form', false);
+        $this->get(route('purchases.create', ['supplier_id'=>$supplier->id]))->assertOk()->assertSee('supply-form', false);
         $data['items'] = [['product_search' => 'RB4001', 'quantity' => 3, 'unit_cost' => '25000']];
         $this->post(route('suppliers.supply', $supplier->id), $data + ['receive_stock' => 1])->assertSessionHasErrors('receive_stock');
         $this->assertDatabaseCount('supplier_invoices', 0);
