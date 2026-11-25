@@ -499,7 +499,7 @@
 </head>
 <body>
     <div class="layout">
-        <aside class="sidebar open" id="app-sidebar">
+        <aside class="sidebar" id="app-sidebar">
             <div class="brand-row">
                 <a href="{{ route('home') }}" class="brand">
                     <span class="brand-mark">TP</span>
@@ -508,9 +508,9 @@
                         <span class="brand-subtitle">Retail Console</span>
                     </span>
                 </a>
-                <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">Menu</button>
+                <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation" aria-controls="app-navigation" aria-expanded="false">Menu</button>
             </div>
-            <nav class="nav">
+            <nav class="nav" id="app-navigation" aria-label="Main navigation">
                 <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}"><span class="nav-icon">HM</span><span>Home</span></a>
                 <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock*') ? 'active' : '' }}"><span class="nav-icon">ST</span><span>Stock</span></a>
                 @if(auth()->user()->canAccessAbility('manage_catalog') && auth()->user()->canViewFinancials())
@@ -582,7 +582,8 @@
             if (!sidebar || !toggle) return;
 
             toggle.addEventListener('click', function () {
-                sidebar.classList.toggle('open');
+                var expanded = sidebar.classList.toggle('open');
+                toggle.setAttribute('aria-expanded', String(expanded));
             });
         })();
     </script>
