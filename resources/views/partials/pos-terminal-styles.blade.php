@@ -48,6 +48,10 @@ body:has(.sale-shell) .header-row h1 { font-size:24px; }
 .sale-card h2,.sale-card h3 { font-size:17px; }
 .sale-summary-btn,.add-btn,.complete-btn { border-radius:6px; }
 .sale-summary-btn { font-size:13px; padding:10px 14px; }
+.sale-header-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.sale-dashboard-btn { display:inline-flex; align-items:center; min-height:40px; padding:10px 14px; border:1px solid #ccd8e5; border-radius:6px; background:#fff; color:#19344e; font-size:13px; font-weight:700; text-decoration:none; }
+.sale-dashboard-btn:hover { background:#eaf2ff; border-color:#1769d1; }
+.sale-dashboard-btn:focus-visible { outline:3px solid #8cbaf2; outline-offset:2px; }
 .terminal-actions { display:grid; gap:8px; position:sticky; top:20px; }
 .terminal-actions button,.terminal-actions a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:74px; padding:8px 4px; border:1px solid #ccd8e5; border-radius:6px; background:#fff; color:#19344e; font-family:inherit; font-size:11px; font-weight:600; text-align:center; text-decoration:none; cursor:pointer; }
 .terminal-actions span { display:grid; place-items:center; width:26px; height:24px; border-radius:5px; background:#edf4fc; color:#1769d1; font-size:10px; font-weight:800; }
