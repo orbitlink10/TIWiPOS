@@ -549,9 +549,6 @@
 
                 <section class="nav-section" aria-labelledby="nav-inventory">
                     <p class="nav-heading" id="nav-inventory">Inventory</p>
-                    @if(auth()->user()->canAccessAbility('view_stock'))
-                        <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock*') ? 'active' : '' }}"><span class="nav-icon">ST</span><span>Stock</span></a>
-                    @endif
                     <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
                     @if(auth()->user()->canAccessAbility('manage_catalog'))
                         <div class="nav-group">
