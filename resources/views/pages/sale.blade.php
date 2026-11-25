@@ -559,11 +559,19 @@
         <form id="sale_form" method="POST" action="{{ route('sale.store') }}" class="sale-layout">
             @csrf
 
+            <nav class="terminal-actions" aria-label="Sale actions">
+                <button type="button" data-panel="customer_details"><span aria-hidden="true">CU</span>Customer</button>
+                <button type="button" data-panel="installation_details"><span aria-hidden="true">SV</span>Installation</button>
+                <button type="button" data-panel="manual_entry"><span aria-hidden="true">QT</span>Quantity / price</button>
+                <a href="{{ route('stock') }}"><span aria-hidden="true">ST</span>Stock list</a>
+                <a href="{{ route('sales.index') }}"><span aria-hidden="true">SH</span>Sales history</a>
+            </nav>
+
             <div class="sale-main">
             <section class="sale-card quick-register">
-                <h2>Product catalogue</h2>
+                <div class="catalogue-heading"><h2>Product catalogue</h2><span class="terminal-caption">{{ $products->count() }} products</span></div>
                 <p class="sale-lead">
-                    Tap a product to add it, or scan a barcode and press Enter.
+                    Choose a quantity and tap Add, or scan a barcode and press Enter.
                     <a href="{{ route('stock') }}">Open stock list</a>
                 </p>
 
@@ -586,18 +594,20 @@
                 </div>
 
                 <div class="product-grid" id="product_grid" aria-label="Available products">
+                    <div class="product-list-head" aria-hidden="true"><span>Product</span><span>Stock</span><span>Price (KES)</span><span>Qty</span><span></span></div>
                     @foreach ($products as $product)
-                        <button type="button" class="product-tile" data-product-id="{{ $product->id }}">
-                            <span class="product-tile-code">{{ $product->sku ?: 'Product' }}</span>
-                            <strong>{{ $product->name }}</strong>
-                            <span class="product-tile-price">KES {{ number_format((float) $product->price, 2) }}</span>
-                            <span class="product-tile-stock">{{ (int) ($product->stock_on_hand ?? 0) }} available</span>
-                        </button>
+                        <div class="product-tile" data-product-id="{{ $product->id }}">
+                            <div class="product-row-name"><strong>{{ $product->name }}</strong><span class="product-tile-code">{{ $product->sku ?: 'Product' }}</span></div>
+                            <span class="product-tile-stock" aria-label="Available stock">{{ (int) ($product->stock_on_hand ?? 0) }}</span>
+                            <span class="product-tile-price">{{ number_format((float) $product->price, 2) }}</span>
+                            <input class="product-row-qty" form="catalogue_controls" type="number" min="1" step="1" max="{{ (int) ($product->stock_on_hand ?? 0) }}" value="1" aria-label="Quantity to add for {{ $product->name }}">
+                            <button type="button" class="product-row-add" aria-label="Add {{ $product->name }} to cart">+ Add</button>
+                        </div>
                     @endforeach
                 </div>
                 <p id="catalogue_empty" class="catalogue-empty" @if($products->isNotEmpty()) hidden @endif>No products available. Check your search or add stock to this branch.</p>
 
-                <details class="manual-entry"><summary>Enter quantity or adjust unit price</summary>
+                <details class="manual-entry" id="manual_entry"><summary>Enter quantity or adjust unit price</summary>
                 <label class="field" style="margin-top:12px;">
                     Select Product
                     <select id="product_id" class="control">
@@ -635,7 +645,7 @@
                 </details>
             </section>
 
-            <details class="sale-card installation" @if(old('installation_amount') || old('technician_name')) open @endif>
+            <details id="installation_details" class="sale-card installation" @if(old('installation_amount') || old('technician_name')) open @endif>
                 <summary>Installation / service details <span>Optional</span></summary>
 
                 <div class="field-grid">
@@ -663,7 +673,7 @@
 
             <section class="sale-card checkout">
                 <div class="checkout-head">
-                    <h3>Checkout</h3>
+                    <h3>Current sale</h3>
                     <span id="cart_count" class="cart-count">0 items</span>
                     <button type="button" id="clear_cart" class="clear-cart" disabled>Clear</button>
                 </div>
@@ -716,6 +726,22 @@
                     </div>
                 </div>
 
+                <details id="customer_details" class="customer-details" @if(old('customer_name') || old('customer_phone') || old('customer_location')) open @endif>
+                    <summary>Customer details <span>Walk-in / optional</span></summary>
+                    <div class="field-grid">
+                        <label class="field">Customer Name<input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Walk-in"></label>
+                        <label class="field">Customer Phone<input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254..."></label>
+                        <label class="field">Customer Location<input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area"></label>
+                    </div>
+                </details>
+
+                <button class="complete-btn" id="open_payment" type="button" disabled>Proceed to payment <span id="pay_total">KES 0.00</span></button>
+                <p class="terminal-hint">Review quantities and prices before taking payment.</p>
+
+                <dialog id="payment_dialog" class="payment-dialog" aria-labelledby="payment_title">
+                <div class="payment-dialog-head"><div><p class="terminal-caption">CHECKOUT</p><h3 id="payment_title">Complete payment</h3></div><button type="button" id="close_payment" class="payment-close" aria-label="Close payment">&times;</button></div>
+                <div class="payment-amount"><span>Amount due</span><strong id="payment_total">KES 0.00</strong></div>
+                <p id="payment_summary" class="sale-lead"></p>
                 <div class="checkout-label">Payment Method</div>
                 <div class="payment-grid">
                     <label class="payment-chip">
@@ -740,25 +766,11 @@
                     </label>
                 </div>
 
-                <div class="checkout-label">Customer Details</div>
-                <div class="field-grid">
-                    <label class="field">
-                        Customer Name
-                        <input name="customer_name" class="control" type="text" value="{{ old('customer_name') }}" placeholder="Walk-in">
-                    </label>
-                    <label class="field">
-                        Customer Phone
-                        <input name="customer_phone" class="control" type="text" value="{{ old('customer_phone') }}" placeholder="+254...">
-                    </label>
-                    <label class="field">
-                        Customer Location
-                        <input name="customer_location" class="control" type="text" value="{{ old('customer_location') }}" placeholder="City/Area">
-                    </label>
-                </div>
-
                 <button class="complete-btn" type="submit">Complete Sale</button>
+                </dialog>
             </section>
         </form>
+        <form id="catalogue_controls" hidden></form>
     </div>
 @endsection
 
@@ -786,6 +798,8 @@
     const feedback = document.getElementById('sale_feedback');
     const clearCart = document.getElementById('clear_cart');
     const completeButton = form.querySelector('button[type="submit"]');
+    const openPayment = document.getElementById('open_payment');
+    const paymentDialog = document.getElementById('payment_dialog');
     const previousItems = @json(old('items', []));
     let submitting = false;
 
@@ -855,16 +869,24 @@
         taxText.textContent = formatKes(tax);
         installationText.textContent = formatKes(installationAmount);
         totalText.textContent = formatKes(total);
+        document.getElementById('pay_total').textContent = formatKes(total);
+        document.getElementById('payment_total').textContent = formatKes(total);
         const quantity = rows.reduce((sum, row) => sum + Number(row.dataset.qty), 0);
         cartCount.textContent = quantity + (quantity === 1 ? ' item' : ' items');
         document.getElementById('cart_empty').hidden = rows.length > 0;
         clearCart.disabled = rows.length === 0;
         completeButton.disabled = rows.length === 0 || submitting;
+        openPayment.disabled = rows.length === 0 || submitting;
+        document.getElementById('payment_summary').textContent = cartCount.textContent + ' · ' + (form.elements.customer_name.value.trim() || 'Walk-in customer');
         productTiles.forEach((tile) => {
             const option = Array.from(productSelect.options).find((item) => item.value === tile.dataset.productId);
             const available = Math.max(0, Number(option.dataset.stock) - quantityAlreadyInCart(option.value));
-            tile.querySelector('.product-tile-stock').textContent = available + ' available';
-            tile.disabled = available === 0;
+            tile.querySelector('.product-tile-stock').textContent = available;
+            tile.querySelector('.product-row-add').disabled = available === 0;
+            tile.querySelector('.product-row-qty').disabled = available === 0;
+            tile.querySelector('.product-row-qty').max = available;
+            tile.classList.toggle('in-cart', available < Number(option.dataset.stock));
+            tile.classList.toggle('is-out', available === 0);
         });
     }
 
@@ -1114,12 +1136,41 @@
     addBtn.addEventListener('click', addToCart);
     addInstallationBtn.addEventListener('click', refreshCartTotals);
 
-    productTiles.forEach((tile) => tile.addEventListener('click', () => {
+    function addProductRow(tile) {
+        const rowQuantity = tile.querySelector('.product-row-qty');
+        if (!rowQuantity.reportValidity()) return;
         productSelect.value = tile.dataset.productId;
-        qtyInput.value = '1';
+        qtyInput.value = rowQuantity.value;
         updateTotalsPreview(true);
-        addToCart();
+        if (addToCart()) {
+            rowQuantity.value = '1';
+            qtyInput.value = '1';
+            barcodeInput.focus();
+        }
+    }
+
+    productTiles.forEach((tile) => {
+        tile.querySelector('.product-row-add').addEventListener('click', () => addProductRow(tile));
+        tile.querySelector('.product-row-qty').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addProductRow(tile);
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-panel]').forEach((button) => button.addEventListener('click', () => {
+        const panel = document.getElementById(button.dataset.panel);
+        panel.open = true;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        panel.querySelector('input, select')?.focus({ preventScroll: true });
     }));
+
+    openPayment.addEventListener('click', () => {
+        refreshCartTotals();
+        if (!openPayment.disabled) paymentDialog.showModal();
+    });
+    document.getElementById('close_payment').addEventListener('click', () => paymentDialog.close());
 
     clearCart.addEventListener('click', () => {
         if (!window.confirm('Remove all items from this cart?')) return;
@@ -1148,6 +1199,7 @@
 
     window.addEventListener('pageshow', () => {
         submitting = false;
+        if (paymentDialog.open) paymentDialog.close();
         completeButton.textContent = 'Complete Sale';
         refreshCartTotals();
     });
