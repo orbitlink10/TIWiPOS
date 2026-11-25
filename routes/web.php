@@ -127,6 +127,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.update');
 
     Route::get('/summary', [PageController::class, 'summary'])->name('summary');
+    Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
 
     Route::get('/staff', [StaffController::class, 'index'])->middleware('role.ability:manage_staff')->name('staff.index');
     Route::post('/staff', [StaffController::class, 'store'])->middleware('role.ability:manage_staff')->name('staff.store');
