@@ -39,6 +39,8 @@
             min-height: 100vh;
         }
 
+        .layout.pos-only { grid-template-columns: minmax(0, 1fr); }
+
         .sidebar {
             background: linear-gradient(165deg, #0b1f3f 0%, #10305d 58%, #13427d 100%);
             color: var(--sidebar-text);
@@ -549,7 +551,7 @@
     @stack('styles')
 </head>
 <body>
-    <div class="layout">
+    <div class="layout {{ auth()->user()->isPosOnly() ? 'pos-only' : '' }}">
         @unless(auth()->user()->isPosOnly())
         <aside class="sidebar" id="app-sidebar">
             <div class="brand-row">
