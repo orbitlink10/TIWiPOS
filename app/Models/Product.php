@@ -15,6 +15,7 @@ class Product extends Model
         'name',
         'sku',
         'serial_number',
+        'tracks_serials',
         'barcode',
         'category_id',
         'supplier_id',
@@ -27,6 +28,7 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'tracks_serials' => 'boolean',
         'recorded_at' => 'date',
     ];
 

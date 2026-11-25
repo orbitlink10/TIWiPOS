@@ -37,9 +37,7 @@
             <label class="supplier-field np-payment-ref"><span>Payment reference</span><input name="payment_reference" maxlength="100" value="{{ old('payment_reference') }}" placeholder="Optional"></label>
         </div>
         <div class="np-balance"><span>Remaining balance</span><strong>KES <span id="purchase-balance">0.00</span></strong></div>
-        @if(auth()->user()->canAccessAbility('add_stock'))
-        <label class="np-stock-choice"><input type="checkbox" name="receive_stock" value="1" @checked(old('receive_stock'))><span>Receive stock now<small class="np-hint">Adds these quantities to {{ $currentBranch->name ?? 'the current branch' }}. Leave unchecked if already received.</small></span></label>
-        @endif
+        <p class="np-hint">Save this purchase first, then use Receive purchase to confirm delivered quantities and serial numbers before stock is added.</p>
         <button class="supplier-account-button primary" type="submit">Save purchase</button>
         <a class="supplier-account-button" href="{{ route('purchases.index') }}">Cancel</a>
     </aside>

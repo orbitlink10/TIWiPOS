@@ -28,6 +28,17 @@ class SupplierInvoice extends Model
         return $this->hasMany(SupplierPayment::class);
     }
 
+    public function receipts()
+    {
+        return $this->hasMany(PurchaseReceipt::class);
+    }
+
+    public function getReceivingStatusAttribute(): string
+    {
+        if ($this->stock_received) return 'Received';
+        return $this->items->sum('received_quantity') > 0 ? 'Part received' : 'Awaiting receipt';
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);

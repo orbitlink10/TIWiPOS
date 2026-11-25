@@ -7,5 +7,6 @@
 <div class="supplier-area supplier-account">
 @include('pages.suppliers.account-style')
 <section class="panel">@include('pages.suppliers.invoice', ['expandedInvoice'=>true])</section>
+@include('pages.purchases.receipts')
 </div>
 @endsection
