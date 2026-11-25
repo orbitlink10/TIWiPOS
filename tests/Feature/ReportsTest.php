@@ -60,7 +60,7 @@ class ReportsTest extends TestCase
             'supplier-payments'=>['amount'=>30],
         ];
         $catalog = $this->get(route('reports.index'))->assertOk()->viewData('reports');
-        $this->assertCount(34, $catalog);
+        $this->assertCount(35, $catalog);
         foreach (array_keys($catalog) as $report) {
             $response = $this->get(route('reports.index', ['report'=>$report]))->assertOk();
             foreach ($expected[$report] ?? [] as $metric=>$value) {

@@ -45,8 +45,11 @@ class ReportController extends Controller
 
         $reports += OperationalReports::catalog($user);
         $branches = Branch::where('business_id', Tenant::businessId())->orderBy('name')->get(['id', 'name']);
+        $reportTimezone = config('app.reporting_timezone', 'Africa/Nairobi');
+        $reportToday = now()->timezone($reportTimezone)->toDateString();
 
         $data = $request->validate([
+            'as_at' => ['sometimes', 'required', 'date_format:Y-m-d', 'before_or_equal:'.$reportToday],
             'branch_id' => ['sometimes', 'required', Rule::in($branches->pluck('id')->map(fn ($id) => (string) $id)->push('all')->all())],
             'report' => ['sometimes', 'string', Rule::in(array_keys($reports))],
             'from' => ['sometimes', 'required', 'date_format:Y-m-d'],
@@ -60,6 +63,11 @@ class ReportController extends Controller
         $report = $data['report'] ?? 'sales';
         $from = $data['from'] ?? now()->startOfMonth()->toDateString();
         $to = $data['to'] ?? now()->toDateString();
+        $asAt = $data['as_at'] ?? $reportToday;
+        if ($report === 'stock-as-at') {
+            $to = $asAt;
+            $from = min($from, $to);
+        }
         $search = trim($data['q'] ?? '');
         $currentStock = in_array($report, ['stock-valuation', 'low-stock'], true);
         $columns = [];
@@ -176,7 +184,7 @@ class ReportController extends Controller
         $rows = $query->paginate(25)->withQueryString();
         $formatValue = fn ($value, $type) => $this->format($value, $type);
 
-        return view('pages.reports', compact('branches', 'branchFilter', 'reportBranchName', 'reports', 'report', 'from', 'to', 'search', 'currentStock', 'columns', 'metrics', 'totals', 'rows', 'formatValue'));
+        return view('pages.reports', compact('reportToday', 'reportTimezone', 'asAt', 'branches', 'branchFilter', 'reportBranchName', 'reports', 'report', 'from', 'to', 'search', 'currentStock', 'columns', 'metrics', 'totals', 'rows', 'formatValue'));
     }
 
     private function branchScope($query, string $table)
