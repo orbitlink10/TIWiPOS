@@ -627,6 +627,20 @@
             var toggle = document.getElementById('sidebar-toggle');
             if (!sidebar || !toggle) return;
 
+            var activeLink = sidebar.querySelector('.nav a.active');
+            if (activeLink) {
+                activeLink.setAttribute('aria-current', 'page');
+                requestAnimationFrame(function () {
+                    if (!activeLink.getClientRects().length || sidebar.scrollHeight <= sidebar.clientHeight) return;
+
+                    var sidebarBounds = sidebar.getBoundingClientRect();
+                    var linkBounds = activeLink.getBoundingClientRect();
+                    if (linkBounds.top < sidebarBounds.top || linkBounds.bottom > sidebarBounds.bottom) {
+                        sidebar.scrollTop += linkBounds.top - sidebarBounds.top - (sidebar.clientHeight - linkBounds.height) / 2;
+                    }
+                });
+            }
+
             toggle.addEventListener('click', function () {
                 var expanded = sidebar.classList.toggle('open');
                 toggle.setAttribute('aria-expanded', String(expanded));
