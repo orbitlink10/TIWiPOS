@@ -583,7 +583,7 @@
             <section class="sale-card quick-register">
                 <div class="catalogue-heading"><h2>Product catalogue</h2><span class="terminal-caption">{{ $products->count() }} products</span></div>
                 <p class="sale-lead">
-                    Choose a quantity and tap Add, or scan a barcode and press Enter.
+                    Tap a product row to add it, or scan a barcode and press Enter.
                     @unless(auth()->user()->isPosOnly())
                         <a href="{{ route('stock') }}">Open stock list</a>
                     @endunless
@@ -611,7 +611,7 @@
                     <div class="product-list-head" aria-hidden="true"><span>Product</span><span>Stock</span><span>Price (KES)</span><span>Qty</span><span></span></div>
                     @foreach ($products as $product)
                         <div class="product-tile" data-product-id="{{ $product->id }}">
-                            <div class="product-row-name"><strong>{{ $product->name }}</strong><span class="product-tile-code">{{ $product->sku ?: 'Product' }}</span></div>
+                            <button type="button" class="product-row-name" aria-label="Add {{ $product->name }} to cart"><strong>{{ $product->name }}</strong><span class="product-tile-code">{{ $product->sku ?: 'Product' }}</span></button>
                             <span class="product-tile-stock" aria-label="Available stock">{{ (int) ($product->stock_on_hand ?? 0) }}</span>
                             <span class="product-tile-price">{{ number_format((float) $product->price, 2) }}</span>
                             <input class="product-row-qty" form="catalogue_controls" type="number" min="1" step="1" max="{{ (int) ($product->stock_on_hand ?? 0) }}" value="1" aria-label="Quantity to add for {{ $product->name }}">
@@ -897,6 +897,7 @@
             const available = Math.max(0, Number(option.dataset.stock) - quantityAlreadyInCart(option.value));
             tile.querySelector('.product-tile-stock').textContent = available;
             tile.querySelector('.product-row-add').disabled = available === 0;
+            tile.querySelector('.product-row-name').disabled = available === 0;
             tile.querySelector('.product-row-qty').disabled = available === 0;
             tile.querySelector('.product-row-qty').max = available;
             tile.classList.toggle('in-cart', available < Number(option.dataset.stock));
@@ -1170,6 +1171,11 @@
     }
 
     productTiles.forEach((tile) => {
+        tile.addEventListener('click', (event) => {
+            if (event.target.closest('input, button') || tile.querySelector('.product-row-add').disabled) return;
+            addProductRow(tile);
+        });
+        tile.querySelector('.product-row-name').addEventListener('click', () => addProductRow(tile));
         tile.querySelector('.product-row-add').addEventListener('click', () => addProductRow(tile));
         tile.querySelector('.product-row-qty').addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {

@@ -67,11 +67,11 @@ body:has(.sale-shell) .header-row h1 { font-size:24px; }
 .product-list-head,.product-tile { display:grid; grid-template-columns:minmax(0,1fr) 38px 82px 48px 62px; gap:6px; align-items:center; padding:9px 8px; }
 .product-list-head { position:sticky; top:0; z-index:1; background:#f0f4f8; color:#536477; font-size:9px; font-weight:800; text-transform:uppercase; }
 .product-list-head span:not(:first-child) { text-align:right; }
-.product-tile { min-height:0; min-width:0; border:0; border-top:1px solid #d6e1eb; border-radius:0; cursor:default; }
+.product-tile { min-height:0; min-width:0; border:0; border-top:1px solid #d6e1eb; border-radius:0; cursor:pointer; }
 .product-tile:hover { background:#f8fbff; }
 .product-tile.in-cart { background:#eef8f4; }
-.product-tile.is-out { opacity:.55; }
-.product-row-name { min-width:0; }
+.product-tile.is-out { opacity:.55; cursor:default; }
+.product-row-name { min-width:0; border:0; padding:0; background:transparent; color:inherit; font:inherit; text-align:left; cursor:inherit; }
 .product-row-name strong { display:block; font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
 .product-tile-code { display:block; margin-top:3px; font-size:10px; }
 .product-tile-price { margin:0; font-size:12px; text-align:right; }
