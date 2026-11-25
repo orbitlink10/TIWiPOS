@@ -58,6 +58,7 @@ class FeatureGate
             'shifts.open',
             'shifts.show',
             'shifts.close',
+            'shifts.verify',
             'sale.store',
             'billing.show',
             'billing.pay',

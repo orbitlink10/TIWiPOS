@@ -79,6 +79,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/shifts/open', [\App\Http\Controllers\CashierShiftController::class, 'open'])->name('shifts.open');
     Route::get('/shifts/{shift}', [\App\Http\Controllers\CashierShiftController::class, 'show'])->whereNumber('shift')->name('shifts.show');
     Route::post('/shifts/{shift}/close', [\App\Http\Controllers\CashierShiftController::class, 'close'])->whereNumber('shift')->name('shifts.close');
+    Route::post('/shifts/{shift}/verify', [\App\Http\Controllers\CashierShiftController::class, 'verify'])->whereNumber('shift')->middleware('role.ability:verify_shifts')->name('shifts.verify');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->middleware('role.ability:edit_sales')->name('sales.edit');
     Route::put('/sales/{sale}', [SaleController::class, 'update'])->middleware('role.ability:edit_sales')->name('sales.update');

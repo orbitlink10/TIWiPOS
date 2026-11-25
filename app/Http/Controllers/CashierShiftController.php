@@ -26,13 +26,15 @@ class CashierShiftController extends Controller
     public function index(Request $request)
     {
         $query = $this->scope();
-        $data = $request->validate(['status' => ['nullable', 'in:open,closed,pending_stock_count,locked']]);
+        $data = $request->validate(['status' => ['nullable', 'in:open,closed,pending_stock_count,locked,pending_verification,verified']]);
         $currentShift = CashierShift::currentQuery()->first();
         $currentSummary = $currentShift?->summary();
         $otherShift = CashierShift::where('active_user_id', auth()->id())->with('branch')->first();
         $shifts = $query->when($data['status'] ?? null, function ($query, $status) {
             if ($status === 'pending_stock_count') return $query->where('status', 'closed')->whereNull('stock_locked_at');
             if ($status === 'locked') return $query->whereNotNull('stock_locked_at');
+            if ($status === 'pending_verification') return $query->where('status', 'closed')->whereNotNull('stock_locked_at')->whereNull('verified_at');
+            if ($status === 'verified') return $query->whereNotNull('verified_at');
             return $query->where('status', $status);
         })
             ->with('user:id,name')->orderByDesc('opened_at')->orderByDesc('id')->paginate(20)->withQueryString();
@@ -59,10 +61,37 @@ class CashierShiftController extends Controller
 
     public function show(int $shift)
     {
-        $shift = $this->scope()->with('user:id,name')->findOrFail($shift);
+        $shift = $this->scope()->with(['user:id,name', 'verifier:id,name'])->findOrFail($shift);
         $summary = $shift->summary();
         $sales = $shift->salesQuery()->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
         return view('pages.shifts.show', compact('shift', 'summary', 'sales'));
+    }
+
+    public function verify(Request $request, int $shift)
+    {
+        abort_unless(auth()->user()->canAccessAbility('verify_shifts'), 403);
+        $this->scope()->findOrFail($shift);
+        $rules = ['confirmation' => ['required', 'accepted'], 'verification_notes' => ['nullable', 'string', 'max:1000'],
+            'verified' => ['required', 'array:cash,mobile,card,bank,other']];
+        foreach (['cash', 'mobile', 'card', 'bank', 'other'] as $method) $rules['verified.'.$method] = ['required', 'regex:/^\d{1,10}(\.\d{1,2})?$/'];
+        $data = $request->validate($rules);
+        DB::transaction(function () use ($shift, $data) {
+            $shift = $this->scope()->whereKey($shift)->lockForUpdate()->firstOrFail();
+            abort_if(in_array((int) auth()->id(), [(int) $shift->user_id, (int) $shift->closed_by], true), 403, 'Another manager or admin must verify this shift.');
+            if ($shift->verified_at) return;
+            if ($shift->status !== 'closed' || !$shift->stock_locked_at) throw ValidationException::withMessages(['shift' => 'Close the shift and complete its stock count before verifying takings.']);
+            $totals = [];
+            foreach ($data['verified'] as $method => $amount) $totals[$method] = $this->cents((string) $amount);
+            $expected = $shift->payment_totals ?? [];
+            $expected['cash'] = (int) $shift->expected_cash_cents;
+            foreach ($totals as $method => $amount) {
+                if ($amount !== (int) ($expected[$method] ?? 0) && blank($data['verification_notes'] ?? null)) {
+                    throw ValidationException::withMessages(['verification_notes' => 'Explain the difference between verified amounts and expected takings before verifying.']);
+                }
+            }
+            $shift->update(['verified_by' => auth()->id(), 'verified_at' => now(), 'verified_payment_totals' => $totals, 'verification_notes' => $data['verification_notes'] ?? null]);
+        }, 3);
+        return redirect()->route('shifts.show', $shift)->with('status', 'Shift verified. Reviewer, confirmed takings and differences have been recorded.');
     }
 
     public function close(Request $request, int $shift)
