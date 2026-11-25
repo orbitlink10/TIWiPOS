@@ -13,9 +13,8 @@
 
 @section('content')
     @php($canManageCatalog = auth()->user()->canAccessAbility('manage_catalog'))
-    @php($canDeleteProducts = auth()->user()->canAccessAbility('delete_products'))
     @php($canViewFinancials = auth()->user()->canViewFinancials())
-    @php($columnCount = 5 + ($canViewFinancials ? 1 : 0) + ($canManageCatalog ? 1 : 0))
+    @php($columnCount = 6 + ($canViewFinancials ? 1 : 0))
     <div class="panel">
         <h2>{{ isset($selectedSubCategory) ? $selectedSubCategory->name . ' products' : 'Catalog' }}</h2>
         @if(isset($selectedSubCategory))
@@ -59,9 +58,7 @@
                         @endif
                         <th style="text-align:right; padding:10px;">Price</th>
                         <th style="text-align:right; padding:10px;">Stock</th>
-                        @if($canManageCatalog)
-                            <th style="text-align:center; padding:10px; width:220px;">Action</th>
-                        @endif
+                        <th style="text-align:center; padding:10px; width:100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -75,24 +72,7 @@
                             @endif
                             <td style="padding:10px; text-align:right;">KES {{ number_format($product->price, 2) }}</td>
                             <td style="padding:10px; text-align:right;">{{ $product->stock_on_hand ?? 0 }}</td>
-                            @if($canManageCatalog)
-                                <td style="padding:10px; text-align:center;">
-                                    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-                                        <a href="{{ route('products.edit', $product) }}" style="border:1px solid #bfdbfe; background:#eff6ff; color:#1d4ed8; border-radius:8px; padding:6px 12px; font-weight:700; text-decoration:none;">
-                                            Edit
-                                        </a>
-                                        @if($canDeleteProducts)
-                                            <form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" style="border:1px solid #fecaca; background:#fff1f2; color:#b91c1c; border-radius:8px; padding:6px 12px; font-weight:700; cursor:pointer;">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            @endif
+                            <td style="padding:10px; text-align:center;"><a href="{{ route('products.show', $product) }}" style="display:inline-block;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:7px;padding:7px 14px;font-weight:700;text-decoration:none;">View</a></td>
                         </tr>
                     @empty
                         <tr>

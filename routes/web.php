@@ -85,6 +85,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::redirect('/services', '/delivery');
     Route::get('/delivery', [ServiceController::class, 'index'])->name('services');
     Route::get('/products/create', [ProductController::class, 'create'])->middleware('role.ability:manage_catalog')->name('products.create');
+    Route::get('/products/{product}', [ProductController::class, 'show'])->whereNumber('product')->name('products.show');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('role.ability:manage_catalog')->name('products.edit');
     Route::post('/products', [ProductController::class, 'store'])->middleware('role.ability:manage_catalog')->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('role.ability:manage_catalog')->name('products.update');
