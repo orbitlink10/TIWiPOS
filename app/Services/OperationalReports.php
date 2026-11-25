@@ -24,7 +24,7 @@ class OperationalReports
             'sales-user-store' => ['Sales by cashier and branch', 'Sales', 'Sales attributed to their original cashier.'],
             'sales-user-store-item' => ['Cashier sales by item', 'Sales', 'Product quantities and revenue by cashier and branch; excludes installation and VAT.'],
             'store-item-sales' => ['Branch sales by item', 'Sales', 'Product quantities and revenue by branch; excludes installation and VAT.'],
-            'sales-supplier' => ['Sales by supplier', 'Sales', 'Product revenue grouped by the product’s current supplier assignment.'],
+            'sales-supplier' => ['Sales by supplier', 'Sales', 'Product revenue grouped by the product’s current preferred supplier assignment.'],
             'vat-analysis' => ['VAT analysis', 'Sales', 'Recorded VAT and product sales by day. Installation is shown separately.'],
         ];
         if ($user->canViewProfit()) {
@@ -34,7 +34,7 @@ class OperationalReports
             $reports += [
                 'price-list' => ['Product price list', 'Inventory', 'Current selling prices and product categories.'],
                 'stock-as-at' => ['Stock as of date', 'Inventory', 'End-of-day quantities reconstructed from effective stock movements. Edited sales restate their original date. Legacy opening balances may be inferred; unlogged historic changes cannot be recovered. Values use current catalogue cost, not historical cost.'],
-                'stock-vendor' => ['Stock by supplier', 'Inventory', 'Current stock by product and current supplier assignment, including inactive products.'],
+                'stock-vendor' => ['Stock by supplier', 'Inventory', 'Current stock by product and current preferred supplier assignment, including inactive products.'],
                 'stock-supplier-summary' => ['Supplier stock summary', 'Inventory', 'Current quantities by supplier, including inactive products.'],
                 'stock-period-counts' => ['Completed stock counts', 'Inventory', 'Saved opening, expected and counted quantities from completed stock periods.'],
                 'stock-period-variance' => ['Periodic stock variance', 'Inventory', 'Non-zero variances from completed stock periods, valued at each period’s saved unit cost.'],
@@ -172,7 +172,7 @@ class OperationalReports
                     ->join('branches as b','b.id','=','s.branch_id')->leftJoin('users as u','u.id','=','s.user_id')->leftJoin('suppliers as v','v.id','=','p.supplier_id');
                 if ($report === 'sales-supplier') {
                     $query->selectRaw("COALESCE(v.name,'Unassigned') as supplier")->groupBy('v.id','v.name')->orderBy('supplier');
-                    $columns = ['supplier'=>$text('Current supplier')];
+                    $columns = ['supplier'=>$text('Preferred supplier')];
                 } else {
                     $query->select('b.name as branch','p.name','p.sku')->groupBy('b.id','b.name','p.id','p.name','p.sku')->orderBy('b.name')->orderBy('p.name');
                     $columns = ['branch'=>$text('Branch'), 'name'=>$text('Product'), 'sku'=>$text('SKU')];
@@ -228,11 +228,11 @@ class OperationalReports
                 $this->search($query, ['p.name','p.sku','v.name','c.name']);
                 if ($report === 'stock-supplier-summary') {
                     $query->selectRaw("COALESCE(v.name,'Unassigned') as supplier, COUNT(*) as products, SUM(COALESCE(st.quantity,0)) as quantity")->groupBy('v.id','v.name')->orderBy('supplier');
-                    $columns = ['supplier'=>$text('Current supplier'), 'products'=>$count('Products'), 'quantity'=>$count('Units on hand')]; $metrics = ['quantity'=>'Units on hand'];
+                    $columns = ['supplier'=>$text('Preferred supplier'), 'products'=>$count('Products'), 'quantity'=>$count('Units on hand')]; $metrics = ['quantity'=>'Units on hand'];
                     if ($canViewCost) { $query->selectRaw('SUM(COALESCE(st.quantity,0)*COALESCE(p.cost,0)) as stock_value'); $columns['stock_value']=$money('Stock value at cost'); $metrics['stock_value']='Stock value at cost'; }
                 } else {
                     $query->select('p.name','p.sku','c.name as category','p.price','p.is_active')->selectRaw("COALESCE(v.name,'Unassigned') as supplier, COALESCE(st.quantity,0) as quantity")->orderBy('p.name')->orderBy('p.id');
-                    $columns = ['name'=>$text('Product'), 'sku'=>$text('SKU'), 'category'=>$text('Category'), 'supplier'=>$text('Current supplier'), 'price'=>$money('Selling price'), 'is_active'=>$count('Active (1=yes)'), 'quantity'=>$count('Units on hand')]; $metrics=['quantity'=>'Units on hand'];
+                    $columns = ['name'=>$text('Product'), 'sku'=>$text('SKU'), 'category'=>$text('Category'), 'supplier'=>$text('Preferred supplier'), 'price'=>$money('Selling price'), 'is_active'=>$count('Active (1=yes)'), 'quantity'=>$count('Units on hand')]; $metrics=['quantity'=>'Units on hand'];
                     if ($canViewCost) { $query->addSelect('p.cost')->selectRaw('COALESCE(st.quantity,0)*COALESCE(p.cost,0) as stock_value'); $columns += ['cost'=>$money('Current cost'), 'stock_value'=>$money('Stock value at cost')]; $metrics['stock_value']='Stock value at cost'; }
                 }
                 break;

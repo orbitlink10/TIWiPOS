@@ -7,7 +7,7 @@
         <h2 id="supplier-products-title">Supplied products <span class="supplier-history-count">{{ $mappedProducts->count() }}</span></h2>
         @if($supplier->is_active)<button type="button" class="supplier-account-button supplier-no-print" id="open-product-mapping">+ Link products</button>@endif
     </div>
-    <p class="supplier-muted">Products assigned to this supplier across your business. Linking a product does not receive stock or create an invoice.</p>
+    <p class="supplier-muted">Products linked to this supplier across your business. Each product can be linked to multiple suppliers. Linking a product does not receive stock or create an invoice.</p>
     <div class="supplier-scroll"><table>
         <thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Selling price (KES)</th><th scope="col">Status</th><th scope="col" class="supplier-no-print">Mapping</th></tr></thead>
         <tbody>
@@ -21,14 +21,14 @@
     <form method="POST" action="{{ route('suppliers.products.store', $supplier->id) }}">
         @csrf
         <div class="supplier-map-head"><h2 id="supplier-map-title">Link products</h2><button type="button" class="supplier-account-button" data-map-close aria-label="Close product mapping">Close</button></div>
-        <p class="supplier-muted">Select products supplied by {{ $supplier->name }}. This list shows active products without an assigned supplier.</p>
+        <p class="supplier-muted">Select products supplied by {{ $supplier->name }}. This list shows active products not yet linked to this supplier. Existing links to other suppliers are kept.</p>
         <input type="search" data-map-search placeholder="Search product name, SKU, barcode or serial…" aria-label="Search products to link">
         <div class="supplier-map-tools"><button type="button" class="supplier-account-button" data-map-select>Select results</button><button type="button" class="supplier-account-button" data-map-clear>Clear selection</button></div>
         <div class="supplier-map-list">
             @foreach($availableProducts as $product)
                 <label class="supplier-map-option" data-map-search-text="{{ $product->name.' '.$product->sku.' '.$product->barcode.' '.$product->serial_number }}"><input type="checkbox" name="product_ids[]" value="{{ $product->id }}" @checked(in_array($product->id, (array) old('product_ids', [])))><span><strong>{{ $product->name }}</strong><small>{{ $product->sku }}@if($product->serial_number) &middot; {{ $product->serial_number }}@endif</small></span></label>
             @endforeach
-            <p class="supplier-map-empty" data-map-empty @if($availableProducts->isNotEmpty()) hidden @endif>No unassigned products match. Products already assigned to another supplier must be unlinked there first.</p>
+            <p class="supplier-map-empty" data-map-empty @if($availableProducts->isNotEmpty()) hidden @endif>No matching products available to link. Products already linked to this supplier are excluded.</p>
         </div>
         <div class="supplier-map-footer"><span data-map-count role="status">0 selected</span><button class="supplier-account-button primary" type="submit" data-map-save disabled>Link selected products</button></div>
     </form>

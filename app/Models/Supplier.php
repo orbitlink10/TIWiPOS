@@ -21,4 +21,9 @@ class Supplier extends Model
         'country',
         'is_active',
     ];
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'product_supplier')->withPivot('business_id')->withTimestamps();
+    }
 }

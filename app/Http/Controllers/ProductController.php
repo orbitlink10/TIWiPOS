@@ -63,11 +63,11 @@ class ProductController extends Controller
         if (!empty($filters['category_id']) && !$categories->contains('id', $filters['category_id'])) {
             $categories->push(Category::where('business_id', $businessId)->findOrFail($filters['category_id']));
         }
-        $products = Product::where('business_id', $businessId)->with(['category.parent', 'supplier'])
+        $products = Product::where('business_id', $businessId)->with(['category.parent', 'supplier', 'suppliers'])
             ->when($filters['category_id'] ?? null, fn ($query, $categoryId) => $query->where(function ($query) use ($categoryId, $businessId) {
                 $query->where('category_id', $categoryId)->orWhereIn('category_id', Category::where('business_id', $businessId)->where('parent_id', $categoryId)->select('id'));
             }))
-            ->when($filters['supplier_id'] ?? null, fn ($query, $supplierId) => $supplierId === 'unassigned' ? $query->whereNull('supplier_id') : $query->where('supplier_id', $supplierId))
+            ->when($filters['supplier_id'] ?? null, fn ($query, $supplierId) => $supplierId === 'unassigned' ? $query->whereNull('supplier_id')->whereDoesntHave('suppliers') : $query->suppliedBy((int) $supplierId))
             ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search, $businessId, $branchId) {
                 foreach (['name', 'sku', 'barcode', 'serial_number'] as $column) $query->orWhere($column, 'like', '%'.$search.'%');
                 $query->orWhereExists(function ($serials) use ($search, $businessId, $branchId) {
@@ -97,7 +97,7 @@ class ProductController extends Controller
         $movementFormat = $movementFilters['movement_format'] ?? null;
         unset($movementFilters['movement_format']);
         $branchId = Tenant::branchId();
-        $product->load(['category.parent', 'supplier']);
+        $product->load(['category.parent', 'supplier', 'suppliers']);
         $stocks = $product->stocks()->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->orderBy('location')->get();
         $serials = DB::table('purchase_receipt_serials as serials')
             ->join('purchase_receipt_lines as lines', 'lines.id', '=', 'serials.purchase_receipt_line_id')

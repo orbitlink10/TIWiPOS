@@ -86,11 +86,10 @@ class SupplierController extends Controller
         abort_unless(auth()->user()->canViewFinancials(), 403);
         $supplier = $this->supplier($supplier);
         $invoices = $this->invoices($supplier->id)->with(['payments', 'items'])->orderByDesc('supplied_at')->orderByDesc('id')->get();
-        $products = Product::where('business_id', Tenant::businessId())
-            ->orderByRaw('CASE WHEN supplier_id = ? THEN 0 ELSE 1 END', [$supplier->id])
-            ->orderBy('name')->get();
-        $mappedProducts = $products->where('supplier_id', $supplier->id);
-        $availableProducts = $products->whereNull('supplier_id')->where('is_active', true);
+        $products = Product::where('business_id', Tenant::businessId())->with('suppliers')->orderBy('name')->get();
+        $mappedProducts = $products->filter(fn ($product) => (int) $product->supplier_id === (int) $supplier->id
+            || $product->suppliers->contains('id',$supplier->id));
+        $availableProducts = $products->where('is_active',true)->whereNotIn('id',$mappedProducts->pluck('id'));
 
         return view('pages.suppliers.show', compact('supplier', 'invoices', 'products', 'mappedProducts', 'availableProducts'));
     }
@@ -106,12 +105,14 @@ class SupplierController extends Controller
         ]);
         DB::transaction(function () use ($data, $supplier) {
             $products = Product::where('business_id', Tenant::businessId())
-                ->whereIn('id', $data['product_ids'])->orderBy('id')->lockForUpdate()->get();
-            if ($products->count() !== count($data['product_ids']) || $products->contains(fn ($product) => $product->supplier_id && (int) $product->supplier_id !== (int) $supplier->id)) {
-                throw ValidationException::withMessages(['product_ids' => 'A selected product is no longer available or is already linked to another supplier. Refresh and select again.']);
+                ->whereIn('id', $data['product_ids'])->where('is_active',true)->orderBy('id')->lockForUpdate()->get();
+            if ($products->count() !== count($data['product_ids'])) {
+                throw ValidationException::withMessages(['product_ids' => 'A selected product is no longer active or available. Refresh and select again.']);
             }
-            Product::where('business_id', Tenant::businessId())->whereIn('id', $products->pluck('id'))
-                ->update(['supplier_id' => $supplier->id]);
+            foreach ($products as $product) {
+                $product->suppliers()->syncWithoutDetaching([$supplier->id=>['business_id'=>Tenant::businessId()]]);
+                if (!$product->supplier_id) $product->update(['supplier_id'=>$supplier->id]);
+            }
         });
 
         return redirect()->route('suppliers.show', $supplier->id)->with('status', 'Products linked to this supplier.');
@@ -121,9 +122,15 @@ class SupplierController extends Controller
     {
         abort_unless($request->user()->canViewFinancials(), 403);
         $supplier = $this->supplier($supplier);
-        $updated = Product::where('business_id', Tenant::businessId())->where('supplier_id', $supplier->id)
-            ->whereKey($product)->update(['supplier_id' => null]);
-        abort_unless($updated, 404);
+        DB::transaction(function () use ($supplier, $product) {
+            $product = Product::where('business_id',Tenant::businessId())->whereKey($product)->lockForUpdate()->firstOrFail();
+            $linked = $product->suppliers()->where('suppliers.id',$supplier->id)->exists();
+            abort_unless($linked || (int) $product->supplier_id === (int) $supplier->id, 404);
+            $product->suppliers()->detach($supplier->id);
+            if ((int) $product->supplier_id === (int) $supplier->id) {
+                $product->update(['supplier_id'=>$product->suppliers()->orderBy('suppliers.id')->value('suppliers.id')]);
+            }
+        });
 
         return redirect()->route('suppliers.show', $supplier->id)->with('status', 'Product unlinked. Purchase history and stock are unchanged.');
     }

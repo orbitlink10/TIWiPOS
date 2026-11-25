@@ -32,6 +32,27 @@ class Product extends Model
         'recorded_at' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Product $product) {
+            if (!$product->supplier_id || (!$product->wasRecentlyCreated && !$product->wasChanged('supplier_id'))) return;
+            if (Supplier::withoutGlobalScope('business')->where('business_id',$product->business_id)->whereKey($product->supplier_id)->exists()) {
+                $product->suppliers()->syncWithoutDetaching([$product->supplier_id=>['business_id'=>$product->business_id]]);
+            }
+        });
+    }
+
+    public function suppliers()
+    {
+        return $this->belongsToMany(Supplier::class, 'product_supplier')->withPivot('business_id')->withTimestamps();
+    }
+
+    public function scopeSuppliedBy($query, int $supplierId)
+    {
+        return $query->where(fn ($query) => $query->where('products.supplier_id',$supplierId)
+            ->orWhereHas('suppliers',fn ($suppliers) => $suppliers->where('suppliers.id',$supplierId)));
+    }
+
     public function stocks()
     {
         return $this->hasMany(ProductStock::class);

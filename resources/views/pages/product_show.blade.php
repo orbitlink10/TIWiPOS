@@ -30,7 +30,11 @@ main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{dis
     <section class="pv-card"><h2>Product information</h2><dl class="pv-details">
         <div><dt>SKU</dt><dd>{{ $product->sku }}</dd></div>
         <div><dt>Category</dt><dd>{{ $product->category?->parent?->name ?? $product->category?->name ?? '—' }}</dd></div>
-        <div><dt>Supplier</dt><dd>@if($product->supplier)@if(auth()->user()->canAccessAbility('manage_catalog') && $canViewFinancials)<a href="{{ route('suppliers.show',$product->supplier->id) }}">{{ $product->supplier->name }}</a>@else{{ $product->supplier->name }}@endif @else Not assigned @endif</dd></div>
+        <div><dt>Suppliers</dt><dd>
+            @forelse($product->suppliers as $supplier)
+                <div>@if(auth()->user()->canAccessAbility('manage_catalog') && $canViewFinancials)<a href="{{ route('suppliers.show',$supplier->id) }}">{{ $supplier->name }}</a>@else{{ $supplier->name }}@endif @if((int) $product->supplier_id === (int) $supplier->id)<small>(Preferred)</small>@endif</div>
+            @empty Not assigned @endforelse
+        </dd></div>
         <div><dt>Serial number</dt><dd>{{ $product->serial_number ?: '—' }}</dd></div>
         <div><dt>Barcode</dt><dd>{{ $product->barcode ?: '—' }}</dd></div>
         <div><dt>Reorder level</dt><dd>{{ $product->stock_alert }}</dd></div>

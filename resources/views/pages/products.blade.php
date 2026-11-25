@@ -67,7 +67,7 @@ main{min-width:0}.catalog-filters{display:flex;gap:10px;align-items:end;flex-wra
                 <tbody>
                     @forelse($products as $product)
                         <tr style="border-top:1px solid #e5e7eb;">
-                            <td style="padding:10px;">{{ $product->name }}<span class="catalog-product-meta">{{ $product->category?->parent?->name ?? $product->category?->name ?? 'No category' }} &middot; {{ $product->supplier?->name ?? 'No supplier assigned' }}</span></td>
+                            <td style="padding:10px;">{{ $product->name }}<span class="catalog-product-meta">{{ $product->category?->parent?->name ?? $product->category?->name ?? 'No category' }} &middot; {{ $product->suppliers->pluck('name')->join(', ') ?: ($product->supplier?->name ?? 'No supplier assigned') }}</span></td>
                             <td style="padding:10px;">{{ $product->sku }}</td>
                             <td style="padding:10px;">{{ $product->serial_number }}</td>
                             @if($canViewFinancials)

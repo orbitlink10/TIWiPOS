@@ -1,5 +1,5 @@
 @php
-    $purchaseProducts = $products->map(fn($product) => ['id'=>(string)$product->id, 'name'=>$product->name, 'sku'=>$product->sku, 'barcode'=>$product->barcode, 'serial'=>$product->serial_number, 'cost'=>(float)$product->cost, 'supplier_id'=>(string)($product->supplier_id ?? '')])->values();
+    $purchaseProducts = $products->map(fn($product) => ['id'=>(string)$product->id, 'name'=>$product->name, 'sku'=>$product->sku, 'barcode'=>$product->barcode, 'serial'=>$product->serial_number, 'cost'=>(float)$product->cost, 'supplier_ids'=>$product->suppliers->pluck('id')->push($product->supplier_id)->filter()->map(fn($id)=>(string)$id)->unique()->values()->all()])->values();
 @endphp
 <script>
 (() => {
@@ -28,7 +28,7 @@
                 if (product.id !== current && term && ![product.name, product.sku, product.barcode, product.serial].join(' ').toLowerCase().includes(term)) return;
                 const option = new Option(product.name + (product.serial ? ' · '+product.serial : ''), product.id);
                 option.disabled = product.id !== current && selectedIds.includes(product.id);
-                (supplier.value && product.supplier_id === supplier.value ? linked : others).appendChild(option);
+                (supplier.value && product.supplier_ids.includes(supplier.value) ? linked : others).appendChild(option);
             });
             if (linked.children.length) select.appendChild(linked);
             if (others.children.length) select.appendChild(others);

@@ -57,7 +57,7 @@ class PurchaseController extends Controller
         $suppliers = Supplier::where('business_id', Tenant::businessId())->where('is_active', true)->orderBy('name')->get();
         $selectedId = old('supplier_id', $data['supplier_id'] ?? null);
         $supplier = $suppliers->firstWhere('id', $selectedId);
-        $products = Product::where('business_id', Tenant::businessId())->where('is_active', true)
+        $products = Product::where('business_id', Tenant::businessId())->with('suppliers')->where('is_active', true)
             ->orderBy('name')->get();
 
         return view('pages.purchases.create', compact('suppliers', 'supplier', 'products'));
