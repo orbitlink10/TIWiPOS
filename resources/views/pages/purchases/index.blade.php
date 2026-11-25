@@ -21,10 +21,10 @@
         <button type="submit" class="supplier-account-button primary">Apply</button><a class="supplier-account-button" href="{{ route('purchases.index') }}">Reset</a>
     </form>
     <div class="supplier-scroll"><table class="purchase-register">
-        <thead><tr><th>Reference</th><th>Supplier</th><th>Supplied</th><th>Due</th><th class="money">Total (KES)</th><th class="money">Paid (KES)</th><th class="money">Balance (KES)</th><th>Status</th><th>Invoice</th></tr></thead>
+        <thead><tr><th>Reference</th><th>Supplier</th><th>Supplied</th><th>Due</th><th class="money">Total (KES)</th><th class="money">Paid (KES)</th><th class="money">Balance (KES)</th><th>Payment</th><th>Receiving</th><th>Invoice</th></tr></thead>
         <tbody>@forelse($invoices as $invoice)<tr>
-            <td><a href="{{ route('purchases.show',$invoice->id) }}">{{ $invoice->reference }}</a></td><td>{{ $invoice->supplier->name ?? 'Supplier unavailable' }}</td><td>{{ $invoice->supplied_at->format('d M Y') }}</td><td>{{ $invoice->due_at?->format('d M Y') ?? '—' }}</td><td class="money">{{ number_format($invoice->total_cents/100,2) }}</td><td class="money">{{ number_format($invoice->paid_cents/100,2) }}</td><td class="money">{{ number_format($invoice->balance_cents/100,2) }}</td><td><span class="supplier-badge {{ $invoice->status==='Overdue' ? 'overdue' : '' }}">{{ $invoice->status }}</span></td><td><a href="{{ route('purchases.show',$invoice->id) }}">View &rarr;</a></td>
-        </tr>@empty<tr><td colspan="9" class="supplier-history-empty">No purchases match these filters. Use New purchase to record a supplier invoice.</td></tr>@endforelse</tbody>
+            <td><a href="{{ route('purchases.show',$invoice->id) }}">{{ $invoice->reference }}</a></td><td>{{ $invoice->supplier->name ?? 'Supplier unavailable' }}</td><td>{{ $invoice->supplied_at->format('d M Y') }}</td><td>{{ $invoice->due_at?->format('d M Y') ?? '—' }}</td><td class="money">{{ number_format($invoice->total_cents/100,2) }}</td><td class="money">{{ number_format($invoice->paid_cents/100,2) }}</td><td class="money">{{ number_format($invoice->balance_cents/100,2) }}</td><td><span class="supplier-badge {{ $invoice->status==='Overdue' ? 'overdue' : '' }}">{{ $invoice->status }}</span></td><td>{{ $invoice->receiving_status }}</td><td><a href="{{ route('purchases.show',$invoice->id) }}">View &rarr;</a></td>
+        </tr>@empty<tr><td colspan="10" class="supplier-history-empty">No purchases match these filters. Use New purchase to record a supplier invoice.</td></tr>@endforelse</tbody>
     </table></div>
     {{ $invoices->links('pagination.app') }}
 </section>

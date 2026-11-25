@@ -1,6 +1,6 @@
 <details class="supplier-invoice" id="invoice-{{ $invoice->id }}" @if($expandedInvoice ?? false) open @endif>
 <summary><span class="supplier-invoice-title">{{ $invoice->reference }}<small>{{ $invoice->supplied_at->format('d M Y') }} &middot; {{ $invoice->items->count() }} {{ $invoice->items->count() === 1 ? 'product' : 'products' }}</small></span><span class="supplier-badge {{ $invoice->status === 'Overdue' ? 'overdue' : '' }}">{{ $invoice->status }}</span><span class="supplier-invoice-balance"><small>Outstanding</small>KES {{ number_format($invoice->balance_cents / 100, 2) }}</span></summary>
-<p>{{ ucfirst($invoice->terms) }} &middot; Due: {{ $invoice->due_at?->format('d M Y') ?? '-' }} &middot; {{ $invoice->stock_received ? 'Added to branch stock' : 'Ledger only; stock not changed' }}</p>
+<p>{{ ucfirst($invoice->terms) }} &middot; Due: {{ $invoice->due_at?->format('d M Y') ?? '-' }} &middot; {{ $invoice->receiving_status }}</p>
 <div class="supplier-scroll"><table><thead><tr><th>Product</th><th>Serial</th><th>Quantity</th><th>Unit cost</th><th>Line total</th></tr></thead><tbody>
 @foreach($invoice->items as $item)<tr><td>{{ $item->product_name }}</td><td>{{ $item->serial_number ?: '-' }}</td><td>{{ $item->quantity }}</td><td>{{ number_format($item->unit_cost_cents / 100, 2) }}</td><td>{{ number_format($item->quantity * $item->unit_cost_cents / 100, 2) }}</td></tr>@endforeach
 </tbody></table></div>

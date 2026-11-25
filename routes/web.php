@@ -117,6 +117,8 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/purchases', [\App\Http\Controllers\PurchaseController::class, 'index'])->middleware('role.ability:manage_catalog')->name('purchases.index');
     Route::get('/purchases/create', [\App\Http\Controllers\PurchaseController::class, 'create'])->middleware('role.ability:manage_catalog')->name('purchases.create');
     Route::post('/purchases', [\App\Http\Controllers\PurchaseController::class, 'store'])->middleware('role.ability:manage_catalog')->name('purchases.store');
+    Route::get('/purchases/{invoice}/receive', [\App\Http\Controllers\PurchaseReceiptController::class, 'create'])->whereNumber('invoice')->middleware('role.ability:add_stock')->name('purchases.receive');
+    Route::post('/purchases/{invoice}/receive', [\App\Http\Controllers\PurchaseReceiptController::class, 'store'])->whereNumber('invoice')->middleware('role.ability:add_stock')->name('purchases.receive.store');
     Route::get('/purchases/{invoice}', [\App\Http\Controllers\PurchaseController::class, 'show'])->whereNumber('invoice')->middleware('role.ability:manage_catalog')->name('purchases.show');
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
     Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.show');

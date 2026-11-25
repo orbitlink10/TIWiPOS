@@ -44,7 +44,7 @@ class PurchaseController extends Controller
             ->selectRaw('COALESCE(SUM(total_cents), 0) as total, COALESCE(SUM(payments_sum_amount_cents), 0) as paid')
             ->selectRaw("COALESCE(SUM({$balance}), 0) as outstanding")
             ->selectRaw("COALESCE(SUM(CASE WHEN due_at < ? THEN {$balance} ELSE 0 END), 0) as overdue", [today()->toDateString()])->first();
-        $invoices = $query->with(['supplier', 'payments'])->orderByDesc('supplied_at')->orderByDesc('id')->paginate(20)->withQueryString();
+        $invoices = $query->with(['supplier', 'payments', 'items'])->orderByDesc('supplied_at')->orderByDesc('id')->paginate(20)->withQueryString();
         $suppliers = Supplier::where('business_id', Tenant::businessId())->orderBy('name')->get(['id', 'name']);
 
         return view('pages.purchases.index', compact('invoices', 'suppliers', 'totals', 'search'));
@@ -74,7 +74,7 @@ class PurchaseController extends Controller
     public function show(Request $request, int $invoice)
     {
         $this->authorizeAccess($request);
-        $invoice = $this->invoices()->with(['supplier', 'items', 'payments'])->findOrFail($invoice);
+        $invoice = $this->invoices()->with(['supplier', 'items', 'payments', 'receipts.lines.serials', 'receipts.lines.item', 'receipts.user'])->findOrFail($invoice);
         $supplier = $invoice->supplier;
         abort_unless($supplier && (int) $supplier->business_id === (int) Tenant::businessId(), 404);
 

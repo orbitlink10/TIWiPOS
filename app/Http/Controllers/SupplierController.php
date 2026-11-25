@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\ProductStock;
-use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SupplierInvoice;
 use App\Support\Tenant;
@@ -148,7 +146,7 @@ class SupplierController extends Controller
             'supplied_at' => 'required|date|before_or_equal:today',
             'terms' => 'required|in:cash,credit',
             'due_at' => 'nullable|required_if:terms,credit|date|after_or_equal:supplied_at',
-            'notes' => 'nullable|string|max:2000', 'receive_stock' => 'nullable|boolean',
+            'notes' => 'nullable|string|max:2000', 'receive_stock' => 'prohibited',
             'redirect_to' => 'nullable|in:purchases.index',
             'items' => 'required|array|min:1|max:100',
             'items.*.product_id' => ['nullable', 'integer', 'distinct', Rule::exists('products', 'id')->where('business_id', Tenant::businessId())],
@@ -158,49 +156,35 @@ class SupplierController extends Controller
             'amount' => ['required', 'regex:/^\d{1,14}(\.\d{1,2})?$/'],
             'method' => 'required|in:cash,mpesa,bank,cheque,other', 'payment_reference' => 'nullable|string|max:100',
         ]);
-        $receive = $request->boolean('receive_stock');
-        abort_if($receive && ! $request->user()->canAccessAbility('add_stock'), 403);
         $total = collect($data['items'])->sum(fn ($item) => $item['quantity'] * $this->cents($item['unit_cost']));
         $paid = $this->cents($data['amount']);
         if ($total <= 0 || $paid > $total || ($data['terms'] === 'cash' && $paid !== $total)) {
             throw ValidationException::withMessages(['amount' => 'Enter a positive invoice total. Payment cannot exceed it; cash purchases must be paid in full.']);
         }
-        DB::transaction(function () use ($data, $supplier, $total, $paid, $receive) {
+        $invoice = DB::transaction(function () use ($data, $supplier, $total, $paid) {
             $invoice = SupplierInvoice::create([
                 'business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'supplier_id' => $supplier->id,
                 'reference' => $data['reference'], 'supplied_at' => $data['supplied_at'], 'due_at' => $data['terms'] === 'credit' ? $data['due_at'] : null,
-                'terms' => $data['terms'], 'total_cents' => $total, 'stock_received' => $receive, 'notes' => $data['notes'] ?? null, 'user_id' => auth()->id(),
+                'terms' => $data['terms'], 'total_cents' => $total, 'stock_received' => false, 'notes' => $data['notes'] ?? null, 'user_id' => auth()->id(),
             ]);
             foreach ($data['items'] as $item) {
                 $product = ! empty($item['product_id'])
                     ? Product::where('business_id', Tenant::businessId())->lockForUpdate()->findOrFail($item['product_id'])
                     : null;
-                if ($receive && ! $product) {
-                    throw ValidationException::withMessages(['receive_stock' => 'To add stock, choose a registered product for every row. Otherwise, uncheck Add these quantities to save typed names on the invoice.']);
-                }
                 $invoice->items()->create(['product_id' => $product?->id, 'product_name' => $product?->name ?? trim($item['product_search']), 'serial_number' => $product?->serial_number,
                     'quantity' => $item['quantity'], 'unit_cost_cents' => $this->cents($item['unit_cost'])]);
-                if ($receive) {
-                    $stock = ProductStock::firstOrCreate(['business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'product_id' => $product->id, 'location' => 'main'], ['quantity' => 0]);
-                    $stock = ProductStock::whereKey($stock->id)->lockForUpdate()->firstOrFail();
-                    $before = $stock->quantity;
-                    $stock->increment('quantity', $item['quantity']);
-                    StockMovement::create(['business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'product_id' => $product->id,
-                        'user_id' => auth()->id(), 'location' => 'main', 'type' => 'purchase', 'quantity_change' => $item['quantity'],
-                        'quantity_before' => $before, 'quantity_after' => $before + $item['quantity'], 'reference_type' => 'supplier_invoice',
-                        'reference_id' => $invoice->id, 'note' => 'Supplier invoice: '.$data['reference']]);
-                }
             }
             if ($paid > 0) {
                 $invoice->payments()->create(['amount_cents' => $paid, 'paid_at' => $data['supplied_at'], 'method' => $data['method'], 'reference' => $data['payment_reference'] ?? null, 'user_id' => auth()->id()]);
             }
+            return $invoice;
         });
 
         $response = ($data['redirect_to'] ?? null) === 'purchases.index'
-            ? redirect()->route('purchases.index', ['supplier_id' => $supplier->id])
+            ? redirect()->route('purchases.show', $invoice->id)
             : back();
 
-        return $response->with('status', 'Supplier invoice recorded.'.($receive ? ' Branch stock increased.' : ' Stock unchanged.'));
+        return $response->with('status', 'Purchase saved. Use Receive purchase to confirm delivered quantities and add stock.');
     }
 
     public function pay(Request $request, int $supplier, int $invoice)
