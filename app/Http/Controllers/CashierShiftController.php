@@ -26,11 +26,15 @@ class CashierShiftController extends Controller
     public function index(Request $request)
     {
         $query = $this->scope();
-        $data = $request->validate(['status' => ['nullable', 'in:open,closed']]);
+        $data = $request->validate(['status' => ['nullable', 'in:open,closed,pending_stock_count,locked']]);
         $currentShift = CashierShift::currentQuery()->first();
         $currentSummary = $currentShift?->summary();
         $otherShift = CashierShift::where('active_user_id', auth()->id())->with('branch')->first();
-        $shifts = $query->when($data['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+        $shifts = $query->when($data['status'] ?? null, function ($query, $status) {
+            if ($status === 'pending_stock_count') return $query->where('status', 'closed')->whereNull('stock_locked_at');
+            if ($status === 'locked') return $query->whereNotNull('stock_locked_at');
+            return $query->where('status', $status);
+        })
             ->with('user:id,name')->orderByDesc('opened_at')->orderByDesc('id')->paginate(20)->withQueryString();
         return view('pages.shifts.index', compact('currentShift', 'currentSummary', 'otherShift', 'shifts'));
     }
@@ -67,6 +71,8 @@ class CashierShiftController extends Controller
         $data = $request->validate(['counted_cash' => ['required', 'regex:/^\d{1,10}(\.\d{1,2})?$/'], 'closing_notes' => ['nullable', 'string', 'max:1000'], 'confirmation' => ['accepted'],
             'expected_sales_count' => ['required', 'integer', 'min:0'], 'expected_cash_cents' => ['required', 'integer', 'min:0']]);
         DB::transaction(function () use ($shift, $data) {
+            $accountId = $this->scope()->whereKey($shift)->value('user_id');
+            User::whereKey($accountId)->lockForUpdate()->firstOrFail();
             $shift = $this->scope()->whereKey($shift)->lockForUpdate()->firstOrFail();
             if ($shift->status === 'closed') return;
             $summary = $shift->summary();
@@ -79,6 +85,6 @@ class CashierShiftController extends Controller
                 'cash_variance_cents' => $counted - $summary['expected_cash_cents'], 'sales_total_cents' => $summary['sales_total_cents'],
                 'sales_count' => $summary['sales_count'], 'payment_totals' => $summary['payments'], 'closing_notes' => $data['closing_notes'] ?? null]);
         }, 3);
-        return redirect()->route('shifts.show', $shift)->with('status', 'Shift closed. Cash totals and the counted difference have been saved.');
+        return redirect()->route('shifts.show', $shift)->with('status', 'Cash totals saved. This shift is pending stock count and will be locked when its stock period is completed.');
     }
 }
