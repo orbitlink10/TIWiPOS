@@ -303,7 +303,19 @@
         .account-signout button { min-height:44px; padding:10px 16px; border:1px solid #fecdd3; border-radius:10px; background:#fff1f2; color:#b42318; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
         .account-signout button:hover { background:#ffe4e6; }
         .account-bar :is(button,select):focus-visible { outline:3px solid #8cbaf2; outline-offset:2px; }
-        @media(max-width:600px) { .account-bar { gap:8px; } .account-branch { flex:1; gap:8px; } .account-switch { width:100%; } .account-switch select { flex:1; width:100%; max-width:none; font-size:16px; } }
+        @media(max-width:800px) {
+            .page-header { gap:12px; }
+            .page-header-content { flex-basis:100%; }
+            .account-bar { width:100%; gap:8px; }
+            .account-branch { flex:1; min-width:0; gap:8px; }
+            .account-branch > div { min-width:0; }
+            .account-switch select,.account-switch button { min-height:44px; }
+            .account-switch select { font-size:16px; }
+        }
+        @media(max-width:600px) {
+            .account-switch { width:100%; }
+            .account-switch select { flex:1; width:100%; max-width:none; }
+        }
 
         .header-row {
             display: flex;
@@ -560,6 +572,7 @@
 
                 <section class="nav-section" aria-labelledby="nav-sales">
                     <p class="nav-heading" id="nav-sales">Sales</p>
+                    <a href="{{ route('shifts.index') }}" class="{{ request()->routeIs('shifts.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Shifts</span></a>
                     <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.store') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Point of Sale</span></a>
                     <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*', 'sale.receipt') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
                     <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}"><span class="nav-icon">QT</span><span>Quotations</span></a>
