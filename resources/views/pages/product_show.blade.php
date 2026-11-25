@@ -13,6 +13,7 @@ main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{dis
 @section('header')
 <div class="header-row"><div><h1>{{ $product->name }}</h1><p class="pv-intro">Product details &middot; {{ $product->sku }}</p></div><div class="pv-actions">
     <a class="pv-button" href="{{ route('products') }}">&larr; Products</a>
+    @if(auth()->user()->canAccessAbility('adjust_stock'))<a class="pv-button" href="{{ route('stock-control.adjust', ['product_id'=>$product->id]) }}">Adjust stock</a>@endif
     @if(auth()->user()->canAccessAbility('manage_catalog'))<a class="pv-button primary" href="{{ route('products.edit', $product) }}">Edit product</a>@endif
     @if(auth()->user()->canAccessAbility('delete_products'))<form method="POST" action="{{ route('products.destroy', $product) }}" onsubmit="return confirm('Delete this product? This action cannot be undone.');">@csrf @method('DELETE')<button type="submit" class="pv-button danger">Delete product</button></form>@endif
 </div></div>

@@ -131,6 +131,9 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');
 
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
+    Route::get('/stock-control', [\App\Http\Controllers\StockControlController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.index');
+    Route::get('/stock-control/adjust', [\App\Http\Controllers\StockControlController::class, 'adjust'])->middleware('role.ability:adjust_stock')->name('stock-control.adjust');
+    Route::post('/stock-control/adjust', [\App\Http\Controllers\StockControlController::class, 'storeAdjustment'])->middleware('role.ability:adjust_stock')->name('stock-control.adjust.store');
     Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->middleware('role.ability:add_stock')->name('stock.adjust.store');
     Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.edit');
     Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.update');
