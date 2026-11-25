@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscription.gate' => \App\Http\Middleware\FeatureGate::class,
             'super.admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'role.ability' => \App\Http\Middleware\EnsureRoleAbility::class,
+            'shift.open' => \App\Http\Middleware\EnsureOpenCashierShift::class,
         ]);
 
         $middleware->appendToGroup('web', [

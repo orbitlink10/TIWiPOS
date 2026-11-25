@@ -18,7 +18,7 @@ class RestrictStaffToPos
             return redirect()->route('sale');
         }
 
-        if (!$request->routeIs('sale', 'sale.store', 'sale.receipt', 'logout')) {
+        if (!$request->routeIs('sale', 'sale.store', 'sale.receipt', 'shifts.*', 'logout')) {
             abort(403, 'Staff accounts can only access the point of sale.');
         }
 

@@ -37,7 +37,6 @@ class FeatureGate
 
         $allowedNames = [
             'home',
-            'summary',
             'login',
             'logout',
             'stock',
@@ -49,6 +48,10 @@ class FeatureGate
             'stock.edit',
             'stock.update',
             'sale',
+            'shifts.index',
+            'shifts.open',
+            'shifts.show',
+            'shifts.close',
             'sale.store',
             'billing.show',
             'billing.pay',

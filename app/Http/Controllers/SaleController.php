@@ -14,6 +14,7 @@ use App\Models\SaleItem;
 use App\Models\Payment;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
+use App\Models\CashierShift;
 use App\Support\Tenant;
 
 class SaleController extends Controller
@@ -174,6 +175,8 @@ class SaleController extends Controller
     public function create()
     {
         $branchId = Tenant::branchId();
+        $cashierShift = CashierShift::currentQuery()->first();
+        if (!$cashierShift) return redirect()->route('shifts.index')->with('status', 'Open your shift before making a sale.');
 
         $products = Product::query()
             ->select('id', 'name', 'sku', 'barcode', 'serial_number', 'price', 'category_id')
@@ -198,7 +201,7 @@ class SaleController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('pages.sale', compact('products', 'categories'));
+        return view('pages.sale', compact('products', 'categories', 'cashierShift'));
     }
 
     public function store(Request $request)
@@ -268,8 +271,11 @@ class SaleController extends Controller
         $total = $subtotal + $tax + $installationAmount;
 
         DB::transaction(function () use ($data, $saleNumber, $subtotal, $tax, $total, $installationAmount, $lineItems, $branchId) {
+            $shift = CashierShift::currentQuery()->lockForUpdate()->first();
+            if (!$shift) throw ValidationException::withMessages(['shift' => 'Your shift is closed. Open a new shift before completing this sale.']);
             $sale = Sale::create([
                 'branch_id' => $branchId,
+                'cashier_shift_id' => $shift->id,
                 'sale_number' => $saleNumber,
                 'customer_id' => null,
                 'customer_name' => $data['customer_name'] ?? null,
@@ -338,6 +344,9 @@ class SaleController extends Controller
     {
         $this->ensureSaleIsVisible($sale);
         $this->ensureAdmin();
+        if ($sale->cashier_shift_id && CashierShift::whereKey($sale->cashier_shift_id)->where('status', 'closed')->exists()) {
+            abort(403, 'Sales from a closed shift cannot be edited.');
+        }
         $branchId = $sale->branch_id ?? Tenant::branchId();
 
         $products = Product::withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
@@ -381,6 +390,11 @@ class SaleController extends Controller
         $branchId = $sale->branch_id ?? Tenant::branchId();
 
         DB::transaction(function () use ($data, $sale, $branchId, $request) {
+            if ($sale->cashier_shift_id) {
+                $shift = CashierShift::where('business_id', $sale->business_id)->where('branch_id', $sale->branch_id)
+                    ->whereKey($sale->cashier_shift_id)->lockForUpdate()->firstOrFail();
+                if ($shift->status !== 'open') throw ValidationException::withMessages(['shift' => 'Sales from a closed shift cannot be edited.']);
+            }
             $sale->load('items');
 
             // Restock prior deducted quantities before recalculating.

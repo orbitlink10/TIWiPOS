@@ -536,6 +536,7 @@
     <div class="header-row">
         <div><h1>Point of Sale</h1><p class="sale-lead">{{ $currentBranch->name ?? 'Your store' }} · {{ now()->format('D, d M Y') }}</p></div>
         <div class="sale-header-actions">
+            <a class="sale-dashboard-btn" href="{{ route('shifts.show', $cashierShift->id) }}">Shift #{{ $cashierShift->id }}</a>
             @if(auth()->user()->isPosOnly())
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -543,7 +544,6 @@
                 </form>
             @else
             <a class="sale-dashboard-btn" href="{{ route('home') }}">&larr; Back to Dashboard</a>
-            <a class="btn sale-summary-btn" href="{{ route('summary') }}">View Sales Summary</a>
             @endif
         </div>
     </div>
