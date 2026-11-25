@@ -179,7 +179,7 @@ class StockController extends Controller
             }
         });
 
-        return redirect()->route('stock')->with('status', 'Stock updated. Added ' . $serialCount . ' serial number(s) to ' . $category->name . '.');
+        return redirect()->route('stock-control.index')->with('status', 'Stock updated. Added ' . $serialCount . ' serial number(s) to ' . $category->name . '.');
     }
 
     public function edit(Product $product)
@@ -243,6 +243,6 @@ class StockController extends Controller
             }
         });
 
-        return redirect()->route('stock')->with('status', 'Stock updated for ' . $product->name . '.');
+        return redirect()->route('stock-control.index')->with('status', 'Stock updated for ' . $product->name . '.');
     }
 }

@@ -82,7 +82,7 @@
             @endisset
             <div class="quick-actions" style="margin-top:10px;">
                 <a class="btn" href="{{ route('sale') }}">Open POS</a>
-                <a class="btn" href="{{ route('stock') }}">Stock</a>
+                <a class="btn" href="{{ route('stock-control.index') }}">Stock Control</a>
             </div>
         </div>
         <div style="justify-self:end; text-align:right;">

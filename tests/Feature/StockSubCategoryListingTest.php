@@ -16,7 +16,7 @@ class StockSubCategoryListingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_stock_page_lists_only_sub_categories_and_their_quantities(): void
+    public function test_product_sub_category_filter_respects_branch_stock(): void
     {
         [$business, $branch, $user] = $this->createActiveTenant();
 
@@ -70,23 +70,6 @@ class StockSubCategoryListingTest extends TestCase
             'quantity' => 7,
         ]);
 
-        $this->actingAs($user)
-            ->get(route('stock'))
-            ->assertOk()
-            ->assertSee('Sub-category listing with current stock quantity per sub-category.')
-            ->assertSee('Out of stock sub-categories')
-            ->assertSee('<div class="metric-value out">1</div>', false)
-            ->assertSee('<div class="metric-value total">3</div>', false)
-            ->assertSee(route('products', ['category_id' => $subCategory->id]), false)
-            ->assertSee('Routers')
-            ->assertSee('<td class="align-right">3</td>', false)
-            ->assertSee('Stock value (KES)')
-            ->assertSee('<td class="align-right">3,000.00</td>', false)
-            ->assertSee('<td class="align-right">0.00</td>', false)
-            ->assertSee('Switches')
-            ->assertDontSee('Standalone Stock')
-            ->assertDontSee('<td class="align-right">7</td>', false);
-
         $soldProduct = $this->createProduct($business, $subCategory, 'SOLD-001', 'SN-SOLD-001');
         ProductStock::create([
             'business_id' => $business->id,
@@ -106,7 +89,7 @@ class StockSubCategoryListingTest extends TestCase
             'quantity' => 1,
         ]);
 
-        $this->get(route('products', ['category_id' => $subCategory->id]))
+        $this->actingAs($user)->get(route('products', ['category_id' => $subCategory->id]))
             ->assertOk()
             ->assertSee('Routers products')
             ->assertSee('SN-RTR-001')
@@ -125,64 +108,12 @@ class StockSubCategoryListingTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_stock_page_can_search_a_specific_sub_category(): void
+    public function test_old_stock_page_is_removed_and_stock_control_remains_available(): void
     {
-        [$business, $branch, $user] = $this->createActiveTenant();
-
-        $category = Category::create([
-            'business_id' => $business->id,
-            'name' => 'Hardware',
-            'slug' => 'hardware',
-            'parent_id' => null,
-            'is_active' => true,
-        ]);
-
-        $routers = Category::create([
-            'business_id' => $business->id,
-            'name' => 'MikroTik Routers',
-            'slug' => 'mikrotik-routers',
-            'parent_id' => $category->id,
-            'is_active' => true,
-        ]);
-
-        $switches = Category::create([
-            'business_id' => $business->id,
-            'name' => 'Switches',
-            'slug' => 'switches',
-            'parent_id' => $category->id,
-            'is_active' => true,
-        ]);
-
-        $routerProduct = $this->createProduct($business, $routers, 'RTR-002', 'SN-RTR-002');
-        ProductStock::create([
-            'business_id' => $business->id,
-            'branch_id' => $branch->id,
-            'product_id' => $routerProduct->id,
-            'location' => 'main',
-            'quantity' => 4,
-        ]);
-
-        $switchProduct = $this->createProduct($business, $switches, 'SWT-001', 'SN-SWT-001');
-        ProductStock::create([
-            'business_id' => $business->id,
-            'branch_id' => $branch->id,
-            'product_id' => $switchProduct->id,
-            'location' => 'main',
-            'quantity' => 9,
-        ]);
-
-        $this->actingAs($user)
-            ->get(route('stock', ['q' => 'mikrotik']))
-            ->assertOk()
-            ->assertSee('placeholder="Search sub-category"', false)
-            ->assertSee('value="mikrotik"', false)
-            ->assertSee('<button class="btn" type="submit">Search</button>', false)
-            ->assertSee('MikroTik Routers')
-            ->assertSee('<td class="align-right">4</td>', false)
-            ->assertSee('<td class="align-right">4,000.00</td>', false)
-            ->assertSee('<div class="metric-value total">4</div>', false)
-            ->assertDontSee('Switches')
-            ->assertDontSee('<td class="align-right">9</td>', false);
+        [, , $user] = $this->createActiveTenant();
+        $this->actingAs($user)->get('/stock')->assertNotFound();
+        $this->get(route('stock-control.index'))->assertOk()->assertSee('Stock balances');
+        $this->get(route('home'))->assertOk()->assertSee(route('stock-control.index'), false);
     }
 
     private function createProduct(Business $business, Category $category, string $sku, string $serialNumber): Product

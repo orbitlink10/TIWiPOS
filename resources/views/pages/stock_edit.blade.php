@@ -5,7 +5,7 @@
 @section('header')
     <div class="header-row">
         <h1>Edit Stock</h1>
-        <a class="btn" href="{{ route('stock') }}">Back to Stock</a>
+        <a class="btn" href="{{ route('stock-control.index') }}">Back to Stock Control</a>
     </div>
 @endsection
 
@@ -50,7 +50,7 @@
             <div style="color:var(--muted); font-size:13px;">Saving will set the quantity exactly to the value above and log a correction movement.</div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn" type="submit">Save stock</button>
-                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('stock') }}">Cancel</a>
+                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('stock-control.index') }}">Cancel</a>
             </div>
         </form>
     </div>

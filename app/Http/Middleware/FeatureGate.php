@@ -39,7 +39,6 @@ class FeatureGate
             'home',
             'login',
             'logout',
-            'stock',
             'stock-control.index',
             'stock-control.adjust',
             'stock-control.adjust.store',

@@ -230,7 +230,7 @@ class StaffRoleManagementTest extends TestCase
             'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => User::ROLE_STAFF,
         ]);
         $this->actingAs($staff);
-        foreach (['products', 'products.create', 'stock', 'stock.adjust', 'suppliers.index',
+        foreach (['products', 'products.create', 'stock-control.index', 'stock.adjust', 'suppliers.index',
             'purchases.index', 'services', 'quotations.index', 'todos.index', 'reports.index',
             'staff.index', 'settings.index', 'billing.show', 'branches.index'] as $route) {
             $this->get(route($route))->assertForbidden();

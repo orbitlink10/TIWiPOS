@@ -60,7 +60,7 @@ class ProductSubCategorySelectionTest extends TestCase
         ]);
     }
 
-    public function test_stock_adjust_adds_serials_to_sub_category_and_stock_page_counts_them(): void
+    public function test_stock_adjust_adds_serials_and_returns_to_stock_control(): void
     {
         [$business, , $user] = $this->createActiveTenant();
 
@@ -84,15 +84,14 @@ class ProductSubCategorySelectionTest extends TestCase
                 'location' => 'main',
                 'stock_date' => now()->toDateString(),
             ])
-            ->assertRedirect(route('stock'));
+            ->assertRedirect(route('stock-control.index'));
 
         $this->assertSame(2, Product::where('category_id', $subCategory->id)->count());
 
         $this->actingAs($user)
-            ->get(route('stock'))
+            ->get(route('stock-control.index'))
             ->assertOk()
-            ->assertSee('<td>Routers</td>', false)
-            ->assertSee('<td class="align-right">2</td>', false);
+            ->assertViewHas('rows', fn ($rows) => (int) $rows->sum('on_hand') === 2);
     }
 
     private function createCategory(Business $business, string $name, ?int $parentId): Category

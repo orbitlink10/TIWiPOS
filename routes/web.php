@@ -73,7 +73,6 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/billing/pay', [BillingController::class, 'pay'])->name('billing.pay');
     Route::post('/payments/record', [PaymentController::class, 'store'])->name('payments.store');
 
-    Route::get('/stock', [PageController::class, 'stock'])->middleware('role.ability:view_stock')->name('stock');
     Route::get('/sale', [PageController::class, 'sale'])->middleware('shift.open')->name('sale');
     Route::post('/sale', [SaleController::class, 'store'])->middleware('shift.open')->name('sale.store');
     Route::get('/shifts', [\App\Http\Controllers\CashierShiftController::class, 'index'])->name('shifts.index');

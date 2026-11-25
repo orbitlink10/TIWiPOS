@@ -574,7 +574,7 @@
                 <button type="button" data-panel="installation_details"><span aria-hidden="true">SV</span>Installation</button>
                 <button type="button" data-panel="manual_entry"><span aria-hidden="true">QT</span>Quantity / price</button>
                 @unless(auth()->user()->isPosOnly())
-                    <a href="{{ route('stock') }}"><span aria-hidden="true">ST</span>Stock list</a>
+                    <a href="{{ route('stock-control.index') }}"><span aria-hidden="true">ST</span>Stock Control</a>
                     <a href="{{ route('sales.index') }}"><span aria-hidden="true">SH</span>Sales history</a>
                 @endunless
             </nav>
@@ -585,7 +585,7 @@
                 <p class="sale-lead">
                     Tap a product row to add it, or scan a barcode and press Enter.
                     @unless(auth()->user()->isPosOnly())
-                        <a href="{{ route('stock') }}">Open stock list</a>
+                        <a href="{{ route('stock-control.index') }}">Open Stock Control</a>
                     @endunless
                 </p>
 

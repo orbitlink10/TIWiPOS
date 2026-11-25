@@ -5,7 +5,7 @@
 @section('header')
     <div class="header-row">
         <h1>Adjust Stock</h1>
-        <a class="btn" href="{{ route('stock') }}">Back to Stock</a>
+        <a class="btn" href="{{ route('stock-control.index') }}">Back to Stock Control</a>
     </div>
 @endsection
 
@@ -69,7 +69,7 @@
 
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="btn" type="submit">Apply Update</button>
-                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('stock') }}">Cancel</a>
+                <a class="btn" style="background:#e5e7eb; color:#0f172a;" href="{{ route('stock-control.index') }}">Cancel</a>
             </div>
         </form>
     </div>
