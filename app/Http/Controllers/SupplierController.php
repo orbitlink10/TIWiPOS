@@ -149,6 +149,7 @@ class SupplierController extends Controller
             'terms' => 'required|in:cash,credit',
             'due_at' => 'nullable|required_if:terms,credit|date|after_or_equal:supplied_at',
             'notes' => 'nullable|string|max:2000', 'receive_stock' => 'nullable|boolean',
+            'redirect_to' => 'nullable|in:purchases.index',
             'items' => 'required|array|min:1|max:100',
             'items.*.product_id' => ['nullable', 'integer', 'distinct', Rule::exists('products', 'id')->where('business_id', Tenant::businessId())],
             'items.*.product_search' => 'nullable|required_without:items.*.product_id|string|max:255',
@@ -195,7 +196,11 @@ class SupplierController extends Controller
             }
         });
 
-        return back()->with('status', 'Supplier invoice recorded.'.($receive ? ' Branch stock increased.' : ' Stock unchanged.'));
+        $response = ($data['redirect_to'] ?? null) === 'purchases.index'
+            ? redirect()->route('purchases.index', ['supplier_id' => $supplier->id])
+            : back();
+
+        return $response->with('status', 'Supplier invoice recorded.'.($receive ? ' Branch stock increased.' : ' Stock unchanged.'));
     }
 
     public function pay(Request $request, int $supplier, int $invoice)
