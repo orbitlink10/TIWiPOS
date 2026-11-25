@@ -1,29 +1,46 @@
-
-<p class="supplier-muted">Enter one invoice or delivery note. Choose existing products or type a product name. The reference must be unique for this supplier.</p>
-<form method="POST" action="{{ route('suppliers.supply', $supplier->id) }}" id="supply-form">@csrf<input type="hidden" name="redirect_to" value="purchases.index">
-<div class="supplier-grid">
-<label class="supplier-field">Invoice / delivery reference<input name="reference" value="{{ old('reference') }}" required maxlength="100"></label>
-<label class="supplier-field">Supply date<input name="supplied_at" type="date" value="{{ old('supplied_at', today()->toDateString()) }}" max="{{ today()->toDateString() }}" required></label>
-<label class="supplier-field">Terms<select name="terms"><option value="credit" @selected(old('terms') === 'credit')>Credit</option><option value="cash" @selected(old('terms') === 'cash')>Cash (fully paid)</option></select></label>
-<label class="supplier-field">Due date (required for credit)<input name="due_at" type="date" value="{{ old('due_at') }}"></label>
-</div>
-<div class="supplier-scroll"><table><thead><tr><th>Product / serial</th><th>Quantity</th><th>Unit cost (KES)</th><th></th></tr></thead><tbody id="supply-items">
-@foreach(old('items', [['product_id' => '', 'quantity' => 1, 'unit_cost' => '']]) as $index => $item)
-<tr><td style="min-width:240px">@php($selectedProduct = $products->firstWhere('id', $item['product_id'] ?? null))
-<input type="text" name="items[{{ $index }}][product_search]" class="supplier-product-search" list="supplier-products" placeholder="Type product name or serial" aria-label="Product name or serial" autocomplete="off" maxlength="255" value="{{ $item['product_search'] ?? ($selectedProduct ? $selectedProduct->name . ($selectedProduct->serial_number ? ' - ' . $selectedProduct->serial_number : '') . ' (' . $selectedProduct->sku . ')' : '') }}" required>
-<input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item['product_id'] ?? '' }}"></td><td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" value="{{ $item['quantity'] ?? 1 }}" required></td><td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost'] ?? '' }}" required></td><td><button type="button" class="remove-item">Remove</button></td></tr>
-@endforeach
-</tbody></table></div>
-<datalist id="supplier-products">@foreach($products as $product)<option value="{{ $product->name }}{{ $product->serial_number ? ' - ' . $product->serial_number : '' }} ({{ $product->sku }})" data-product-id="{{ $product->id }}"></option>@endforeach</datalist>
-<div class="supplier-actions" style="margin:12px 0"><button type="button" id="add-item" class="btn">Add product row</button><strong>Invoice total: KES <span id="supply-total">0.00</span></strong></div>
-<div class="supplier-grid">
-<label class="supplier-field">Amount paid now (0 if unpaid)<input name="amount" type="number" min="0" step="0.01" value="{{ old('amount', '0') }}" required></label>
-<label class="supplier-field">Payment method<select name="method">@foreach(['cash' => 'Cash', 'mpesa' => 'M-Pesa', 'bank' => 'Bank', 'cheque' => 'Cheque', 'other' => 'Other'] as $key => $label)<option value="{{ $key }}" @selected(old('method') === $key)>{{ $label }}</option>@endforeach</select></label>
-<label class="supplier-field">Payment reference<input name="payment_reference" maxlength="100" value="{{ old('payment_reference') }}"></label>
-</div>
-<label class="supplier-field">Notes / delivery details<textarea name="notes" maxlength="2000">{{ old('notes') }}</textarea></label>
-@if(auth()->user()->canAccessAbility('add_stock'))
-<p><label><input type="checkbox" name="receive_stock" value="1" @checked(old('receive_stock'))> Add these quantities to the selected branch's main stock</label><br><span class="supplier-muted">Stock additions require a registered product in every row. Leave unchecked to save typed names or if stock was already entered. Saving with this option increases stock immediately.</span></p>
-@endif
-<button class="btn" style="margin-top:12px">Save supplier invoice</button>
+<form method="POST" action="{{ route('purchases.store') }}" id="supply-form" class="np-form">
+    @csrf
+    <input type="hidden" name="redirect_to" value="purchases.index">
+    <div class="np-main">
+        <section class="np-card">
+            <h2>Supplier & invoice</h2><p class="supplier-muted">Choose a supplier and enter the invoice or delivery reference.</p>
+            <div class="np-grid">
+                <label class="supplier-field np-wide"><span>Supplier *</span><select name="supplier_id" id="purchase-supplier" required><option value="">Select supplier…</option>@foreach($suppliers as $choice)<option value="{{ $choice->id }}" @selected((string)old('supplier_id',$supplier?->id)===(string)$choice->id)>{{ $choice->name }}{{ $choice->phone ? ' · '.$choice->phone : '' }}</option>@endforeach</select></label>
+                <label class="supplier-field"><span>Purchase date *</span><input name="supplied_at" type="date" value="{{ old('supplied_at',today()->toDateString()) }}" max="{{ today()->toDateString() }}" required></label>
+                <label class="supplier-field"><span>Invoice / delivery no. *</span><input name="reference" value="{{ old('reference') }}" maxlength="100" placeholder="Supplier reference" required></label>
+                <label class="supplier-field"><span>Payment terms</span><select name="terms" id="purchase-terms"><option value="credit" @selected(old('terms','credit')==='credit')>Credit / pay later</option><option value="cash" @selected(old('terms')==='cash')>Fully paid</option></select></label>
+                <label class="supplier-field" id="purchase-due-field"><span>Due date *</span><input name="due_at" id="purchase-due" type="date" value="{{ old('due_at') }}"></label>
+            </div>
+        </section>
+        <section class="np-card">
+            <div class="np-products-head"><div><h2>Products</h2><p class="np-hint">Supplier-linked products appear first. Selecting a product fills its current cost.</p></div><input type="search" id="purchase-product-filter" placeholder="Find a product…" aria-label="Filter product choices"></div>
+            <div class="supplier-scroll"><table class="np-lines"><thead><tr><th>Product *</th><th>Qty *</th><th>Unit cost *</th><th style="text-align:right">Total (KES)</th><th><span aria-label="Remove product"></span></th></tr></thead><tbody id="supply-items">
+                @foreach(old('items',[['product_id'=>'','quantity'=>1,'unit_cost'=>'']]) as $index=>$item)
+                <tr>
+                    <td><select name="items[{{ $index }}][product_id]" class="np-product" required aria-label="Product"><option value="">Select product…</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected((string)($item['product_id']??'')===(string)$product->id)>{{ $product->name }}</option>@endforeach</select><small class="np-hint np-product-code"></small></td>
+                    <td><input name="items[{{ $index }}][quantity]" type="number" min="1" max="1000000" step="1" value="{{ $item['quantity']??1 }}" required aria-label="Quantity"></td>
+                    <td><input name="items[{{ $index }}][unit_cost]" type="number" min="0" max="99999999.99" step="0.01" value="{{ $item['unit_cost']??'' }}" required aria-label="Unit cost in KES"></td>
+                    <td class="np-line-total">0.00</td><td><button type="button" class="np-remove" aria-label="Remove product">&times;</button></td>
+                </tr>
+                @endforeach
+            </tbody></table></div>
+            <button type="button" id="add-item" class="supplier-account-button">+ Add product</button>
+            @if($products->isEmpty())<p class="np-hint">No active products available. <a href="{{ route('products.create') }}">Add a product</a> to your catalogue first.</p>@endif
+        </section>
+        <details class="np-card np-notes" @if(old('notes')) open @endif><summary>Notes / delivery details (optional)</summary><textarea name="notes" maxlength="2000" rows="3" placeholder="Additional invoice or delivery information">{{ old('notes') }}</textarea></details>
+    </div>
+    <aside class="np-card np-summary" aria-label="Purchase totals and payment">
+        <div class="np-summary-head"><h2>Purchase total</h2><div class="np-total">KES <span id="supply-total">0.00</span></div><p class="np-hint" id="purchase-unit-count">0 units</p></div>
+        <div class="np-summary-fields">
+            <label class="supplier-field"><span>Amount paid now (KES)</span><input id="purchase-paid" name="amount" type="number" min="0" step="0.01" value="{{ old('amount','0') }}" required><small class="np-hint">Use 0 for an unpaid credit invoice.</small></label>
+            <label class="supplier-field"><span>Payment method</span><select name="method">@foreach(['cash'=>'Cash','mpesa'=>'M-Pesa','bank'=>'Bank','cheque'=>'Cheque','other'=>'Other'] as $key=>$label)<option value="{{ $key }}" @selected(old('method')===$key)>{{ $label }}</option>@endforeach</select></label>
+            <label class="supplier-field np-payment-ref"><span>Payment reference</span><input name="payment_reference" maxlength="100" value="{{ old('payment_reference') }}" placeholder="Optional"></label>
+        </div>
+        <div class="np-balance"><span>Remaining balance</span><strong>KES <span id="purchase-balance">0.00</span></strong></div>
+        @if(auth()->user()->canAccessAbility('add_stock'))
+        <label class="np-stock-choice"><input type="checkbox" name="receive_stock" value="1" @checked(old('receive_stock'))><span>Receive stock now<small class="np-hint">Adds these quantities to {{ $currentBranch->name ?? 'the current branch' }}. Leave unchecked if already received.</small></span></label>
+        @endif
+        <button class="supplier-account-button primary" type="submit">Save purchase</button>
+        <a class="supplier-account-button" href="{{ route('purchases.index') }}">Cancel</a>
+    </aside>
 </form>

@@ -55,11 +55,20 @@ class PurchaseController extends Controller
         $this->authorizeAccess($request);
         $data = $request->validate(['supplier_id' => ['nullable', 'integer', Rule::exists('suppliers', 'id')->where('business_id', Tenant::businessId())->where('is_active', true)]]);
         $suppliers = Supplier::where('business_id', Tenant::businessId())->where('is_active', true)->orderBy('name')->get();
-        $supplier = isset($data['supplier_id']) ? $suppliers->firstWhere('id', $data['supplier_id']) : null;
-        $products = $supplier ? Product::where('business_id', Tenant::businessId())
-            ->orderByRaw('CASE WHEN supplier_id = ? THEN 0 ELSE 1 END', [$supplier->id])->orderBy('name')->get() : collect();
+        $selectedId = old('supplier_id', $data['supplier_id'] ?? null);
+        $supplier = $suppliers->firstWhere('id', $selectedId);
+        $products = Product::where('business_id', Tenant::businessId())->where('is_active', true)
+            ->orderBy('name')->get();
 
         return view('pages.purchases.create', compact('suppliers', 'supplier', 'products'));
+    }
+
+    public function store(Request $request)
+    {
+        $this->authorizeAccess($request);
+        $data = $request->validate(['supplier_id' => ['required', 'integer', Rule::exists('suppliers', 'id')->where('business_id', Tenant::businessId())->where('is_active', true)]]);
+
+        return app(SupplierController::class)->supply($request, (int) $data['supplier_id']);
     }
 
     public function show(Request $request, int $invoice)
