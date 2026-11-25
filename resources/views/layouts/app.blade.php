@@ -163,6 +163,28 @@
             gap: 4px;
         }
 
+        .nav-section {
+            display: grid;
+            gap: 3px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-section:first-child { padding-top: 0; }
+        .nav-section:last-child { border-bottom: 0; }
+
+        .nav-heading {
+            margin: 0 12px 5px;
+            color: var(--sidebar-muted);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .nav a { padding: 8px 12px; font-size: 13px; }
+        .nav a:focus-visible { outline: 2px solid #a9d7ff; outline-offset: 2px; }
+
         .nav-sub-link {
             margin-left: 28px;
             padding: 8px 12px 8px 22px;
@@ -511,35 +533,62 @@
                 <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation" aria-controls="app-navigation" aria-expanded="false">Menu</button>
             </div>
             <nav class="nav" id="app-navigation" aria-label="Main navigation">
-                <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}"><span class="nav-icon">HM</span><span>Home</span></a>
-                <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock*') ? 'active' : '' }}"><span class="nav-icon">ST</span><span>Stock</span></a>
-                @if(auth()->user()->canAccessAbility('manage_catalog') && auth()->user()->canViewFinancials())
-                    <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">SP</span><span>Supplier</span></a>
-                @endif
-                <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.*') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Make a Sale</span></a>
-                <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
-                <a href="{{ route('todos.index') }}" class="{{ request()->routeIs('todos.*') ? 'active' : '' }}"><span class="nav-icon">TD</span><span>To Do List</span></a>
-                <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}"><span class="nav-icon">QT</span><span>Quotation</span></a>
-                <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
-                @if(auth()->user()->canAccessAbility('manage_catalog'))
-                    <div class="nav-group">
-                        <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Category</span></a>
-                        <a href="{{ route('sub-categories.create') }}" class="nav-sub-link {{ request()->routeIs('sub-categories.*') ? 'active' : '' }}"><span>Sub-Category</span></a>
-                    </div>
-                @endif
-                <a href="{{ route('services') }}" class="{{ request()->routeIs('services*') || request()->routeIs('service-categories.*') || request()->routeIs('service-workers.*') || request()->routeIs('service-visits.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Delivery</span></a>
-                @if(auth()->user()->canAccessAbility('manage_branches'))
-                    <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
-                @endif
-                <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*') || request()->routeIs('payments.*') ? 'active' : '' }}"><span class="nav-icon">BL</span><span>Billing</span></a>
+                <section class="nav-section" aria-labelledby="nav-overview">
+                    <p class="nav-heading" id="nav-overview">Overview</p>
+                    <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}"><span class="nav-icon">HM</span><span>Dashboard</span></a>
+                    <a href="{{ route('summary') }}" class="{{ request()->routeIs('summary') ? 'active' : '' }}"><span class="nav-icon">RP</span><span>Sales Summary</span></a>
+                </section>
+
+                <section class="nav-section" aria-labelledby="nav-sales">
+                    <p class="nav-heading" id="nav-sales">Sales</p>
+                    <a href="{{ route('sale') }}" class="{{ request()->routeIs('sale', 'sale.store') ? 'active' : '' }}"><span class="nav-icon">SL</span><span>Point of Sale</span></a>
+                    <a href="{{ route('sales.index') }}" class="{{ request()->routeIs('sales.*', 'sale.receipt') ? 'active' : '' }}"><span class="nav-icon">SH</span><span>Sales History</span></a>
+                    <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}"><span class="nav-icon">QT</span><span>Quotations</span></a>
+                </section>
+
+                <section class="nav-section" aria-labelledby="nav-inventory">
+                    <p class="nav-heading" id="nav-inventory">Inventory</p>
+                    @if(auth()->user()->canAccessAbility('view_stock'))
+                        <a href="{{ route('stock') }}" class="{{ request()->routeIs('stock*') ? 'active' : '' }}"><span class="nav-icon">ST</span><span>Stock</span></a>
+                    @endif
+                    <a href="{{ route('products') }}" class="{{ request()->routeIs('products*') ? 'active' : '' }}"><span class="nav-icon">PD</span><span>Products</span></a>
+                    @if(auth()->user()->canAccessAbility('manage_catalog'))
+                        <div class="nav-group">
+                            <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Categories</span></a>
+                            <a href="{{ route('sub-categories.create') }}" class="nav-sub-link {{ request()->routeIs('sub-categories.*') ? 'active' : '' }}"><span>Sub-categories</span></a>
+                        </div>
+                        @if(auth()->user()->canViewFinancials())
+                            <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">SP</span><span>Suppliers & Purchases</span></a>
+                        @endif
+                    @endif
+                </section>
+
+                <section class="nav-section" aria-labelledby="nav-operations">
+                    <p class="nav-heading" id="nav-operations">Operations</p>
+                    <a href="{{ route('services') }}" class="{{ request()->routeIs('services*', 'service-categories.*', 'service-workers.*', 'service-visits.*') ? 'active' : '' }}"><span class="nav-icon">SV</span><span>Delivery</span></a>
+                    <a href="{{ route('todos.index') }}" class="{{ request()->routeIs('todos.*') ? 'active' : '' }}"><span class="nav-icon">TD</span><span>To-do List</span></a>
+                </section>
+
+                <section class="nav-section" aria-labelledby="nav-management">
+                    <p class="nav-heading" id="nav-management">Management</p>
+                    @if(auth()->user()->canAccessAbility('manage_branches'))
+                        <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
+                    @endif
+                    @if(auth()->user()->canAccessAbility('manage_staff'))
+                        <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">TM</span><span>Staff & Roles</span></a>
+                    @endif
+                    <a href="{{ route('billing.show') }}" class="{{ request()->routeIs('billing.*', 'payments.*') ? 'active' : '' }}"><span class="nav-icon">BL</span><span>Billing</span></a>
+                    @if(auth()->user()->canAccessAbility('manage_profile'))
+                        <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') ? 'active' : '' }}"><span class="nav-icon">SE</span><span>Settings</span></a>
+                    @endif
+                </section>
+
                 @if(auth()->user()->is_super_admin)
-                    <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.*') ? 'active' : '' }}"><span class="nav-icon">PG</span><span>Pages</span></a>
-                @endif
-                @if(auth()->user()->canAccessAbility('manage_profile'))
-                    <a href="{{ route('settings.index') }}" class="{{ request()->routeIs('settings.*') || request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">SE</span><span>Settings</span></a>
-                @endif
-                @if(auth()->user()->is_super_admin)
-                    <a href="{{ route('admin.tenants.index') }}" class="{{ request()->routeIs('admin.*') ? 'active' : '' }}"><span class="nav-icon">AD</span><span>Admin</span></a>
+                    <section class="nav-section" aria-labelledby="nav-platform">
+                        <p class="nav-heading" id="nav-platform">Platform Admin</p>
+                        <a href="{{ route('admin.tenants.index') }}" class="{{ request()->routeIs('admin.*') ? 'active' : '' }}"><span class="nav-icon">AD</span><span>Businesses</span></a>
+                        <a href="{{ route('content.index') }}" class="{{ request()->routeIs('content.*') ? 'active' : '' }}"><span class="nav-icon">PG</span><span>Website Pages</span></a>
+                    </section>
                 @endif
             </nav>
             <div class="spacer"></div>
