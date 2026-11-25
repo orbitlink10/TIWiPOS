@@ -36,8 +36,8 @@
                     <input name="sku" type="text" value="{{ old('sku', $product->sku) }}" placeholder="SKU-001" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
-                    Serial number
-                    <input name="serial_number" type="text" value="{{ old('serial_number', $product->serial_number) }}" placeholder="Unique serial" required style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
+                    Serial number (optional)
+                    <input name="serial_number" type="text" value="{{ old('serial_number', $product->serial_number) }}" placeholder="Unique serial, if available" style="padding:12px;border:1px solid #e5e7eb;border-radius:10px;">
                 </label>
                 <label style="display:flex; flex-direction:column; gap:6px; font-weight:600;">
                     Barcode
