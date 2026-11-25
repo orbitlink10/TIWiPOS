@@ -10,6 +10,98 @@ class SplitPaymentTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_edit_preserves_cashier_recorded_prices_and_payment_report_date(): void
+    {
+        [$cashier, $product, $shift] = $this->fixture();
+        $cashier->update(['role' => 'staff']);
+        $this->actingAs($cashier)->post(route('sale.store'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 80]],
+            'payments' => ['cash' => 30, 'mobile' => 50],
+        ])->assertSessionHasNoErrors();
+        $sale = Sale::sole();
+        $paidAt = $sale->paid_at->toDateTimeString();
+        $originalDay = $sale->paid_at->toDateString();
+        $itemId = $sale->items()->sole()->id;
+        $product->update(['price' => 250, 'cost' => 200]);
+        $this->travel(1)->days();
+        $owner = User::factory()->create([
+            'business_id' => $cashier->business_id, 'branch_id' => $cashier->branch_id, 'role' => 'owner',
+        ]);
+        $this->actingAs($owner)->put(route('sales.update', $sale), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2, 'sale_item_id' => $itemId, 'unit_price' => 999]],
+            'payments' => ['cash' => 60, 'mobile' => 100], 'customer_name' => 'Updated Customer',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('sale.receipt', $sale));
+
+        $sale->refresh();
+        $this->assertSame($cashier->id, $sale->user_id);
+        $this->assertSame($shift->id, $sale->cashier_shift_id);
+        $this->assertSame($paidAt, $sale->paid_at->toDateTimeString());
+        $this->assertEquals(160, $sale->total);
+        $this->assertEquals(80, $sale->items()->sole()->unit_price);
+        $this->assertEquals(50, $sale->items()->sole()->unit_cost);
+        foreach ($sale->payments as $payment) {
+            $this->assertSame($paidAt, $payment->paid_at->toDateTimeString());
+        }
+        $this->assertSame(1, $shift->summary()['sales_count']);
+        $this->assertSame(16000, $shift->summary()['sales_total_cents']);
+        $this->assertSame(11000, $shift->summary()['expected_cash_cents']);
+
+        // A replacement method also belongs to the original payment date.
+        $this->put(route('sales.update', $sale), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'payments' => ['cash' => 120, 'bank' => 40],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame($paidAt, $sale->payments()->where('method', 'bank')->sole()->paid_at->toDateTimeString());
+        $this->get(route('reports.index', ['report' => 'payments', 'from' => $originalDay, 'to' => $originalDay]))
+            ->assertOk()->assertViewHas('totals', fn ($totals) => (float) $totals->amount === 160.0);
+        $this->get(route('reports.index', ['report' => 'payments', 'from' => now()->toDateString(), 'to' => now()->toDateString()]))
+            ->assertOk()->assertViewHas('totals', fn ($totals) => (float) $totals->amount === 0.0);
+        $this->actingAs($cashier)->get(route('sale.receipt', $sale))->assertOk()->assertSee('KES 160.00');
+    }
+
+    public function test_edit_preserves_distinct_prices_and_prices_new_rows_from_catalogue(): void
+    {
+        [$user, $product] = $this->fixture();
+        $this->actingAs($user)->post(route('sale.store'), [
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 70],
+                ['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 90],
+            ], 'method' => 'cash',
+        ])->assertSessionHasNoErrors();
+        $sale = Sale::sole();
+        $originalItems = $sale->items()->orderBy('id')->get();
+        $product->update(['price' => 200]);
+        $this->put(route('sales.update', $sale), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]], 'method' => 'cash',
+        ])->assertSessionHasErrors('items');
+        $this->assertEquals(160, $sale->fresh()->total);
+        $this->put(route('sales.update', $sale), [
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1, 'sale_item_id' => $originalItems[0]->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'sale_item_id' => $originalItems[1]->id],
+                ['product_id' => $product->id, 'quantity' => 1, 'sale_item_id' => ''],
+            ], 'method' => 'cash',
+        ])->assertSessionHasNoErrors();
+        $this->assertEquals([70, 90, 200], $sale->items()->orderBy('id')->pluck('unit_price')->map(fn ($price) => (float) $price)->all());
+        $this->assertEquals(360, $sale->fresh()->total);
+        $this->assertEquals(7, $product->stocks()->sum('quantity'));
+    }
+
+    public function test_edit_rejects_invalid_original_item_ids_without_changing_stock(): void
+    {
+        [$user, $product] = $this->fixture();
+        $this->actingAs($user)->post(route('sale.store'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]], 'method' => 'cash',
+        ])->assertSessionHasNoErrors();
+        $sale = Sale::sole();
+        $this->put(route('sales.update', $sale), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2, 'sale_item_id' => 999999]],
+            'method' => 'cash',
+        ])->assertSessionHasErrors('items.0.sale_item_id');
+        $this->assertEquals(100, $sale->fresh()->total);
+        $this->assertEquals(9, $product->stocks()->sum('quantity'));
+    }
+
     public function test_cash_mobile_split_receipt_and_shift_closing_totals(): void
     {
         [$user, $product, $shift] = $this->fixture();

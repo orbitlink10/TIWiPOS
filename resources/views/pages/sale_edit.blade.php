@@ -13,6 +13,7 @@
     @php
         $existingItemsForJs = $sale->items->map(function ($item) {
             return [
+                'sale_item_id' => $item->id,
                 'product_id' => $item->product_id,
                 'name' => $item->product->name ?? 'Product',
                 'quantity' => $item->quantity,
@@ -183,7 +184,7 @@
         totalText.textContent = 'KES ' + total.toFixed(2);
     }
 
-    function renderRow({ productId, name, qty, price, serial }) {
+    function renderRow({ productId, name, qty, price, serial, saleItemId = '' }) {
         const lineSubtotal = price * qty;
         const tr = document.createElement('tr');
         tr.dataset.subtotal = lineSubtotal;
@@ -200,6 +201,7 @@
             </td>
             <input type="hidden" name="items[${idx}][product_id]" value="${productId}">
             <input type="hidden" name="items[${idx}][quantity]" value="${qty}">
+            <input type="hidden" name="items[${idx}][sale_item_id]" value="${saleItemId}">
         `;
         idx++;
         tr.querySelector('button').addEventListener('click', () => {
@@ -276,6 +278,7 @@
 
     existingItems.forEach(item => {
         renderRow({
+            saleItemId: item.sale_item_id,
             productId: item.product_id,
             name: item.name,
             qty: item.quantity,

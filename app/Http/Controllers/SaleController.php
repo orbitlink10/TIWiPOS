@@ -235,12 +235,16 @@ class SaleController extends Controller
     private function savePayments(Sale $sale, array $payments, ?int $branchId): void
     {
         foreach ($payments as $method => $amount) {
-            $sale->payments()->withoutGlobalScope('branch')->updateOrCreate(['method' => $method], [
+            $payment = $sale->payments()->withoutGlobalScope('branch')->firstOrNew(['method' => $method]);
+            $payment->fill([
                 'business_id' => $sale->business_id,
                 'branch_id' => $branchId,
                 'amount' => $amount,
-                'paid_at' => now(),
             ]);
+            if (!$payment->exists) {
+                $payment->paid_at = $sale->paid_at ?? $sale->created_at ?? now();
+            }
+            $payment->save();
         }
         $sale->payments()->withoutGlobalScope('branch')->whereNotIn('method', array_keys($payments))->delete();
     }
@@ -411,6 +415,10 @@ class SaleController extends Controller
                 Rule::exists('products', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
             ],
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.sale_item_id' => [
+                'nullable', 'integer',
+                Rule::exists('sale_items', 'id')->where(fn ($query) => $query->where('sale_id', $sale->id)->where('business_id', $businessId)),
+            ],
             ...$this->paymentRules(),
             'apply_tax' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:255',
@@ -497,14 +505,28 @@ class SaleController extends Controller
 
             foreach ($data['items'] as $item) {
                 $product = Product::find($item['product_id']);
-                $unitPrice = $product->price;
+                $priorItem = null;
+                if (!empty($item['sale_item_id'])) {
+                    $priorItem = $sale->items->firstWhere('id', $item['sale_item_id']);
+                    if (!$priorItem || (int) $priorItem->product_id !== (int) $product->id) {
+                        throw ValidationException::withMessages(['items' => 'The original sale item does not match this product.']);
+                    }
+                } elseif (!array_key_exists('sale_item_id', $item)) {
+                    // Older clients omit row IDs. Preserve an unambiguous recorded price.
+                    $priorRows = $sale->items->where('product_id', $product->id);
+                    if ($priorRows->pluck('unit_price')->unique()->count() > 1) {
+                        throw ValidationException::withMessages(['items' => 'Reload this sale to preserve its different recorded unit prices.']);
+                    }
+                    $priorItem = $priorRows->first();
+                }
+                $unitPrice = round((float) ($priorItem?->unit_price ?? $product->price), 2);
                 $lineSubtotal = $unitPrice * $item['quantity'];
                 $subtotal += $lineSubtotal;
                 $lineItems[] = [
                     'product' => $product,
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
-                    'unit_cost' => round((float) $product->cost, 2),
+                    'unit_cost' => round((float) ($priorItem?->unit_cost ?? $product->cost), 2),
                     'subtotal' => $lineSubtotal,
                 ];
             }
@@ -552,7 +574,6 @@ class SaleController extends Controller
                 'technician_name' => $data['technician_name'] ?? $sale->technician_name,
                 'technician_phone' => $data['technician_phone'] ?? $sale->technician_phone,
                 'installation_location' => $data['installation_location'] ?? $sale->installation_location,
-                'user_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount' => 0,
                 'tax' => $tax,
@@ -560,7 +581,6 @@ class SaleController extends Controller
                 'total' => $total,
                 'payment_status' => 'paid',
                 'status' => 'completed',
-                'paid_at' => now(),
                 'branch_id' => $branchId,
             ]);
 
