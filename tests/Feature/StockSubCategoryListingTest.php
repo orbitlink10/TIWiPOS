@@ -16,7 +16,7 @@ class StockSubCategoryListingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_product_sub_category_filter_respects_branch_stock(): void
+    public function test_category_filters_include_legacy_children_and_show_current_branch_stock(): void
     {
         [$business, $branch, $user] = $this->createActiveTenant();
 
@@ -91,21 +91,34 @@ class StockSubCategoryListingTest extends TestCase
 
         $this->actingAs($user)->get(route('products', ['category_id' => $subCategory->id]))
             ->assertOk()
-            ->assertSee('Routers products')
+            ->assertViewHas('products', function ($products) use ($subCategoryProduct, $soldProduct) {
+                $rows = $products->getCollection()->keyBy('id');
+                return $rows->count() === 2
+                    && (int) $rows[$subCategoryProduct->id]->stock_on_hand === 3
+                    && (int) $rows[$soldProduct->id]->stock_on_hand === 0;
+            })
             ->assertSee('SN-RTR-001')
             ->assertDontSee('SN-TOP-001')
-            ->assertDontSee('SN-SOLD-001')
-            ->assertSee('View all products');
+            ->assertSee('SN-SOLD-001');
+
+        $this->get(route('products', ['category_id' => $category->id]))
+            ->assertOk()
+            ->assertViewHas('products', fn ($products) => $products->getCollection()->pluck('id')->sort()->values()->all()
+                === collect([$subCategoryProduct->id, $soldProduct->id])->sort()->values()->all());
 
         $this->get(route('products'))->assertOk()->assertSee('SN-SOLD-001');
 
         $subCategoryProduct->stocks()->where('branch_id', $branch->id)->update(['quantity' => 0]);
         $this->get(route('products', ['category_id' => $subCategory->id]))
             ->assertOk()
-            ->assertSee('No products currently in stock in this sub-category for the selected branch.');
+            ->assertViewHas('products', fn ($products) => $products->count() === 2
+                && $products->every(fn ($product) => (int) $product->stock_on_hand === 0));
 
         $this->get(route('products', ['category_id' => $topLevelOnlyCategory->id]))
-            ->assertNotFound();
+            ->assertOk()
+            ->assertViewHas('products', fn ($products) => $products->count() === 1
+                && (int) $products->first()->id === $topLevelProduct->id
+                && (int) $products->first()->stock_on_hand === 7);
     }
 
     public function test_old_stock_page_is_removed_and_stock_control_remains_available(): void

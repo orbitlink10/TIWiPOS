@@ -15,7 +15,7 @@ class ProductSubCategorySelectionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_product_create_form_lists_sub_categories_not_top_level_categories(): void
+    public function test_product_create_form_lists_top_level_categories_only(): void
     {
         [$business, , $user] = $this->createActiveTenant();
 
@@ -26,14 +26,14 @@ class ProductSubCategorySelectionTest extends TestCase
         $this->actingAs($user)
             ->get(route('products.create'))
             ->assertOk()
-            ->assertSee('Sub-Category')
-            ->assertSee('Hardware - Routers')
-            ->assertSee('<option value="' . $subCategory->id . '"', false)
-            ->assertDontSee('<option value="' . $parent->id . '"', false)
-            ->assertDontSee('<option value="' . $topLevelOnly->id . '"', false);
+            ->assertSee('Select category')
+            ->assertViewHas('categories', fn ($categories) => $categories->modelKeys() === [$parent->id, $topLevelOnly->id])
+            ->assertSee('<option value="' . $parent->id . '"', false)
+            ->assertSee('<option value="' . $topLevelOnly->id . '"', false)
+            ->assertDontSee('<option value="' . $subCategory->id . '"', false);
     }
 
-    public function test_product_store_rejects_top_level_category(): void
+    public function test_product_store_accepts_top_level_category_and_rejects_sub_category(): void
     {
         [$business, , $user] = $this->createActiveTenant();
 
@@ -52,12 +52,28 @@ class ProductSubCategorySelectionTest extends TestCase
                 'stock_location' => 'main',
                 'is_active' => 1,
             ])
-            ->assertRedirect(route('products.create'))
-            ->assertSessionHasErrors('category_id');
+            ->assertRedirect(route('products'))
+            ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseMissing('products', [
-            'sku' => 'RTR-001',
+        $this->assertDatabaseHas('products', [
+            'name' => 'Router',
+            'business_id' => $business->id,
+            'category_id' => $parent->id,
+            'serial_number' => 'SN-RTR-001',
         ]);
+
+        $subCategory = $this->createCategory($business, 'Routers', $parent->id);
+        $this->from(route('products.create'))->post(route('products.store'), [
+            'name' => 'Invalid child category product',
+            'serial_number' => 'SN-RTR-002',
+            'category_id' => $subCategory->id,
+            'cost' => 1000,
+            'price' => 1500,
+            'stock' => 1,
+            'is_active' => 1,
+        ])->assertRedirect(route('products.create'))->assertSessionHasErrors('category_id');
+
+        $this->assertDatabaseMissing('products', ['serial_number' => 'SN-RTR-002']);
     }
 
     public function test_stock_adjust_adds_serials_and_returns_to_stock_control(): void
