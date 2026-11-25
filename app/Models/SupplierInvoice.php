@@ -18,6 +18,11 @@ class SupplierInvoice extends Model
         return $this->hasMany(SupplierInvoiceItem::class);
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(SupplierPayment::class);

@@ -114,6 +114,9 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role.ability:delete_products')->name('categories.destroy');
 
     Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('role.ability:manage_catalog')->name('suppliers.index');
+    Route::get('/purchases', [\App\Http\Controllers\PurchaseController::class, 'index'])->middleware('role.ability:manage_catalog')->name('purchases.index');
+    Route::get('/purchases/create', [\App\Http\Controllers\PurchaseController::class, 'create'])->middleware('role.ability:manage_catalog')->name('purchases.create');
+    Route::get('/purchases/{invoice}', [\App\Http\Controllers\PurchaseController::class, 'show'])->whereNumber('invoice')->middleware('role.ability:manage_catalog')->name('purchases.show');
     Route::get('/suppliers/create', [SupplierController::class, 'create'])->middleware('role.ability:manage_catalog')->name('suppliers.create');
     Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.show');
     Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->whereNumber('supplier')->middleware('role.ability:manage_catalog')->name('suppliers.update');

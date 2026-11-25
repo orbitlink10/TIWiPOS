@@ -555,7 +555,8 @@
                             <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Categories</span></a>
                         </div>
                         @if(auth()->user()->canViewFinancials())
-                            <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">SP</span><span>Suppliers & Purchases</span></a>
+                            <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">SP</span><span>Suppliers</span></a>
+                            <a href="{{ route('purchases.index') }}" class="{{ request()->routeIs('purchases.*') ? 'active' : '' }}"><span class="nav-icon">PU</span><span>Purchases</span></a>
                         @endif
                     @endif
                 </section>
