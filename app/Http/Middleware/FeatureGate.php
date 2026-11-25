@@ -51,6 +51,7 @@ class FeatureGate
             'billing.pay',
             'payments.store',
             'products',
+            'products.show',
             'products.create',
             'products.store',
             'products.edit',

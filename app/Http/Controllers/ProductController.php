@@ -10,6 +10,7 @@ use App\Support\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -71,6 +72,23 @@ class ProductController extends Controller
         }
 
         return view('pages.products', compact('products', 'selectedSubCategory'));
+    }
+
+    public function show(Product $product)
+    {
+        abort_unless((int) $product->business_id === (int) Tenant::businessId(), 404);
+        $branchId = Tenant::branchId();
+        $product->load(['category.parent', 'supplier']);
+        $stocks = $product->stocks()->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->orderBy('location')->get();
+        $serials = DB::table('purchase_receipt_serials as serials')
+            ->join('purchase_receipt_lines as lines', 'lines.id', '=', 'serials.purchase_receipt_line_id')
+            ->join('purchase_receipts as receipts', 'receipts.id', '=', 'lines.purchase_receipt_id')
+            ->where('lines.product_id', $product->id)->where('receipts.business_id', Tenant::businessId())
+            ->when($branchId, fn ($query) => $query->where('receipts.branch_id', $branchId))
+            ->orderByDesc('serials.id')->paginate(20, ['serials.serial_number', 'receipts.received_at'], 'serial_page');
+        $canViewFinancials = auth()->user()->canViewFinancials();
+
+        return view('pages.product_show', compact('product', 'stocks', 'serials', 'canViewFinancials'));
     }
 
     public function create()
@@ -229,7 +247,7 @@ class ProductController extends Controller
             );
         }
 
-        return redirect()->route('products')->with('status', 'Product updated successfully.');
+        return redirect()->route('products.show', $product)->with('status', 'Product updated successfully.');
     }
 
     public function destroy(Request $request, Product $product)
@@ -240,7 +258,7 @@ class ProductController extends Controller
             $product->delete();
         } catch (QueryException $exception) {
             if ((string) $exception->getCode() === '23000') {
-                return redirect()->route($redirectTo)->with('error', 'Cannot delete product because it is linked to existing sales records. Archive it instead.');
+                return redirect()->route($redirectTo)->with('error', 'Cannot delete this product because it has transaction history. Mark it inactive instead.');
             }
 
             throw $exception;
