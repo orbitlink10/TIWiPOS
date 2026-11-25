@@ -29,6 +29,7 @@ main{min-width:0}.supplier-account-subtitle{margin:6px 0 0;color:#718087;font-si
 <div class="panel"><div class="supplier-muted">{{ $label }}</div><div class="supplier-metric">KES {{ number_format($amount / 100, 2) }}</div></div>
 @endforeach
 </div>
+@include('pages.suppliers.products')
 @if($supplier->is_active)
 <details class="panel supplier-no-print supplier-purchase" id="record-supply" @if(old('items') || $errors->hasAny(['reference','supplied_at','terms','due_at','items','amount','receive_stock'])) open @endif><summary><div><strong>Record a purchase</strong><span>Supplier invoice, products and initial payment</span></div></summary><div class="supplier-purchase-body">
 <p class="supplier-muted">Enter one invoice or delivery note. Choose existing products or type a product name. The reference must be unique for this supplier.</p>

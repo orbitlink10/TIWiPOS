@@ -88,9 +88,46 @@ class SupplierController extends Controller
         abort_unless(auth()->user()->canViewFinancials(), 403);
         $supplier = $this->supplier($supplier);
         $invoices = $this->invoices($supplier->id)->with(['payments', 'items'])->orderByDesc('supplied_at')->orderByDesc('id')->get();
-        $products = Product::where('business_id', Tenant::businessId())->orderBy('name')->get();
+        $products = Product::where('business_id', Tenant::businessId())
+            ->orderByRaw('CASE WHEN supplier_id = ? THEN 0 ELSE 1 END', [$supplier->id])
+            ->orderBy('name')->get();
+        $mappedProducts = $products->where('supplier_id', $supplier->id);
+        $availableProducts = $products->whereNull('supplier_id')->where('is_active', true);
 
-        return view('pages.suppliers.show', compact('supplier', 'invoices', 'products'));
+        return view('pages.suppliers.show', compact('supplier', 'invoices', 'products', 'mappedProducts', 'availableProducts'));
+    }
+
+    public function mapProducts(Request $request, int $supplier)
+    {
+        abort_unless($request->user()->canViewFinancials(), 403);
+        $supplier = $this->supplier($supplier);
+        abort_unless($supplier->is_active, 422, 'Activate the supplier before linking products.');
+        $data = $request->validate([
+            'product_ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'product_ids.*' => ['required', 'integer', 'distinct', Rule::exists('products', 'id')->where('business_id', Tenant::businessId())],
+        ]);
+        DB::transaction(function () use ($data, $supplier) {
+            $products = Product::where('business_id', Tenant::businessId())
+                ->whereIn('id', $data['product_ids'])->orderBy('id')->lockForUpdate()->get();
+            if ($products->count() !== count($data['product_ids']) || $products->contains(fn ($product) => $product->supplier_id && (int) $product->supplier_id !== (int) $supplier->id)) {
+                throw ValidationException::withMessages(['product_ids' => 'A selected product is no longer available or is already linked to another supplier. Refresh and select again.']);
+            }
+            Product::where('business_id', Tenant::businessId())->whereIn('id', $products->pluck('id'))
+                ->update(['supplier_id' => $supplier->id]);
+        });
+
+        return redirect()->route('suppliers.show', $supplier->id)->with('status', 'Products linked to this supplier.');
+    }
+
+    public function unmapProduct(Request $request, int $supplier, int $product)
+    {
+        abort_unless($request->user()->canViewFinancials(), 403);
+        $supplier = $this->supplier($supplier);
+        $updated = Product::where('business_id', Tenant::businessId())->where('supplier_id', $supplier->id)
+            ->whereKey($product)->update(['supplier_id' => null]);
+        abort_unless($updated, 404);
+
+        return redirect()->route('suppliers.show', $supplier->id)->with('status', 'Product unlinked. Purchase history and stock are unchanged.');
     }
 
     // All ledger amounts are calculated and persisted in whole cents.
