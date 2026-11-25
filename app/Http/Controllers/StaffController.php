@@ -34,6 +34,19 @@ class StaffController extends Controller
         return view('pages.staff', compact('staff', 'branches'));
     }
 
+    public function show(User $user)
+    {
+        $this->ensureOwner();
+
+        if ((int) $user->business_id !== (int) Tenant::businessId() || $user->role === User::ROLE_OWNER) {
+            abort(404);
+        }
+
+        $user->load('branch');
+
+        return view('pages.staff_show', ['member' => $user]);
+    }
+
     public function store(Request $request)
     {
         $this->ensureOwner();

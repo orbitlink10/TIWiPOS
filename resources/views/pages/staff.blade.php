@@ -50,7 +50,7 @@
                     <tbody>
                         @forelse($staff as $member)
                             <tr style="border-top:1px solid #e5e7eb;">
-                                <td style="padding:10px;">{{ $member->name }}</td>
+                                <td style="padding:10px;"><a href="{{ route('staff.show', $member) }}" style="color:var(--accent); font-weight:700;">{{ $member->name }}</a></td>
                                 <td style="padding:10px;">{{ $member->email }}</td>
                                 <td style="padding:10px;">{{ $member->phone ?: '-' }}</td>
                                 <td style="padding:10px;">
@@ -81,6 +81,7 @@
                                     </span>
                                 </td>
                                 <td style="padding:10px;">
+                                    <a href="{{ route('staff.show', $member) }}" style="display:inline-flex; margin-bottom:8px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; color:var(--accent); font-weight:700; text-decoration:none;">View</a>
                                     <form method="POST" action="{{ route('staff.status', $member) }}">
                                         @csrf
                                         @method('PATCH')

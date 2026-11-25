@@ -139,6 +139,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
 
     Route::get('/staff', [StaffController::class, 'index'])->middleware('role.ability:manage_staff')->name('staff.index');
+    Route::get('/staff/{user}', [StaffController::class, 'show'])->middleware('role.ability:manage_staff')->name('staff.show');
     Route::post('/staff', [StaffController::class, 'store'])->middleware('role.ability:manage_staff')->name('staff.store');
     Route::patch('/staff/{user}/status', [StaffController::class, 'status'])->middleware('role.ability:manage_staff')->name('staff.status');
     Route::patch('/staff/{user}/role', [StaffController::class, 'role'])->middleware('role.ability:manage_staff')->name('staff.role');

@@ -15,6 +15,53 @@ class StaffRoleManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_can_view_staff_profile_from_team_list(): void
+    {
+        [$business, $branch, $owner] = $this->createActiveTenant();
+        $staff = User::factory()->create([
+            'business_id' => $business->id,
+            'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF,
+            'phone' => '+254700123456',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($owner)->get(route('staff.index'))
+            ->assertOk()->assertSee(route('staff.show', $staff), false);
+
+        $this->get(route('staff.show', $staff))->assertOk()
+            ->assertSee($staff->name)->assertSee($staff->email)
+            ->assertSee('+254700123456')->assertSee($branch->name)
+            ->assertSee('Inactive')->assertDontSee($staff->password);
+    }
+
+    public function test_staff_profile_rejects_other_business_and_owner_records(): void
+    {
+        [, , $owner] = $this->createActiveTenant();
+        [$otherBusiness, $otherBranch] = $this->createActiveTenant();
+        $otherStaff = User::factory()->create([
+            'business_id' => $otherBusiness->id,
+            'branch_id' => $otherBranch->id,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        $this->actingAs($owner)->get(route('staff.show', $otherStaff))->assertNotFound();
+        $this->get(route('staff.show', $owner))->assertNotFound();
+    }
+
+    public function test_staff_and_managers_cannot_view_staff_profiles(): void
+    {
+        [$business, $branch] = $this->createActiveTenant();
+        foreach ([User::ROLE_STAFF, User::ROLE_MANAGER] as $role) {
+            $user = User::factory()->create([
+                'business_id' => $business->id,
+                'branch_id' => $branch->id,
+                'role' => $role,
+            ]);
+            $this->actingAs($user)->get(route('staff.show', $user))->assertForbidden();
+        }
+    }
+
     public function test_owner_can_update_staff_role(): void
     {
         [$business, $branch, $owner] = $this->createActiveTenant();
