@@ -289,7 +289,10 @@
             animation: fade-in-up 280ms ease-out;
         }
 
-        .account-bar { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:18px; }
+        .page-header { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; }
+        .page-header-content { flex:1 1 320px; min-width:0; }
+        .page-header-content .header-row { margin-bottom:0; }
+        .account-bar { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:10px; }
         .account-branch { display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:9px 14px; border:1px solid var(--border); border-radius:10px; background:#fff; }
         .account-branch-label { display:block; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
         .account-branch-name { display:block; margin-top:2px; color:var(--text); font-size:13px; font-weight:800; overflow-wrap:anywhere; }
@@ -606,10 +609,12 @@
         </aside>
         @endunless
         <main>
+            <div class="page-header">
+                <div class="page-header-content">@yield('header')</div>
             @unless(auth()->user()->isPosOnly())
                 @include('partials.account-bar')
             @endunless
-            @yield('header')
+            </div>
             @yield('content')
         </main>
     </div>
