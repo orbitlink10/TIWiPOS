@@ -35,5 +35,24 @@ main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{dis
         <section class="pv-card"><h2>Stock by location</h2><div class="pv-scroll"><table class="pv-table"><thead><tr><th>Location</th><th>Quantity</th></tr></thead><tbody>@forelse($stocks as $stock)<tr><td>{{ $stock->location }}</td><td>{{ $stock->quantity }}</td></tr>@empty<tr><td colspan="2">No stock recorded for this branch.</td></tr>@endforelse</tbody></table></div></section>
         <section class="pv-card"><h2>Received serial numbers</h2><p class="pv-note">Serials recorded on purchase receipts for {{ $currentBranch->name ?? 'the current business' }}.</p><div class="pv-scroll"><table class="pv-table"><thead><tr><th>Serial number</th><th>Received</th></tr></thead><tbody>@forelse($serials as $serial)<tr><td>{{ $serial->serial_number }}</td><td>{{ \Carbon\Carbon::parse($serial->received_at)->format('d M Y') }}</td></tr>@empty<tr><td colspan="2">No receipt serials recorded.</td></tr>@endforelse</tbody></table></div>{{ $serials->links('pagination.app') }}</section>
     </div>
+    <section class="pv-card" id="stock-movements">
+        <h2>Stock movements</h2><p class="pv-note">Recorded stock changes for {{ $currentBranch->name ?? 'the current business' }}, most recent first.</p>
+        <div class="pv-scroll"><table class="pv-table" style="min-width:900px">
+            <thead><tr><th>Date / time</th><th>Type</th><th>Location</th><th style="text-align:right">Change</th><th style="text-align:right">Before</th><th style="text-align:right">After</th><th>Reference / notes</th><th>Recorded by</th></tr></thead>
+            <tbody>@forelse($movements as $movement)
+                <tr>
+                    <td style="white-space:nowrap">{{ $movement->created_at->format('d M Y H:i') }}</td>
+                    <td>{{ ['sale'=>'Sale','purchase'=>'Purchase receipt','adjustment'=>'Adjustment','return'=>'Return'][$movement->type] ?? ucfirst($movement->type) }}</td>
+                    <td>{{ $movement->location }}</td>
+                    <td style="text-align:right;font-weight:700;color:{{ $movement->quantity_change > 0 ? '#166534' : ($movement->quantity_change < 0 ? '#b42318' : '#526473') }}">{{ $movement->quantity_change > 0 ? '+' : '' }}{{ number_format($movement->quantity_change) }}</td>
+                    <td style="text-align:right">{{ $movement->quantity_before === null ? '—' : number_format($movement->quantity_before) }}</td>
+                    <td style="text-align:right">{{ $movement->quantity_after === null ? '—' : number_format($movement->quantity_after) }}</td>
+                    <td>@if($movement->reference_type)<span>{{ str($movement->reference_type)->replace('_',' ')->title() }}@if($movement->reference_id) #{{ $movement->reference_id }}@endif</span>@endif @if($movement->note)<div class="pv-note" style="white-space:pre-wrap">{{ $movement->note }}</div>@endif</td>
+                    <td>{{ $movement->user->name ?? '—' }}</td>
+                </tr>
+            @empty<tr><td colspan="8">No recorded stock movements for this product in this branch.</td></tr>@endforelse</tbody>
+        </table></div>
+        {{ $movements->links('pagination.app') }}
+    </section>
 </div>
 @endsection
