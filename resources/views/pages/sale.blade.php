@@ -596,7 +596,7 @@
                     </label>
                 </div>
 
-                <div class="product-grid" id="product_grid" aria-label="Available products">
+                <div class="product-grid" id="product_grid" aria-label="Available products" hidden>
                     <div class="product-list-head" aria-hidden="true"><span>Product</span><span>Stock</span><span>Price (KES)</span><span>Qty</span><span></span></div>
                     @foreach ($products as $product)
                         <div class="product-tile" data-product-id="{{ $product->id }}">
@@ -608,7 +608,7 @@
                         </div>
                     @endforeach
                 </div>
-                <p id="catalogue_empty" class="catalogue-empty" @if($products->isNotEmpty()) hidden @endif>No products available. Check your search or add stock to this branch.</p>
+                <p id="catalogue_empty" class="catalogue-empty" role="status">Start typing a product name, SKU or barcode to find products.</p>
 
                 <details class="manual-entry" id="manual_entry"><summary>Enter quantity or adjust unit price</summary>
                 <label class="field" style="margin-top:12px;">
@@ -1076,7 +1076,13 @@
         }
 
         updateTotalsPreview(syncPrice);
-        document.getElementById('catalogue_empty').hidden = Boolean(firstVisibleValue);
+        const hasResults = term !== '' && Boolean(firstVisibleValue);
+        document.getElementById('product_grid').hidden = !hasResults;
+        const catalogueEmpty = document.getElementById('catalogue_empty');
+        catalogueEmpty.hidden = hasResults;
+        catalogueEmpty.textContent = term === ''
+            ? 'Start typing a product name, SKU or barcode to find products.'
+            : 'No products found. Check your search or add stock to this branch.';
     }
 
     function setActiveCategory(categoryId) {
