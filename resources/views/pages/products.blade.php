@@ -40,7 +40,6 @@
             <input type="text" placeholder="Search products..." style="flex:1; min-width:220px; padding:12px; border-radius:10px; border:1px solid #e5e7eb;">
             @if($canManageCatalog)
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <a class="btn" href="{{ route('products.create') }}">➕ Add Product</a>
                     <a class="btn" href="{{ route('categories.create') }}" style="background:#0ea5e9;">🗂️ Add Category</a>
                     <a class="btn" href="{{ route('suppliers.create') }}" style="background:#22c55e;">🏭 Add Supplier</a>
                     <a class="btn" href="{{ route('stock.adjust') }}" style="background:#f59e0b;">📦 Adjust Stock</a>
