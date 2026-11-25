@@ -38,7 +38,8 @@
 .payment-chip input:checked + span { border-color:#1769d1; background:#eef4fb; color:#1057b0; box-shadow:none; }
 @media(max-width:1250px) { .sale-layout { grid-template-columns:minmax(0,1fr); } .checkout { position:static; } .product-grid { max-height:420px; } }
 /* Baseline terminal: action rail, current sale, product rows. */
-body:has(.sale-shell) .layout { grid-template-columns:220px minmax(0,1fr); }
+body:has(.sale-shell) .layout { grid-template-columns:minmax(0,1fr); }
+body:has(.sale-shell) .sidebar { display:none; }
 body:has(.sale-shell) main { min-width:0; padding:20px; }
 body:has(.sale-shell) .header-row h1 { font-size:24px; }
 .sale-layout { grid-template-columns:88px minmax(340px,.95fr) minmax(390px,1.2fr); gap:12px; align-items:start; }
@@ -106,7 +107,6 @@ body:has(.sale-shell) .header-row h1 { font-size:24px; }
 .payment-dialog .complete-btn { margin-top:24px; }
 .payment-chip span { min-height:52px; border-radius:6px; font-size:13px; }
 @media(max-width:1350px) {
-    body:has(.sale-shell) .layout { grid-template-columns:190px minmax(0,1fr); }
     body:has(.sale-shell) main { padding:16px; }
     .sale-layout { grid-template-columns:minmax(310px,.9fr) minmax(360px,1.1fr); }
     .terminal-actions { grid-column:1/-1; position:static; display:flex; gap:6px; }
