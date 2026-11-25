@@ -53,7 +53,7 @@
                 @php($confirmedCents = (int)($shift->verified_payment_totals[$method] ?? 0))
                 <tr data-review-expected="{{ $expectedCents }}"><td>{{ $label }}@if($method==='cash')<small>Cashier counted KES {{ number_format($shift->counted_cash_cents/100,2) }}</small>@endif</td><td class="number">{{ number_format($expectedCents/100,2) }}</td><td class="number">
                 @if($shift->verified_at){{ number_format($confirmedCents/100,2) }}@else
-                    <input class="shift-verify-amount" name="verified[{{ $method }}]" type="number" min="0" max="9999999999.99" step="0.01" inputmode="decimal" value="{{ old('verified.'.$method) }}" placeholder="0.00" aria-label="Confirmed {{ $label }} in KES" required>
+                    <input class="shift-verify-amount" name="verified[{{ $method }}]" type="number" min="0" max="9999999999.99" step="0.01" inputmode="decimal" value="{{ old('verified.'.$method) ?? ($expectedCents === 0 ? '0.00' : '') }}" placeholder="0.00" aria-label="Confirmed {{ $label }} in KES" @required($expectedCents !== 0)>
                 @endif</td><td class="number" data-review-difference>{{ $shift->verified_at ? number_format(($confirmedCents-$expectedCents)/100,2) : '—' }}</td></tr>
             @endforeach
             </tbody></table></div>
@@ -76,7 +76,7 @@ document.querySelectorAll('.shift-verify-amount').forEach(input => {
     const row = input.closest('tr'), cell = row.querySelector('[data-review-difference]');
     const update = () => {
         const difference = Math.round(Number(input.value || 0) * 100) - Number(row.dataset.reviewExpected);
-        cell.textContent = input.value === '' ? '—' : (difference/100).toLocaleString('en-KE', {minimumFractionDigits:2, maximumFractionDigits:2});
+        cell.textContent = input.value === '' && Number(row.dataset.reviewExpected) !== 0 ? '—' : (difference/100).toLocaleString('en-KE', {minimumFractionDigits:2, maximumFractionDigits:2});
         cell.style.color = input.value === '' ? '' : difference < 0 ? '#b42318' : difference > 0 ? '#166534' : '';
     };
     input.addEventListener('input', update); update();

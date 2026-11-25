@@ -73,7 +73,7 @@ class CashierShiftController extends Controller
         $this->scope()->findOrFail($shift);
         $rules = ['confirmation' => ['required', 'accepted'], 'verification_notes' => ['nullable', 'string', 'max:1000'],
             'verified' => ['required', 'array:cash,mobile,card,bank,other']];
-        foreach (['cash', 'mobile', 'card', 'bank', 'other'] as $method) $rules['verified.'.$method] = ['required', 'regex:/^\d{1,10}(\.\d{1,2})?$/'];
+        foreach (['cash', 'mobile', 'card', 'bank', 'other'] as $method) $rules['verified.'.$method] = ['nullable', 'regex:/^\d{1,10}(\.\d{1,2})?$/'];
         $data = $request->validate($rules);
         DB::transaction(function () use ($shift, $data) {
             $shift = $this->scope()->whereKey($shift)->lockForUpdate()->firstOrFail();
@@ -81,9 +81,15 @@ class CashierShiftController extends Controller
             if ($shift->verified_at) return;
             if ($shift->status !== 'closed') throw ValidationException::withMessages(['shift' => 'Close the shift before verifying takings.']);
             $totals = [];
-            foreach ($data['verified'] as $method => $amount) $totals[$method] = $this->cents((string) $amount);
             $expected = $shift->payment_totals ?? [];
             $expected['cash'] = (int) $shift->expected_cash_cents;
+            foreach (['cash', 'mobile', 'card', 'bank', 'other'] as $method) {
+                $amount = $data['verified'][$method] ?? null;
+                if ($amount === null && (int) ($expected[$method] ?? 0) !== 0) {
+                    throw ValidationException::withMessages(['verified.'.$method => 'Confirm the received amount for '.$method.'. Enter 0 if none was received.']);
+                }
+                $totals[$method] = $this->cents((string) ($amount ?? '0'));
+            }
             foreach ($totals as $method => $amount) {
                 if ($amount !== (int) ($expected[$method] ?? 0) && blank($data['verification_notes'] ?? null)) {
                     throw ValidationException::withMessages(['verification_notes' => 'Explain the difference between verified amounts and expected takings before verifying.']);
