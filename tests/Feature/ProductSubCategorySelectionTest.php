@@ -103,6 +103,7 @@ class ProductSubCategorySelectionTest extends TestCase
             ->assertRedirect(route('stock-control.index'));
 
         $this->assertSame(2, Product::where('category_id', $subCategory->id)->count());
+        $this->assertEquals(2, \App\Models\ProductStock::sum('quantity'));
 
         $this->actingAs($user)
             ->get(route('reports.index', ['report'=>'stock-as-at']))

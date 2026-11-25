@@ -140,6 +140,7 @@ class DashboardTaxCardTest extends TestCase
 
     private function createSale(User $user, int $productId, int $applyTax): Sale
     {
+        $this->openTestShift($user);
         $this->actingAs($user)
             ->post(route('sale.store'), [
                 'items' => [

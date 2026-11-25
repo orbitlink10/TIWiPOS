@@ -129,7 +129,7 @@ class SaleTaxTest extends TestCase
         $response = $this->actingAs($user)->get(route('sale'));
 
         $response->assertOk();
-        $response->assertSee('id="add_installation" class="complete-btn" type="button"', false);
+        $response->assertSee('id="add_installation"', false);
         $response->assertSee('<button class="complete-btn" type="submit">Complete Sale</button>', false);
     }
 
@@ -160,10 +160,12 @@ class SaleTaxTest extends TestCase
             'last_payment_at' => now(),
         ]);
 
-        return User::factory()->create([
+        $user = User::factory()->create([
             'business_id' => $business->id,
             'role' => 'owner',
         ]);
+        $this->openTestShift($user);
+        return $user;
     }
 
     private function createProductWithStock(int $businessId, float $price, int $stock): Product

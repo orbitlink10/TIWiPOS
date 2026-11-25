@@ -126,6 +126,7 @@ class StockSubCategoryListingTest extends TestCase
         [, , $user] = $this->createActiveTenant();
         $this->actingAs($user)->get('/stock')->assertNotFound();
         $this->get(route('stock-control.index'))->assertRedirect(route('stock-control.periods.index'));
+        $this->get(route('stock-control.periods.index'))->assertOk()->assertSee('Stock periods');
         $this->get(route('home'))->assertOk()->assertSee(route('stock-control.index'), false);
     }
 

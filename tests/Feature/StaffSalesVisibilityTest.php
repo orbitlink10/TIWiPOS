@@ -20,7 +20,7 @@ class StaffSalesVisibilityTest extends TestCase
     public function test_sales_summary_page_and_links_are_removed(): void
     {
         [$owner] = $this->createTenantUsers();
-        $this->actingAs($owner)->get('/summary')->assertNotFound();
+        $this->actingAs($owner)->get('/summary')->assertRedirect('/reports');
         $this->get(route('home'))->assertOk()
             ->assertDontSee('Sales Summary')->assertDontSee("Today's Summary");
         $this->get(route('sales.index'))->assertOk()->assertDontSee('Today Summary');
@@ -103,7 +103,7 @@ class StaffSalesVisibilityTest extends TestCase
         $history->assertSee($staffOneSale->sale_number);
         $history->assertSee($staffTwoSale->sale_number);
 
-        $this->actingAs($owner)->get('/summary')->assertNotFound();
+        $this->actingAs($owner)->get('/summary')->assertRedirect('/reports');
 
         $this->actingAs($owner)
             ->get(route('sale.receipt', $staffTwoSale))
@@ -194,6 +194,7 @@ class StaffSalesVisibilityTest extends TestCase
 
     private function createSaleForUser(User $user, int $productId, string $customerName): Sale
     {
+        $this->openTestShift($user);
         $this->actingAs($user)
             ->post(route('sale.store'), [
                 'items' => [
