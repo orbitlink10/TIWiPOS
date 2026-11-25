@@ -142,7 +142,7 @@ class SupplierController extends Controller
         $supplier = $this->supplier($supplier);
         abort_unless($supplier->is_active && Tenant::branchId(), 422, 'An active supplier and branch are required.');
         $data = $request->validate([
-            'reference' => ['required', 'string', 'max:100', Rule::unique('supplier_invoices')->where('business_id', Tenant::businessId())->where('supplier_id', $supplier->id)],
+            'reference' => ['nullable', 'string', 'max:100', Rule::unique('supplier_invoices')->where('business_id', Tenant::businessId())->where('supplier_id', $supplier->id)],
             'supplied_at' => 'required|date|before_or_equal:today',
             'terms' => 'required|in:cash,credit',
             'due_at' => 'nullable|required_if:terms,credit|date|after_or_equal:supplied_at',
@@ -164,7 +164,7 @@ class SupplierController extends Controller
         $invoice = DB::transaction(function () use ($data, $supplier, $total, $paid) {
             $invoice = SupplierInvoice::create([
                 'business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'supplier_id' => $supplier->id,
-                'reference' => $data['reference'], 'supplied_at' => $data['supplied_at'], 'due_at' => $data['terms'] === 'credit' ? $data['due_at'] : null,
+                'reference' => $data['reference'] ?? null, 'supplied_at' => $data['supplied_at'], 'due_at' => $data['terms'] === 'credit' ? $data['due_at'] : null,
                 'terms' => $data['terms'], 'total_cents' => $total, 'stock_received' => false, 'notes' => $data['notes'] ?? null, 'user_id' => auth()->id(),
             ]);
             foreach ($data['items'] as $item) {

@@ -25,7 +25,7 @@ main{min-width:0}
         @foreach(collect($reports)->groupBy(fn($item) => $item[1], preserveKeys: true) as $group => $items)
             <h2>{{ $group }}</h2>
             @foreach($items as $key => $item)
-                <a href="{{ route('reports.index', ['report'=>$key, 'branch_id'=>$branchFilter, 'from'=>$from, 'to'=>$to]) }}" class="{{ $report === $key ? 'active' : '' }}" @if($report === $key) aria-current="page" @endif>{{ $item[0] }}</a>
+                <a href="{{ route('reports.index', ['report'=>$key, 'branch_id'=>$branchFilter, 'as_at'=>$asAt, 'from'=>$from, 'to'=>$to]) }}" class="{{ $report === $key ? 'active' : '' }}" @if($report === $key) aria-current="page" @endif>{{ $item[0] }}</a>
             @endforeach
         @endforeach
         @if(auth()->user()->canAccessAbility('view_stock'))<h2>Stock Control</h2><a href="{{ route('stock-control.variance') }}">Stock variance report</a>@endif
@@ -38,21 +38,23 @@ main{min-width:0}
             <div class="report-heading">
                 <div><h2>{{ $reports[$report][0] }}</h2><p class="report-note">{{ $reports[$report][2] }}</p></div>
                 <div class="report-tools">
-                    <a class="report-button" href="{{ route('reports.index', ['report'=>$report, 'branch_id'=>$branchFilter, 'from'=>$from, 'to'=>$to, 'q'=>$search, 'format'=>'csv']) }}">Export CSV</a>
+                    <a class="report-button" href="{{ route('reports.index', ['report'=>$report, 'branch_id'=>$branchFilter, 'as_at'=>$asAt, 'from'=>$from, 'to'=>$to, 'q'=>$search, 'format'=>'csv']) }}">Export CSV</a>
                     <button class="report-button" type="button" onclick="window.print()">Print page</button>
                 </div>
             </div>
-            <p class="report-note">{{ $currentStock ? 'Current stock snapshot · '.now()->format('d M Y, H:i') : \Carbon\Carbon::parse($from)->format('d M Y').' – '.\Carbon\Carbon::parse($to)->format('d M Y') }} · {{ $reportBranchName }}@if(!auth()->user()->canViewAllSales() && in_array($report, ['sales','daily-sales','product-sales','payments'])) · Your sales only @endif</p>
+            <p class="report-note">{{ $report === 'stock-as-at' ? 'Stock as of '.\Carbon\Carbon::parse($asAt)->format('d M Y').' � End of day ('.\Carbon\Carbon::parse($asAt, $reportTimezone)->format('T').')' : ($currentStock ? 'Current stock snapshot · '.now()->format('d M Y, H:i') : \Carbon\Carbon::parse($from)->format('d M Y').' – '.\Carbon\Carbon::parse($to)->format('d M Y')) }} · {{ $reportBranchName }}@if(!auth()->user()->canViewAllSales() && in_array($report, ['sales','daily-sales','product-sales','payments'])) · Your sales only @endif</p>
             <form class="report-filters" action="{{ route('reports.index') }}" method="GET">
                 <input type="hidden" name="report" value="{{ $report }}">
                 <label>Branch<select name="branch_id"><option value="all" @selected($branchFilter === 'all')>All branches</option>@foreach($branches as $branch)<option value="{{ $branch->id }}" @selected((string) $branchFilter === (string) $branch->id)>{{ $branch->name }}</option>@endforeach</select></label>
-                @if(!$currentStock)
+                @if($report === 'stock-as-at')
+                    <label>As of date<input type="date" name="as_at" value="{{ $asAt }}" max="{{ $reportToday }}" required></label>
+                @elseif(!$currentStock)
                     <label>From<input type="date" name="from" value="{{ $from }}" required></label>
                     <label>To<input type="date" name="to" value="{{ $to }}" required></label>
                 @endif
                 @if(!in_array($report, ['daily-sales','payments']))<label class="report-query">Search<input type="search" name="q" value="{{ $search }}" maxlength="100" placeholder="Search this report…"></label>@endif
                 <button type="submit" class="report-button primary">Apply filters</button>
-                <a class="report-button" href="{{ route('reports.index', ['report'=>$report, 'branch_id'=>$branchFilter]) }}">Reset</a>
+                <a class="report-button" href="{{ route('reports.index', ['report'=>$report, 'branch_id'=>$branchFilter, 'as_at'=>$asAt]) }}">Reset</a>
             </form>
             <p class="print-context">Printed {{ now()->format('d M Y H:i') }} · Page {{ $rows->currentPage() }} of {{ $rows->lastPage() }} · {{ auth()->user()->business->name ?? config('app.name') }}</p>
         </section>

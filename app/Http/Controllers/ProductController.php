@@ -167,6 +167,25 @@ class ProductController extends Controller
         return view('pages.product_edit', compact('product', 'categories', 'suppliers', 'stockQuantity', 'stockLocation'));
     }
 
+    private function writeProductStock(Product $product, int $quantity, ?int $branchId, string $location, $effectiveAt, bool $opening = false): void
+    {
+        $stock = ProductStock::firstOrCreate(
+            ['product_id'=>$product->id, 'location'=>$location, 'branch_id'=>$branchId],
+            ['business_id'=>$product->business_id, 'quantity'=>0]
+        );
+        $stock = ProductStock::whereKey($stock->id)->lockForUpdate()->firstOrFail();
+        $before = (int) $stock->quantity;
+        if ($before === $quantity) return;
+        $stock->update(['quantity'=>$quantity]);
+        StockMovement::create([
+            'business_id'=>$product->business_id, 'branch_id'=>$branchId, 'product_id'=>$product->id,
+            'user_id'=>auth()->id(), 'location'=>$location, 'type'=>'adjustment',
+            'quantity_change'=>$quantity-$before, 'quantity_before'=>$before, 'quantity_after'=>$quantity,
+            'reference_type'=>$opening ? 'product_opening' : 'product_edit', 'reference_id'=>$product->id,
+            'effective_at'=>$effectiveAt, 'note'=>$opening ? 'Opening product stock' : 'Stock changed from product edit',
+        ]);
+    }
+
     public function store(Request $request)
     {
         $businessId = Tenant::businessId();
@@ -200,35 +219,27 @@ class ProductController extends Controller
 
         $branchId = Tenant::branchId();
 
-        $product = Product::create([
-            'name' => $data['name'],
-            'sku' => 'SKU-'.Str::ulid(),
-            'serial_number' => $data['serial_number'] ?? null,
-            'barcode' => $data['barcode'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
-            'supplier_id' => $data['supplier_id'] ?? null,
-            'cost' => $data['cost'] ?? 0,
-            'price' => $data['price'],
-            'stock_alert' => $data['stock_alert'] ?? 0,
-            'recorded_at' => $data['recorded_at'] ?? now()->toDateString(),
-            'is_active' => $request->boolean('is_active'),
-            'description' => $data['description'] ?? null,
-        ]);
+        DB::transaction(function () use ($data, $request, $branchId) {
+            $product = Product::create([
+                'name' => $data['name'],
+                'sku' => 'SKU-'.Str::ulid(),
+                'serial_number' => $data['serial_number'] ?? null,
+                'barcode' => $data['barcode'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'cost' => $data['cost'] ?? 0,
+                'price' => $data['price'],
+                'stock_alert' => $data['stock_alert'] ?? 0,
+                'recorded_at' => $data['recorded_at'] ?? now()->toDateString(),
+                'is_active' => $request->boolean('is_active'),
+                'description' => $data['description'] ?? null,
+            ]);
 
-        // New serialized products should count as stock by default unless user sets a value.
-        $initialStock = array_key_exists('stock', $data) ? (int) $data['stock'] : 1;
-        $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
-        ProductStock::updateOrCreate(
-            [
-                'product_id' => $product->id,
-                'location' => $stockLocation,
-                'branch_id' => $branchId,
-            ],
-            [
-                'quantity' => $initialStock,
-                'business_id' => $product->business_id,
-            ]
-        );
+            // New serialized products should count as stock by default unless user sets a value.
+            $initialStock = array_key_exists('stock', $data) ? (int) $data['stock'] : 1;
+            $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
+            $this->writeProductStock($product, $initialStock, $branchId, $stockLocation, $product->recorded_at ?? now(), true);
+        }, 3);
 
         return redirect()->route('products')->with('status', 'Product added successfully.');
     }
@@ -267,35 +278,27 @@ class ProductController extends Controller
 
         $branchId = Tenant::branchId();
 
-        $product->update([
-            'name' => $data['name'],
-            'sku' => $data['sku'],
-            'serial_number' => $data['serial_number'] ?? null,
-            'barcode' => $data['barcode'] ?? null,
-            'category_id' => $data['category_id'] ?? null,
-            'supplier_id' => $data['supplier_id'] ?? null,
-            'cost' => $data['cost'] ?? 0,
-            'price' => $data['price'],
-            'stock_alert' => $data['stock_alert'] ?? 0,
-            'recorded_at' => $data['recorded_at'] ?? null,
-            'is_active' => $request->boolean('is_active'),
-            'description' => $data['description'] ?? null,
-        ]);
+        DB::transaction(function () use ($data, $request, $branchId, $product) {
+            $product->update([
+                'name' => $data['name'],
+                'sku' => $data['sku'],
+                'serial_number' => $data['serial_number'] ?? null,
+                'barcode' => $data['barcode'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'cost' => $data['cost'] ?? 0,
+                'price' => $data['price'],
+                'stock_alert' => $data['stock_alert'] ?? 0,
+                'recorded_at' => $data['recorded_at'] ?? null,
+                'is_active' => $request->boolean('is_active'),
+                'description' => $data['description'] ?? null,
+            ]);
 
-        if (array_key_exists('stock', $data)) {
-            $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
-            ProductStock::updateOrCreate(
-                [
-                    'product_id' => $product->id,
-                    'location' => $stockLocation,
-                    'branch_id' => $branchId,
-                ],
-                [
-                    'quantity' => (int) $data['stock'],
-                    'business_id' => $product->business_id,
-                ]
-            );
-        }
+            if (array_key_exists('stock', $data)) {
+                $stockLocation = $this->normalizeLocation($data['stock_location'] ?? null);
+                $this->writeProductStock($product, (int) $data['stock'], $branchId, $stockLocation, now());
+            }
+        }, 3);
 
         return redirect()->route('products.show', $product)->with('status', 'Product updated successfully.');
     }

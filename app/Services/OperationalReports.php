@@ -33,6 +33,7 @@ class OperationalReports
         if ($user->canAccessAbility('view_stock')) {
             $reports += [
                 'price-list' => ['Product price list', 'Inventory', 'Current selling prices and product categories.'],
+                'stock-as-at' => ['Stock as of date', 'Inventory', 'End-of-day quantities reconstructed from effective stock movements. Edited sales restate their original date. Legacy opening balances may be inferred; unlogged historic changes cannot be recovered. Values use current catalogue cost, not historical cost.'],
                 'stock-vendor' => ['Stock by supplier', 'Inventory', 'Current stock by product and current supplier assignment, including inactive products.'],
                 'stock-supplier-summary' => ['Supplier stock summary', 'Inventory', 'Current quantities by supplier, including inactive products.'],
                 'stock-period-counts' => ['Completed stock counts', 'Inventory', 'Saved opening, expected and counted quantities from completed stock periods.'],
@@ -185,6 +186,36 @@ class OperationalReports
                 if ($canViewCost) {
                     $query->selectRaw('SUM(l.subtotal - l.quantity * COALESCE(l.unit_cost,p.cost,0)) as gross_profit');
                     $columns['gross_profit'] = $money('Gross product profit'); $metrics['gross_profit'] = 'Gross product profit';
+                }
+                break;
+            case 'stock-as-at':
+                $cutoff = Carbon::parse($this->to, config('app.reporting_timezone', 'Africa/Nairobi'))
+                    ->addDay()->startOfDay()->setTimezone(config('app.timezone', 'UTC'));
+                $movements = $this->scoped('stock_movements','m')
+                    ->select('m.product_id','m.branch_id','m.location')
+                    ->selectRaw('SUM(m.quantity_change) as total_change, SUM(CASE WHEN COALESCE(m.effective_at,m.created_at) < ? THEN m.quantity_change ELSE 0 END) as dated_change, MIN(COALESCE(m.effective_at,m.created_at)) as first_at', [$cutoff])
+                    ->groupBy('m.product_id','m.branch_id','m.location');
+                $positions = $this->scoped('product_stocks','st')->leftJoinSub($movements,'m',function ($join) {
+                    $join->on('m.product_id','=','st.product_id')->on('m.location','=','st.location')
+                        ->whereRaw('(m.branch_id=st.branch_id OR (m.branch_id IS NULL AND st.branch_id IS NULL))');
+                })->select('st.product_id')
+                    ->selectRaw('SUM(COALESCE(m.dated_change,0) + CASE WHEN st.created_at < ? THEN st.quantity-COALESCE(m.total_change,0) ELSE 0 END) as quantity,
+                        SUM(CASE WHEN st.created_at < ? AND st.quantity-COALESCE(m.total_change,0) != 0 THEN 1 ELSE 0 END) as inferred_positions,
+                        SUM(CASE WHEN st.created_at < ? OR m.first_at < ? THEN 1 ELSE 0 END) as known_positions', [$cutoff,$cutoff,$cutoff,$cutoff])
+                    ->groupBy('st.product_id');
+                $query = DB::table('products as p')->where('p.business_id',Tenant::businessId())->joinSub($positions,'pos','pos.product_id','=','p.id')
+                    ->leftJoin('categories as c','c.id','=','p.category_id')->where('pos.known_positions','>',0)
+                    ->select('p.name','p.sku','c.name as category','pos.quantity','pos.inferred_positions')
+                    ->selectRaw("CASE WHEN pos.inferred_positions > 0 THEN 'Inferred legacy opening' ELSE 'Recorded movements' END as history")
+                    ->orderBy('p.name')->orderBy('p.id');
+                $this->search($query,['p.name','p.sku','c.name']);
+                $columns=['name'=>$text('Product'),'sku'=>$text('SKU'),'category'=>$text('Current category'),'quantity'=>$count('Units as of date'),'history'=>$text('Opening balance source')];
+                $metrics=['quantity'=>'Units as of date','inferred_positions'=>'Positions with inferred openings'];
+                $columns['inferred_positions']=$count('Inferred opening positions');
+                if ($canViewCost) {
+                    $query->addSelect('p.cost')->selectRaw('pos.quantity*COALESCE(p.cost,0) as stock_value');
+                    $columns+=['cost'=>$money('Current unit cost'),'stock_value'=>$money('Value at current cost')];
+                    $metrics['stock_value']='Value at current cost';
                 }
                 break;
             case 'price-list':

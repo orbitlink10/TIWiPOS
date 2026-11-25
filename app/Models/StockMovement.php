@@ -24,7 +24,28 @@ class StockMovement extends Model
         'reference_type',
         'reference_id',
         'note',
+        'effective_at',
     ];
+
+    protected $casts = ['effective_at' => 'datetime'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (StockMovement $movement) {
+            if ($movement->effective_at) return;
+            $source = match ($movement->reference_type) {
+                'sale' => ['sales', 'created_at'],
+                'purchase_receipt' => ['purchase_receipts', 'received_at'],
+                'stock_adjustment' => ['stock_adjustments', 'adjusted_at'],
+                default => null,
+            };
+            $effectiveAt = $source && $movement->reference_id
+                ? \Illuminate\Support\Facades\DB::table($source[0])->where('business_id', $movement->business_id ?? auth()->user()?->business_id)
+                    ->where('id', $movement->reference_id)->value($source[1])
+                : null;
+            $movement->effective_at = $effectiveAt ?? $movement->created_at ?? now();
+        });
+    }
 
     public function product()
     {

@@ -3,11 +3,11 @@
     <input type="hidden" name="redirect_to" value="purchases.index">
     <div class="np-main">
         <section class="np-card">
-            <h2>Supplier & invoice</h2><p class="supplier-muted">Choose a supplier and enter the invoice or delivery reference.</p>
+            <h2>Supplier & invoice</h2><p class="supplier-muted">Choose a supplier. The invoice / delivery number is generated automatically.</p>
             <div class="np-grid">
                 <label class="supplier-field np-wide"><span>Supplier *</span><select name="supplier_id" id="purchase-supplier" required><option value="">Select supplier…</option>@foreach($suppliers as $choice)<option value="{{ $choice->id }}" @selected((string)old('supplier_id',$supplier?->id)===(string)$choice->id)>{{ $choice->name }}{{ $choice->phone ? ' · '.$choice->phone : '' }}</option>@endforeach</select></label>
                 <label class="supplier-field"><span>Purchase date *</span><input name="supplied_at" type="date" value="{{ old('supplied_at',today()->toDateString()) }}" max="{{ today()->toDateString() }}" required></label>
-                <label class="supplier-field"><span>Invoice / delivery no. *</span><input name="reference" value="{{ old('reference') }}" maxlength="100" placeholder="Supplier reference" required></label>
+                <label class="supplier-field"><span>Invoice / delivery no.</span><input value="Auto-generated on save" readonly aria-describedby="purchase-reference-hint"><small id="purchase-reference-hint" class="np-hint">Assigned when you save this purchase.</small></label>
                 <label class="supplier-field"><span>Payment terms</span><select name="terms" id="purchase-terms"><option value="credit" @selected(old('terms','credit')==='credit')>Credit / pay later</option><option value="cash" @selected(old('terms')==='cash')>Fully paid</option></select></label>
                 <label class="supplier-field" id="purchase-due-field"><span>Due date *</span><input name="due_at" id="purchase-due" type="date" value="{{ old('due_at') }}"></label>
             </div>

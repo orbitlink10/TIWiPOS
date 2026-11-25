@@ -106,7 +106,9 @@ class ProductSubCategorySelectionTest extends TestCase
         $this->assertEquals(2, \App\Models\ProductStock::sum('quantity'));
 
         $this->actingAs($user)
-            ->get(route('stock-control.index'))->assertRedirect(route('stock-control.periods.index'));
+            ->get(route('reports.index', ['report'=>'stock-as-at']))
+            ->assertOk()
+            ->assertViewHas('totals', fn ($totals) => (int) $totals->quantity === 2);
     }
 
     private function createCategory(Business $business, string $name, ?int $parentId): Category

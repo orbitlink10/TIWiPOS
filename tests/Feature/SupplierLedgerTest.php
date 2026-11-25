@@ -17,6 +17,28 @@ class SupplierLedgerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_new_purchases_generate_unique_references_without_manual_entry(): void
+    {
+        [, , , $supplier, $product] = $this->setupSupplier();
+        $this->get(route('purchases.create'))->assertOk()->assertSee('Auto-generated on save')
+            ->assertDontSee('name="reference"', false);
+        $data = $this->supplyData($product);
+        unset($data['reference']);
+        $data['supplier_id'] = $supplier->id;
+        $data['redirect_to'] = 'purchases.index';
+        $this->post(route('purchases.store'), $data)->assertSessionHasNoErrors()->assertRedirect();
+        $first = SupplierInvoice::sole();
+        $this->assertMatchesRegularExpression('/^PUR-[0-9A-Z]{26}$/', $first->reference);
+        $this->get(route('purchases.show', $first))->assertOk()->assertSee($first->reference);
+        $data['reference'] = '';
+        $this->post(route('purchases.store'), $data)->assertSessionHasNoErrors()->assertRedirect();
+        $second = SupplierInvoice::latest('id')->firstOrFail();
+        $this->assertNotSame($first->reference, $second->reference);
+        $this->assertMatchesRegularExpression('/^PUR-[0-9A-Z]{26}$/', $second->reference);
+        $this->assertDatabaseCount('supplier_invoices', 2);
+        $this->assertDatabaseCount('product_stocks', 0);
+    }
+
     private function setupSupplier(): array
     {
         [$business, $branch, $user] = $this->createActiveTenant();
@@ -40,17 +62,17 @@ class SupplierLedgerTest extends TestCase
         $data = $this->supplyData($product);
         $this->post(route('suppliers.supply', $supplier->id), $data)->assertSessionHasNoErrors();
         $invoice = SupplierInvoice::firstOrFail();
-        $item = $invoice->items()->sole();
-        $this->assertDatabaseCount('product_stocks', 0);
-        $this->post(route('purchases.receive.store', $invoice), [
-            'receipt_token'=>(string)\Illuminate\Support\Str::uuid(), 'received_at'=>today()->toDateString(),
-            'lines'=>[$item->id=>['quantity'=>2]],
-        ])->assertSessionHasNoErrors()->assertRedirect();
         $this->assertEquals(20100, $invoice->total_cents);
         $this->assertEquals(15075, $invoice->balance_cents);
         $this->assertSame('Overdue', $invoice->status);
+        $this->assertDatabaseCount('product_stocks', 0);
+        $this->post(route('purchases.receive.store', $invoice), [
+            'receipt_token' => (string) \Illuminate\Support\Str::uuid(),
+            'received_at' => today()->toDateString(),
+            'lines' => [$invoice->items()->sole()->id => ['quantity' => 2, 'product_id' => $product->id]],
+        ])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('product_stocks', ['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 2]);
-        $this->assertDatabaseHas('stock_movements', ['reference_type' => 'purchase_receipt', 'quantity_change' => 2]);
+        $this->assertDatabaseHas('stock_movements', ['reference_type' => 'purchase_receipt', 'reference_id' => $invoice->receipts()->sole()->id, 'quantity_change' => 2]);
         $this->get(route('suppliers.index'))->assertOk()->assertSee('Test Supplier')->assertSee('150.75');
         $this->get(route('suppliers.show', $supplier->id))->assertOk()->assertSee('INV-001')->assertSee('Router');
         $payment = ['amount' => '150.76', 'paid_at' => today()->toDateString(), 'method' => 'bank'];
@@ -113,7 +135,7 @@ class SupplierLedgerTest extends TestCase
         [, , , $supplier, $product] = $this->setupSupplier();
         $data = $this->supplyData($product);
         $product->delete();
-        $this->get(route('purchases.create', ['supplier_id'=>$supplier->id]))->assertOk()->assertSee('supply-form', false);
+        $this->get(route('purchases.create', ['supplier_id' => $supplier->id]))->assertOk()->assertSee('supply-form', false);
         $data['items'] = [['product_search' => 'RB4001', 'quantity' => 3, 'unit_cost' => '25000']];
         $this->post(route('suppliers.supply', $supplier->id), $data + ['receive_stock' => 1])->assertSessionHasErrors('receive_stock');
         $this->assertDatabaseCount('supplier_invoices', 0);
