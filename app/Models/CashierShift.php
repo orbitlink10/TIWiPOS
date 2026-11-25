@@ -8,7 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class CashierShift extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['opened_at' => 'datetime', 'closed_at' => 'datetime', 'payment_totals' => 'array'];
+    protected $casts = ['opened_at' => 'datetime', 'closed_at' => 'datetime', 'stock_locked_at' => 'datetime', 'payment_totals' => 'array'];
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status === 'open' ? 'Open' : ($this->stock_locked_at ? 'Locked' : 'Pending stock count');
+    }
+
+    public function stockPeriod()
+    {
+        return $this->belongsTo(StockPeriod::class);
+    }
 
     public static function currentQuery()
     {

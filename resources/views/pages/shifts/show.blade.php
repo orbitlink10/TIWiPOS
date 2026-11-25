@@ -2,7 +2,7 @@
 @section('title', 'Shift #'.$shift->id)
 @push('styles')@include('pages.shifts.style')@endpush
 @section('header')
-<div class="header-row"><div><h1>Shift #{{ $shift->id }}</h1><p class="shift-intro">{{ $shift->user->name ?? 'Former user' }} &middot; {{ $currentBranch->name ?? 'Current branch' }} &middot; {{ ucfirst($shift->status) }}</p></div><div class="shift-actions"><a class="shift-button" href="{{ route('shifts.index') }}">&larr; Shifts</a>@if($shift->status==='open' && (int)$shift->user_id===(int)auth()->id())<a class="shift-button primary" href="{{ route('sale') }}">Open POS</a>@endif @if(auth()->user()->canAccessAbility('view_stock'))<a class="shift-button" href="{{ route('stock-control.index') }}">Stock Control</a>@endif</div></div>
+<div class="header-row"><div><h1>Shift #{{ $shift->id }}</h1><p class="shift-intro">{{ $shift->user->name ?? 'Former user' }} &middot; {{ $currentBranch->name ?? 'Current branch' }} &middot; {{ $shift->status_label }}</p></div><div class="shift-actions"><a class="shift-button" href="{{ route('shifts.index') }}">&larr; Shifts</a>@if($shift->status==='open' && (int)$shift->user_id===(int)auth()->id())<a class="shift-button primary" href="{{ route('sale') }}">Open POS</a>@endif @if(auth()->user()->canAccessAbility('view_stock'))<a class="shift-button" href="{{ route('stock-control.index') }}">Stock Control</a>@endif</div></div>
 @endsection
 @section('content')
 <div class="shift-page">
@@ -17,8 +17,9 @@
             @if($shift->closing_notes)<h3 style="font-size:13px">Closing notes</h3><p class="shift-note">{{ $shift->closing_notes }}</p>@endif
         </section>
         <section class="shift-card shift-close">
+            @if($shift->stock_period_id && auth()->user()->canAccessAbility('view_stock'))<p><a class="shift-button" href="{{ route('stock-control.periods.show',$shift->stock_period_id) }}">View completed stock period</a></p>@endif
             @if($shift->status==='open')
-            <h2>Close shift</h2><p class="shift-muted">Count the cash in your till. Closing locks this shift's sales and saves the cash difference.</p>
+            <h2>Close shift</h2><p class="shift-muted">Count the cash in your till. Closing saves cash totals and sends this shift to Pending stock count. Completing its stock period locks the shift.</p>
             <form method="POST" action="{{ route('shifts.close',$shift->id) }}" id="close-shift-form">@csrf
                 <input type="hidden" name="expected_sales_count" value="{{ $summary['sales_count'] }}"><input type="hidden" name="expected_cash_cents" value="{{ $summary['expected_cash_cents'] }}">
                 <label class="shift-field">Counted cash (KES)<input name="counted_cash" id="counted-cash" type="number" min="0" max="9999999999.99" step="0.01" value="{{ old('counted_cash') }}" required></label>
@@ -28,7 +29,7 @@
                 <button class="shift-button danger" type="submit">Close shift</button>
             </form>
             @else
-            <h2>Shift closed</h2><p class="shift-muted">Counted cash</p><div class="shift-difference">KES {{ number_format($shift->counted_cash_cents/100,2) }}</div><p class="shift-muted">{{ $shift->cash_variance_cents < 0 ? 'Cash shortage' : ($shift->cash_variance_cents > 0 ? 'Cash overage' : 'Cash balanced') }}</p><div class="shift-difference {{ $shift->cash_variance_cents<0 ? 'short' : ($shift->cash_variance_cents>0 ? 'over' : '') }}">KES {{ number_format($shift->cash_variance_cents/100,2) }}</div><p class="shift-muted">Closed shifts are kept as a permanent record.</p>
+            <h2>{{ $shift->status_label }}</h2><p class="shift-muted">Counted cash</p><div class="shift-difference">KES {{ number_format($shift->counted_cash_cents/100,2) }}</div><p class="shift-muted">{{ $shift->cash_variance_cents < 0 ? 'Cash shortage' : ($shift->cash_variance_cents > 0 ? 'Cash overage' : 'Cash balanced') }}</p><div class="shift-difference {{ $shift->cash_variance_cents<0 ? 'short' : ($shift->cash_variance_cents>0 ? 'over' : '') }}">KES {{ number_format($shift->cash_variance_cents/100,2) }}</div><p class="shift-muted">@if($shift->stock_locked_at)Stock count completed. Locked {{ $shift->stock_locked_at->format('d M Y H:i') }}.@else Cash closing is complete. Awaiting stock count before the shift is locked.@endif</p>
             @endif
         </section>
     </div>
