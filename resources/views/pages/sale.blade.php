@@ -529,7 +529,7 @@
         }
     }
 </style>
-<link rel="stylesheet" href="{{ asset('css/pos-terminal.css') }}?v={{ filemtime(public_path('css/pos-terminal.css')) }}">
+<style>@include('partials.pos-terminal-styles')</style>
 @endpush
 
 @section('header')
