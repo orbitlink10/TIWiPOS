@@ -41,6 +41,7 @@ class FeatureGate
             'logout',
             'stock-control.index',
             'stock-control.periods.index',
+            'stock-control.variance',
             'stock-control.periods.store',
             'stock-control.periods.show',
             'stock-control.periods.save',

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockPeriod extends Model
 {
+    public function branch() { return $this->belongsTo(Branch::class); }
     public function account() { return $this->belongsTo(User::class, 'user_id'); }
     public function shifts() { return $this->hasMany(CashierShift::class); }
     protected $guarded = ['id'];

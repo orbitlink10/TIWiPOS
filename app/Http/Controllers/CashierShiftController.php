@@ -31,9 +31,9 @@ class CashierShiftController extends Controller
         $currentSummary = $currentShift?->summary();
         $otherShift = CashierShift::where('active_user_id', auth()->id())->with('branch')->first();
         $shifts = $query->when($data['status'] ?? null, function ($query, $status) {
-            if ($status === 'pending_stock_count') return $query->where('status', 'closed')->whereNull('stock_locked_at');
+            if ($status === 'pending_stock_count') return $query->where('status', 'closed')->whereNull('verified_at');
             if ($status === 'locked') return $query->whereNotNull('stock_locked_at');
-            if ($status === 'pending_verification') return $query->where('status', 'closed')->whereNotNull('stock_locked_at')->whereNull('verified_at');
+            if ($status === 'pending_verification') return $query->where('status', 'closed')->whereNull('verified_at');
             if ($status === 'verified') return $query->whereNotNull('verified_at');
             return $query->where('status', $status);
         })
@@ -79,7 +79,7 @@ class CashierShiftController extends Controller
             $shift = $this->scope()->whereKey($shift)->lockForUpdate()->firstOrFail();
             abort_if(in_array((int) auth()->id(), [(int) $shift->user_id, (int) $shift->closed_by], true), 403, 'Another manager or admin must verify this shift.');
             if ($shift->verified_at) return;
-            if ($shift->status !== 'closed' || !$shift->stock_locked_at) throw ValidationException::withMessages(['shift' => 'Close the shift and complete its stock count before verifying takings.']);
+            if ($shift->status !== 'closed') throw ValidationException::withMessages(['shift' => 'Close the shift before verifying takings.']);
             $totals = [];
             foreach ($data['verified'] as $method => $amount) $totals[$method] = $this->cents((string) $amount);
             $expected = $shift->payment_totals ?? [];
@@ -114,6 +114,6 @@ class CashierShiftController extends Controller
                 'cash_variance_cents' => $counted - $summary['expected_cash_cents'], 'sales_total_cents' => $summary['sales_total_cents'],
                 'sales_count' => $summary['sales_count'], 'payment_totals' => $summary['payments'], 'closing_notes' => $data['closing_notes'] ?? null]);
         }, 3);
-        return redirect()->route('shifts.show', $shift)->with('status', 'Cash totals saved. This shift is pending stock count and will be locked when its stock period is completed.');
+        return redirect()->route('shifts.show', $shift)->with('status', 'Cash totals saved. This shift is pending manager or admin verification.');
     }
 }

@@ -25,6 +25,7 @@ main{min-width:0}
                 <a href="{{ route('reports.index', ['report'=>$key, 'from'=>$from, 'to'=>$to]) }}" class="{{ $report === $key ? 'active' : '' }}" @if($report === $key) aria-current="page" @endif>{{ $item[0] }}</a>
             @endforeach
         @endforeach
+        @if(auth()->user()->canAccessAbility('view_stock'))<h2>Stock Control</h2><a href="{{ route('stock-control.variance') }}">Stock variance report</a>@endif
         </div>
         <p id="no_reports" class="report-note" hidden>No matching reports.</p>
     </aside>

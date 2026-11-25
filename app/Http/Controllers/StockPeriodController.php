@@ -2,39 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Branch, CashierShift, Product, ProductStock, StockAdjustment, StockMovement, StockPeriod, User};
+use App\Models\{Branch, Product, ProductStock, StockAdjustment, StockMovement, StockPeriod};
 use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class StockPeriodController extends Controller
 {
-    private function accountShifts($userId, $from, $to)
-    {
-        return CashierShift::where('business_id', Tenant::businessId())->where('branch_id', Tenant::branchId())
-            ->where('user_id', $userId)->where('opened_at', '>=', $from.' 00:00:00')->where('opened_at', '<=', $to.' 23:59:59');
-    }
-
-    private function pendingShifts($userId, $from, $to)
-    {
-        // Serialize against opening/closing a shift for this account.
-        User::where('business_id', Tenant::businessId())->whereKey($userId)->lockForUpdate()->firstOrFail();
-        $shifts = $this->accountShifts($userId, $from, $to)->orderBy('id')->lockForUpdate()->get();
-        if ($shifts->contains(fn ($shift) => $shift->status === 'open')) {
-            throw ValidationException::withMessages(['user_id' => 'Close this account’s open shifts in the selected dates before completing a stock count.']);
-        }
-        $pending = $shifts->filter(fn ($shift) => $shift->status === 'closed' && !$shift->stock_locked_at);
-        if ($pending->isEmpty()) throw ValidationException::withMessages(['user_id' => 'This account has no shifts pending stock count in the selected dates. Dates refer to when shifts opened.']);
-        return $pending;
-    }
-
     private function periods()
     {
         abort_unless(Tenant::businessId() && Tenant::branchId(), 403, 'A business and branch are required.');
         return StockPeriod::where('business_id', Tenant::businessId())->where('branch_id', Tenant::branchId());
+    }
+
+    public function variance(Request $request)
+    {
+        $this->periods();
+        $data = $request->validate(['from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('from') ? ['after_or_equal:from'] : [])],
+            'q' => ['nullable', 'string', 'max:100'], 'direction' => ['nullable', 'in:changed,shortage,surplus,balanced,all'], 'period' => ['nullable', 'integer', 'min:1']]);
+        $selectedPeriod = !empty($data['period']) ? $this->periods()->findOrFail($data['period']) : null;
+        $query = DB::table('stock_period_lines as lines')->join('stock_periods as periods', 'periods.id', '=', 'lines.stock_period_id')
+            ->where('periods.business_id', Tenant::businessId())->where('periods.branch_id', Tenant::branchId())->where('periods.status', 'closed');
+        if ($selectedPeriod) $query->where('periods.id', $selectedPeriod->id);
+        if (!empty($data['from'])) $query->where('periods.ends_on', '>=', $data['from']);
+        if (!empty($data['to'])) $query->where('periods.ends_on', '<=', $data['to']);
+        $search = trim($data['q'] ?? '');
+        if ($search !== '') $query->where(fn ($q) => $q->where('lines.product_name', 'like', '%'.$search.'%')->orWhere('lines.sku', 'like', '%'.$search.'%'));
+        $direction = $data['direction'] ?? 'changed';
+        if ($direction === 'shortage') $query->where('lines.variance', '<', 0);
+        elseif ($direction === 'surplus') $query->where('lines.variance', '>', 0);
+        elseif ($direction === 'balanced') $query->where('lines.variance', 0);
+        elseif ($direction === 'changed') $query->where('lines.variance', '!=', 0);
+        $totals = (clone $query)->selectRaw('COUNT(*) as items, COALESCE(SUM(CASE WHEN lines.variance < 0 THEN -lines.variance ELSE 0 END),0) as shortage, COALESCE(SUM(CASE WHEN lines.variance > 0 THEN lines.variance ELSE 0 END),0) as surplus, COALESCE(SUM(lines.variance),0) as net_units, COALESCE(SUM(lines.variance * lines.unit_cost),0) as net_value, COALESCE(SUM(CASE WHEN lines.variance < 0 THEN -lines.variance * lines.unit_cost ELSE 0 END),0) as shortage_value, COALESCE(SUM(CASE WHEN lines.variance > 0 THEN lines.variance * lines.unit_cost ELSE 0 END),0) as surplus_value')->first();
+        $rows = $query->select('lines.*', 'periods.ends_on', 'periods.closed_at', 'periods.location')->orderByDesc('periods.closed_at')->orderBy('lines.product_name')->orderBy('lines.id')->paginate(50)->withQueryString();
+        return view('pages.stock_control.variance', compact('rows', 'totals', 'direction', 'search', 'selectedPeriod'));
     }
 
     private function stock($period, $ids, bool $lock = false)
@@ -66,12 +69,11 @@ class StockPeriodController extends Controller
                 $query->where('notes', 'like', '%'.$search.'%');
                 $number = preg_replace('/^SP-0*/i', '', $search);
                 if (ctype_digit($number)) $query->orWhere('id', (int) $number);
-            }))->with(['opener:id,name', 'account:id,name', 'category:id,name', 'shift:id,user_id'])->withCount('lines')
+            }))->with(['opener:id,name', 'category:id,name', 'branch:id,name'])->withCount('lines')
             ->withCount(['lines as counted_lines_count' => fn ($query) => $query->whereNotNull('counted_quantity')])
             ->orderByDesc('id')->paginate(20)->withQueryString();
         $locations = ProductStock::where('business_id', Tenant::businessId())->where('branch_id', Tenant::branchId())->distinct()->pluck('location')->prepend('main')->unique()->values();
-        $accounts = User::where('business_id', Tenant::businessId())->orderBy('name')->get(['id', 'name']);
-        return view('pages.stock_control.periods', compact('periods', 'locations', 'accounts', 'search'));
+        return view('pages.stock_control.periods', compact('periods', 'locations', 'search'));
     }
 
     public function store(Request $request)
@@ -81,7 +83,6 @@ class StockPeriodController extends Controller
             'creation_token' => ['required', 'uuid'], 'location' => ['required', 'string', 'max:100'],
             'starts_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'ends_on' => ['required', 'date_format:Y-m-d', 'after_or_equal:starts_on', 'before_or_equal:today'],
-            'user_id' => ['required', 'integer', Rule::exists('users', 'id')->where('business_id', Tenant::businessId())],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
         $period = DB::transaction(function () use ($data) {
@@ -90,11 +91,7 @@ class StockPeriodController extends Controller
             $location = strtolower(trim($data['location']));
             if ($location === '') throw ValidationException::withMessages(['location' => 'Choose a stock location.']);
             $slot = hash('sha256', Tenant::businessId().':'.Tenant::branchId().':'.$location);
-            if ($existing = $this->periods()->where('active_slot', $slot)->first()) {
-                if ((int) $existing->user_id === (int) $data['user_id'] && $existing->starts_on->toDateString() === $data['starts_on'] && $existing->ends_on->toDateString() === $data['ends_on']) return $existing;
-                throw ValidationException::withMessages(['user_id' => 'Another stock count is open for this location. Complete or cancel it before starting this account’s count.']);
-            }
-            $this->pendingShifts($data['user_id'], $data['starts_on'], $data['ends_on']);
+            if ($existing = $this->periods()->where('active_slot', $slot)->first()) return $existing;
             $stock = ProductStock::where('business_id', Tenant::businessId())->where('branch_id', Tenant::branchId())->where('location', $location)
                 ->selectRaw('product_id, SUM(quantity) as quantity')->groupBy('product_id');
             $products = Product::where('products.business_id', Tenant::businessId())->leftJoinSub($stock, 'stock_snapshot', 'stock_snapshot.product_id', '=', 'products.id')
@@ -103,7 +100,7 @@ class StockPeriodController extends Controller
             if ($products->isEmpty()) throw ValidationException::withMessages(['period' => 'No products are available for this count.']);
             $period = StockPeriod::create(['business_id' => Tenant::businessId(), 'branch_id' => Tenant::branchId(), 'opened_by' => auth()->id(),
                 'creation_token' => $data['creation_token'], 'active_slot' => $slot, 'location' => $location, 'starts_on' => $data['starts_on'], 'ends_on' => $data['ends_on'],
-                'user_id' => $data['user_id'], 'notes' => $data['notes'] ?? null]);
+                'notes' => $data['notes'] ?? null]);
             foreach ($products->chunk(300) as $chunk) {
                 $period->lines()->insert($chunk->map(fn ($product) => ['stock_period_id' => $period->id, 'product_id' => $product->id, 'product_name' => $product->name,
                     'sku' => $product->sku, 'opening_quantity' => $product->quantity, 'expected_quantity' => $product->quantity, 'unit_cost' => $product->cost ?? 0, 'created_at' => now(), 'updated_at' => now()])->all());
@@ -115,13 +112,10 @@ class StockPeriodController extends Controller
 
     public function show(int $period)
     {
-        $period = $this->periods()->with(['opener:id,name', 'closer:id,name', 'account:id,name', 'category:id,name', 'shift:id,user_id'])->findOrFail($period);
-        $periodShifts = $period->user_id
-            ? ($period->status === 'closed' ? $period->shifts()->orderBy('opened_at')->get() : $this->accountShifts($period->user_id, $period->starts_on->toDateString(), $period->ends_on->toDateString())->whereNull('stock_locked_at')->orderBy('opened_at')->get())
-            : collect();
+        $period = $this->periods()->with(['opener:id,name', 'closer:id,name', 'category:id,name', 'branch:id,name'])->findOrFail($period);
         $summary = $period->lines()->selectRaw('COUNT(*) as total_lines, COUNT(counted_quantity) as counted_lines, COALESCE(SUM(expected_quantity), 0) as expected_units, COALESCE(SUM(counted_quantity), 0) as counted_units, COALESCE(SUM(CASE WHEN counted_quantity IS NOT NULL THEN CAST(counted_quantity AS SIGNED) - expected_quantity ELSE 0 END), 0) as variance, COALESCE(SUM(CASE WHEN counted_quantity IS NOT NULL THEN (CAST(counted_quantity AS SIGNED) - expected_quantity) * unit_cost ELSE 0 END), 0) as variance_value')->first();
         $lines = $period->lines()->orderBy('product_name')->orderBy('id')->paginate(50)->withQueryString();
-        return view('pages.stock_control.period_show', compact('period', 'summary', 'lines', 'periodShifts'));
+        return view('pages.stock_control.period_show', compact('period', 'summary', 'lines'));
     }
 
     public function save(Request $request, int $period)
@@ -138,7 +132,7 @@ class StockPeriodController extends Controller
         }, 3);
         $page = (int) $data['page'];
         if (!empty($data['next'])) $page++;
-        return redirect()->to(route('stock-control.periods.show', ['period' => $period, 'page' => $page]).'#count-sheet')->with('status', 'Count quantities saved. Review the differences before posting and locking the shifts.');
+        return redirect()->to(route('stock-control.periods.show', ['period' => $period, 'page' => $page]).'#count-sheet')->with('status', 'Count quantities saved. Review the branch stock differences before posting.');
     }
 
     public function refresh(Request $request, int $period)
@@ -169,7 +163,6 @@ class StockPeriodController extends Controller
             if ($period->status === 'closed') return;
             abort_unless($period->status === 'open', 422);
             $this->checkVersion($period, $request);
-            $shifts = $period->user_id ? $this->pendingShifts($period->user_id, $period->starts_on->toDateString(), $period->ends_on->toDateString()) : collect();
             $lines = $period->lines()->orderBy('product_id')->lockForUpdate()->get();
             if ($lines->isEmpty() || $lines->contains(fn ($line) => $line->counted_quantity === null)) throw ValidationException::withMessages(['period' => 'Save a physical quantity for every product before posting. Blank quantities are not treated as zero.']);
             $this->lockProducts($period, $lines);
@@ -199,10 +192,9 @@ class StockPeriodController extends Controller
                     'location' => $period->location, 'type' => 'adjustment', 'quantity_change' => $variance, 'quantity_before' => $before, 'quantity_after' => $after,
                     'reference_type' => 'stock_period', 'reference_id' => $period->id, 'note' => 'Physical stock count '.$period->reference.' (snapshot '.$line->expected_quantity.', physical '.$line->counted_quantity.'; later movements preserved)']);
             }
-            foreach ($shifts as $shift) $shift->update(['stock_period_id' => $period->id, 'stock_locked_at' => now()]);
             $period->update(['status' => 'closed', 'active_slot' => null, 'closed_by' => auth()->id(), 'closed_at' => now(), 'closing_notes' => $request->input('closing_notes'), 'version' => $period->version + 1]);
         }, 3);
-        return back()->with('status', 'Stock period closed. Count variances were posted and the account’s shifts for this period are locked.');
+        return redirect()->route('stock-control.variance', ['period' => $period])->with('status', 'Stock period closed. Branch stock variances were posted. The final variance report is ready.');
     }
 
     public function cancel(Request $request, int $period)
