@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Branch, Product, ProductStock, StockAdjustment, StockMovement, StockPeriod};
+use App\Models\{Branch, CashierShift, Product, ProductStock, StockAdjustment, StockMovement, StockPeriod};
 use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +17,19 @@ class StockPeriodController extends Controller
         return StockPeriod::where('business_id', Tenant::businessId())->where('branch_id', Tenant::branchId());
     }
 
+    private function uncountedShifts(StockPeriod $period)
+    {
+        return CashierShift::where('business_id', $period->business_id)->where('branch_id', $period->branch_id)
+            ->where('status', 'closed')->whereNull('stock_period_id')->whereNull('stock_locked_at')
+            ->where('opened_at', '>=', $period->starts_on->copy()->startOfDay())
+            ->where('opened_at', '<', $period->ends_on->copy()->addDay()->startOfDay());
+    }
+
     public function variance(Request $request)
     {
         $this->periods();
         $data = $request->validate(['from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('from') ? ['after_or_equal:from'] : [])],
-            'q' => ['nullable', 'string', 'max:100'], 'direction' => ['nullable', 'in:changed,shortage,surplus,balanced,all'], 'period' => ['nullable', 'integer', 'min:1']]);
+            'q' => ['nullable', 'string', 'max:100'], 'direction' => ['nullable', 'in:changed,shortage,surplus,balanced,all'], 'period' => ['nullable', 'integer', 'min:1'], 'export' => ['nullable', 'in:csv']]);
         $selectedPeriod = !empty($data['period']) ? $this->periods()->findOrFail($data['period']) : null;
         $query = DB::table('stock_period_lines as lines')->join('stock_periods as periods', 'periods.id', '=', 'lines.stock_period_id')
             ->where('periods.business_id', Tenant::businessId())->where('periods.branch_id', Tenant::branchId())->where('periods.status', 'closed');
@@ -36,7 +44,27 @@ class StockPeriodController extends Controller
         elseif ($direction === 'balanced') $query->where('lines.variance', 0);
         elseif ($direction === 'changed') $query->where('lines.variance', '!=', 0);
         $totals = (clone $query)->selectRaw('COUNT(*) as items, COALESCE(SUM(CASE WHEN lines.variance < 0 THEN -lines.variance ELSE 0 END),0) as shortage, COALESCE(SUM(CASE WHEN lines.variance > 0 THEN lines.variance ELSE 0 END),0) as surplus, COALESCE(SUM(lines.variance),0) as net_units, COALESCE(SUM(lines.variance * lines.unit_cost),0) as net_value, COALESCE(SUM(CASE WHEN lines.variance < 0 THEN -lines.variance * lines.unit_cost ELSE 0 END),0) as shortage_value, COALESCE(SUM(CASE WHEN lines.variance > 0 THEN lines.variance * lines.unit_cost ELSE 0 END),0) as surplus_value')->first();
-        $rows = $query->select('lines.*', 'periods.ends_on', 'periods.closed_at', 'periods.location')->orderByDesc('periods.closed_at')->orderBy('lines.product_name')->orderBy('lines.id')->paginate(50)->withQueryString();
+        $query->select('lines.*', 'periods.ends_on', 'periods.closed_at', 'periods.location')->orderByDesc('periods.closed_at')->orderBy('lines.product_name')->orderBy('lines.id');
+        if (($data['export'] ?? null) === 'csv') {
+            $financials = auth()->user()->canViewFinancials();
+            $branchName = Branch::where('business_id', Tenant::businessId())->findOrFail(Tenant::branchId())->name;
+            $filename = 'stock-variance-'.($selectedPeriod ? $selectedPeriod->reference : 'branch-'.Tenant::branchId()).'-'.now()->format('Ymd-His').'.csv';
+            return response()->streamDownload(function () use ($query, $financials, $branchName) {
+                $out = fopen('php://output', 'w');
+                fwrite($out, "\xEF\xBB\xBF");
+                $safe = fn ($value) => preg_match('/^[=+\-@\t\r\n]/u', (string) $value) ? "'".$value : $value;
+                $headers = ['Branch', 'Period', 'Period end', 'Location', 'Product', 'SKU', 'Expected', 'Physical', 'Variance'];
+                if ($financials) $headers = array_merge($headers, ['Unit cost (KES)', 'Variance value (KES)']);
+                fputcsv($out, $headers, ',', '"', '');
+                foreach ($query->cursor() as $row) {
+                    $values = [$safe($branchName), 'SP-'.str_pad((string) $row->stock_period_id, 6, '0', STR_PAD_LEFT), $row->ends_on, $safe($row->location), $safe($row->product_name), $safe($row->sku), (int) $row->expected_quantity, (int) $row->counted_quantity, (int) $row->variance];
+                    if ($financials) $values = array_merge($values, [number_format($row->unit_cost, 2, '.', ''), number_format($row->variance * $row->unit_cost, 2, '.', '')]);
+                    fputcsv($out, $values, ',', '"', '');
+                }
+                fclose($out);
+            }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
+        }
+        $rows = $query->paginate(50)->withQueryString();
         return view('pages.stock_control.variance', compact('rows', 'totals', 'direction', 'search', 'selectedPeriod'));
     }
 
@@ -115,7 +143,8 @@ class StockPeriodController extends Controller
         $period = $this->periods()->with(['opener:id,name', 'closer:id,name', 'category:id,name', 'branch:id,name'])->findOrFail($period);
         $summary = $period->lines()->selectRaw('COUNT(*) as total_lines, COUNT(counted_quantity) as counted_lines, COALESCE(SUM(expected_quantity), 0) as expected_units, COALESCE(SUM(counted_quantity), 0) as counted_units, COALESCE(SUM(CASE WHEN counted_quantity IS NOT NULL THEN CAST(counted_quantity AS SIGNED) - expected_quantity ELSE 0 END), 0) as variance, COALESCE(SUM(CASE WHEN counted_quantity IS NOT NULL THEN (CAST(counted_quantity AS SIGNED) - expected_quantity) * unit_cost ELSE 0 END), 0) as variance_value')->first();
         $lines = $period->lines()->orderBy('product_name')->orderBy('id')->paginate(50)->withQueryString();
-        return view('pages.stock_control.period_show', compact('period', 'summary', 'lines'));
+        $countShifts = ($period->status === 'closed' ? $period->shifts() : $this->uncountedShifts($period))->with('user:id,name')->orderBy('id')->get();
+        return view('pages.stock_control.period_show', compact('period', 'summary', 'lines', 'countShifts'));
     }
 
     public function save(Request $request, int $period)
@@ -163,6 +192,8 @@ class StockPeriodController extends Controller
             if ($period->status === 'closed') return;
             abort_unless($period->status === 'open', 422);
             $this->checkVersion($period, $request);
+            Branch::where('business_id', $period->business_id)->whereKey($period->branch_id)->lockForUpdate()->firstOrFail();
+            $countShifts = $this->uncountedShifts($period)->orderBy('id')->lockForUpdate()->get();
             $lines = $period->lines()->orderBy('product_id')->lockForUpdate()->get();
             if ($lines->isEmpty() || $lines->contains(fn ($line) => $line->counted_quantity === null)) throw ValidationException::withMessages(['period' => 'Save a physical quantity for every product before posting. Blank quantities are not treated as zero.']);
             $this->lockProducts($period, $lines);
@@ -192,6 +223,7 @@ class StockPeriodController extends Controller
                     'location' => $period->location, 'type' => 'adjustment', 'quantity_change' => $variance, 'quantity_before' => $before, 'quantity_after' => $after,
                     'reference_type' => 'stock_period', 'reference_id' => $period->id, 'note' => 'Physical stock count '.$period->reference.' (snapshot '.$line->expected_quantity.', physical '.$line->counted_quantity.'; later movements preserved)']);
             }
+            foreach ($countShifts as $shift) $shift->update(['stock_period_id' => $period->id, 'stock_locked_at' => now()]);
             $period->update(['status' => 'closed', 'active_slot' => null, 'closed_by' => auth()->id(), 'closed_at' => now(), 'closing_notes' => $request->input('closing_notes'), 'version' => $period->version + 1]);
         }, 3);
         return redirect()->route('stock-control.variance', ['period' => $period])->with('status', 'Stock period closed. Branch stock variances were posted. The final variance report is ready.');

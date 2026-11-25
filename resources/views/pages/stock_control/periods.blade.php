@@ -22,7 +22,7 @@
         <div class="sp-row"><label class="sc-field">Period from<input type="date" name="starts_on" value="{{ old('starts_on',today()->toDateString()) }}" max="{{ today()->toDateString() }}" required></label><label class="sc-field">Period to<input type="date" name="ends_on" value="{{ old('ends_on',today()->toDateString()) }}" max="{{ today()->toDateString() }}" required></label></div>
         @if($locations->count()>1)<label class="sc-field">Stock location<select name="location">@foreach($locations as $location)<option value="{{ $location }}" @selected(old('location','main')===$location)>{{ $location }}</option>@endforeach</select></label>@else<input type="hidden" name="location" value="main">@endif
         <label class="sc-field">Notes (optional)<textarea name="notes" rows="2" maxlength="1000" placeholder="e.g. Evening count">{{ old('notes') }}</textarea></label>
-        <p class="sc-muted">The count captures current stock for this branch and location. Dates label the count period. One count can be open per location; an existing count will be continued.</p>
+        <p class="sc-muted">The count captures current stock for this branch and location. Dates label the count period. Posting locks the branch’s uncounted closed shifts opened within these dates. Previously counted shifts are excluded. One count can be open per location.</p>
         <div class="sc-footer"><button class="sc-button" type="button" onclick="this.closest('dialog').close()">Cancel</button><button class="sc-button primary" type="submit">Open period & count stock</button></div>
     </form>
 </dialog>

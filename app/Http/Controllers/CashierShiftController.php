@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{CashierShift, User};
+use App\Models\{Branch, CashierShift, User};
 use App\Support\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +106,7 @@ class CashierShiftController extends Controller
         $data = $request->validate(['counted_cash' => ['required', 'regex:/^\d{1,10}(\.\d{1,2})?$/'], 'closing_notes' => ['nullable', 'string', 'max:1000'], 'confirmation' => ['accepted'],
             'expected_sales_count' => ['required', 'integer', 'min:0'], 'expected_cash_cents' => ['required', 'integer', 'min:0']]);
         DB::transaction(function () use ($shift, $data) {
+            Branch::where('business_id', Tenant::businessId())->whereKey(Tenant::branchId())->lockForUpdate()->firstOrFail();
             $accountId = $this->scope()->whereKey($shift)->value('user_id');
             User::whereKey($accountId)->lockForUpdate()->firstOrFail();
             $shift = $this->scope()->whereKey($shift)->lockForUpdate()->firstOrFail();
