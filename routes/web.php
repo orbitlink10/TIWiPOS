@@ -135,6 +135,13 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
 
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
     Route::get('/stock-control', [\App\Http\Controllers\StockControlController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.index');
+    Route::get('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.periods.index');
+    Route::post('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'store'])->middleware('role.ability:adjust_stock')->name('stock-control.periods.store');
+    Route::get('/stock-control/periods/{period}', [\App\Http\Controllers\StockPeriodController::class, 'show'])->whereNumber('period')->middleware('role.ability:view_stock')->name('stock-control.periods.show');
+    Route::post('/stock-control/periods/{period}/count', [\App\Http\Controllers\StockPeriodController::class, 'save'])->whereNumber('period')->middleware('role.ability:adjust_stock')->name('stock-control.periods.save');
+    Route::post('/stock-control/periods/{period}/refresh', [\App\Http\Controllers\StockPeriodController::class, 'refresh'])->whereNumber('period')->middleware('role.ability:adjust_stock')->name('stock-control.periods.refresh');
+    Route::post('/stock-control/periods/{period}/post', [\App\Http\Controllers\StockPeriodController::class, 'post'])->whereNumber('period')->middleware('role.ability:adjust_stock')->name('stock-control.periods.post');
+    Route::post('/stock-control/periods/{period}/cancel', [\App\Http\Controllers\StockPeriodController::class, 'cancel'])->whereNumber('period')->middleware('role.ability:adjust_stock')->name('stock-control.periods.cancel');
     Route::get('/stock-control/adjust', [\App\Http\Controllers\StockControlController::class, 'adjust'])->middleware('role.ability:adjust_stock')->name('stock-control.adjust');
     Route::post('/stock-control/adjust', [\App\Http\Controllers\StockControlController::class, 'storeAdjustment'])->middleware('role.ability:adjust_stock')->name('stock-control.adjust.store');
     Route::post('/stock/adjust', [StockController::class, 'adjustStore'])->middleware('role.ability:add_stock')->name('stock.adjust.store');

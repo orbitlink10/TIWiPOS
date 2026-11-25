@@ -2,13 +2,13 @@
 @section('title', 'Stock Control')
 @push('styles')@include('pages.stock_control.style')@endpush
 @section('header')
-<div class="header-row"><div><h1>Stock Control</h1><p class="sc-intro">Stock balances, counts and movement history &middot; {{ $currentBranch->name ?? 'Current branch' }}</p></div><div class="sc-actions">@if(auth()->user()->canViewFinancials())<a class="sc-button" href="{{ route('purchases.index') }}">Purchase receiving</a>@endif @if(auth()->user()->canAccessAbility('adjust_stock'))<a class="sc-button primary" href="{{ route('stock-control.adjust') }}">+ Stock adjustment</a>@endif</div></div>
+<div class="header-row"><div><h1>Stock Control</h1><p class="sc-intro">Stock balances, counts and movement history &middot; {{ $currentBranch->name ?? 'Current branch' }}</p></div><div class="sc-actions">@if(auth()->user()->canViewFinancials())<a class="sc-button" href="{{ route('purchases.index') }}">Purchase receiving</a>@endif @if(auth()->user()->canAccessAbility('adjust_stock'))<a class="sc-button" href="{{ route('stock-control.adjust') }}">Stock adjustment</a><a class="sc-button primary" href="{{ route('stock-control.periods.index',['start'=>1]) }}">+ Start count</a>@endif</div></div>
 @endsection
 @section('content')
 <div class="sc-page">
     @if(session('status'))<div class="sc-message" role="status">{{ session('status') }}</div>@endif
     @if($errors->any())<div class="sc-message error" role="alert">{{ $errors->first() }}</div>@endif
-    <nav class="sc-tabs" aria-label="Stock control sections"><a class="{{ $tab==='stock' ? 'active' : '' }}" href="{{ route('stock-control.index') }}" @if($tab==='stock') aria-current="page" @endif>Stock balances</a><a class="{{ $tab==='movements' ? 'active' : '' }}" href="{{ route('stock-control.index',['tab'=>'movements']) }}" @if($tab==='movements') aria-current="page" @endif>Movement history</a></nav>
+    <nav class="sc-tabs" aria-label="Stock control sections"><a href="{{ route('stock-control.periods.index') }}">Stock periods</a><a class="{{ $tab==='stock' ? 'active' : '' }}" href="{{ route('stock-control.index') }}" @if($tab==='stock') aria-current="page" @endif>Stock balances</a><a class="{{ $tab==='movements' ? 'active' : '' }}" href="{{ route('stock-control.index',['tab'=>'movements']) }}" @if($tab==='movements') aria-current="page" @endif>Movement history</a></nav>
     @if($totals)
     <div class="sc-kpis"><div class="sc-kpi"><span>Units on hand</span><strong>{{ number_format($totals->units) }}</strong></div><div class="sc-kpi"><span>Low-stock products</span><strong>{{ number_format($totals->low_count) }}</strong></div><div class="sc-kpi"><span>Out-of-stock products</span><strong>{{ number_format($totals->out_count) }}</strong></div>@if($canViewValue)<div class="sc-kpi"><span>Stock value at current cost</span><strong>KES {{ number_format($totals->stock_value,2) }}</strong></div>@endif</div>
     @endif
