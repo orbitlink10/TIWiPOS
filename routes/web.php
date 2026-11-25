@@ -134,7 +134,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('role.ability:manage_catalog')->name('suppliers.store');
 
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
-    Route::get('/stock-control', [\App\Http\Controllers\StockControlController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.index');
+    Route::redirect('/stock-control', '/stock-control/periods')->middleware('role.ability:view_stock')->name('stock-control.index');
     Route::get('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.periods.index');
     Route::post('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'store'])->middleware('role.ability:adjust_stock')->name('stock-control.periods.store');
     Route::get('/stock-control/periods/{period}', [\App\Http\Controllers\StockPeriodController::class, 'show'])->whereNumber('period')->middleware('role.ability:view_stock')->name('stock-control.periods.show');
