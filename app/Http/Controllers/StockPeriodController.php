@@ -175,17 +175,20 @@ class StockPeriodController extends Controller
             $this->lockProducts($period, $lines);
             $stock = $this->stock($period, $lines->pluck('product_id'), true);
             foreach ($lines as $line) {
-                if ((int) ($stock->get($line->product_id)?->sum('quantity') ?? 0) !== (int) $line->expected_quantity) {
-                    throw ValidationException::withMessages(['period' => 'Stock changed for '.$line->product_name.'. Use Refresh changed stock, then recount affected products before posting.']);
+                $current = (int) ($stock->get($line->product_id)?->sum('quantity') ?? 0);
+                $variance = (int) $line->counted_quantity - (int) $line->expected_quantity;
+                if ($current + $variance < 0) {
+                    throw ValidationException::withMessages(['period' => 'The saved shortage for '.$line->product_name.' exceeds current stock. Review later movements or refresh and recount this item before posting.']);
                 }
             }
             foreach ($lines as $line) {
-                $before = (int) $line->expected_quantity;
-                $after = (int) $line->counted_quantity;
-                $variance = $after - $before;
+                $variance = (int) $line->counted_quantity - (int) $line->expected_quantity;
                 $line->update(['variance' => $variance]);
                 if ($variance === 0) continue;
                 $rows = $stock->get($line->product_id, collect());
+                // Apply the snapshot variance to live stock, preserving subsequent sales and receipts.
+                $before = (int) $rows->sum('quantity');
+                $after = $before + $variance;
                 $primary = $rows->first() ?? ProductStock::create(['business_id' => $period->business_id, 'branch_id' => $period->branch_id, 'product_id' => $line->product_id, 'location' => $period->location, 'quantity' => 0]);
                 $primary->update(['quantity' => $after]);
                 foreach ($rows->skip(1) as $extra) $extra->update(['quantity' => 0]);
@@ -194,7 +197,7 @@ class StockPeriodController extends Controller
                     'quantity_after' => $after, 'adjusted_at' => today(), 'notes' => $period->reference]);
                 StockMovement::create(['business_id' => $period->business_id, 'branch_id' => $period->branch_id, 'product_id' => $line->product_id, 'user_id' => auth()->id(),
                     'location' => $period->location, 'type' => 'adjustment', 'quantity_change' => $variance, 'quantity_before' => $before, 'quantity_after' => $after,
-                    'reference_type' => 'stock_period', 'reference_id' => $period->id, 'note' => 'Physical stock count '.$period->reference]);
+                    'reference_type' => 'stock_period', 'reference_id' => $period->id, 'note' => 'Physical stock count '.$period->reference.' (snapshot '.$line->expected_quantity.', physical '.$line->counted_quantity.'; later movements preserved)']);
             }
             foreach ($shifts as $shift) $shift->update(['stock_period_id' => $period->id, 'stock_locked_at' => now()]);
             $period->update(['status' => 'closed', 'active_slot' => null, 'closed_by' => auth()->id(), 'closed_at' => now(), 'closing_notes' => $request->input('closing_notes'), 'version' => $period->version + 1]);
