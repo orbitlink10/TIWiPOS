@@ -44,7 +44,7 @@ main{min-width:0}.catalog-filters{display:flex;gap:10px;align-items:end;flex-wra
                 <div class="catalog-tools">
                     <a class="catalog-button" href="{{ route('categories.create') }}">Add category</a>
                     <a class="catalog-button" href="{{ route('suppliers.create') }}">Add supplier</a>
-                    <a class="catalog-button" href="{{ route('stock.adjust') }}">Adjust stock</a>
+                    @if(auth()->user()->canAccessAbility('adjust_stock'))<a class="catalog-button" href="{{ route('stock-control.adjust') }}">Adjust stock</a>@endif
                 </div>
             @endif
         <p class="catalog-result-count">{{ number_format($products->total()) }} matching {{ $products->total() === 1 ? 'product' : 'products' }} &middot; Stock shown for {{ $currentBranch->name ?? 'the current business' }}</p>
