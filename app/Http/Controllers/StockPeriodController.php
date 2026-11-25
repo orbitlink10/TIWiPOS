@@ -110,7 +110,7 @@ class StockPeriodController extends Controller
             }
             return $period;
         }, 3);
-        return redirect()->route('stock-control.periods.show', ['period' => $period->id, 'count' => 1])->with('status', 'Stock period ready. Enter the physical quantities in the count modal.');
+        return redirect()->route('stock-control.periods.show', ['period' => $period->id, 'count' => 1])->with('status', 'Stock period ready. Enter physical quantities directly in the count sheet and save your progress.');
     }
 
     public function show(int $period)
@@ -138,7 +138,7 @@ class StockPeriodController extends Controller
         }, 3);
         $page = (int) $data['page'];
         if (!empty($data['next'])) $page++;
-        return redirect()->route('stock-control.periods.show', ['period' => $period, 'page' => $page, 'count' => !empty($data['next']) ? 1 : null])->with('status', 'Count quantities saved. Stock is unchanged until you close and post this period.');
+        return redirect()->to(route('stock-control.periods.show', ['period' => $period, 'page' => $page]).'#count-sheet')->with('status', 'Count quantities saved. Review the differences before posting and locking the shifts.');
     }
 
     public function refresh(Request $request, int $period)
