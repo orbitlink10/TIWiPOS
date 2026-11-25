@@ -7,7 +7,6 @@
         <h1>Sales History</h1>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <a class="btn" href="{{ route('sale') }}">New Sale</a>
-            <a class="btn" href="{{ route('summary') }}" style="background:#0ea5e9;">Today Summary</a>
         </div>
     </div>
 @endsection

@@ -17,6 +17,15 @@ class StaffSalesVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sales_summary_page_and_links_are_removed(): void
+    {
+        [$owner] = $this->createTenantUsers();
+        $this->actingAs($owner)->get('/summary')->assertNotFound();
+        $this->get(route('home'))->assertOk()
+            ->assertDontSee('Sales Summary')->assertDontSee("Today's Summary");
+        $this->get(route('sales.index'))->assertOk()->assertDontSee('Today Summary');
+    }
+
     public function test_staff_can_only_use_pos_and_their_own_receipts(): void
     {
         [$owner, $staffOne, $staffTwo] = $this->createTenantUsers();
@@ -27,9 +36,6 @@ class StaffSalesVisibilityTest extends TestCase
 
         $history = $this->actingAs($staffOne)->get(route('sales.index'));
         $history->assertForbidden();
-
-        $summary = $this->actingAs($staffOne)->get(route('summary'));
-        $summary->assertForbidden();
 
         $this->get(route('sale'))->assertOk()->assertSee('Sign Out')
             ->assertDontSee('View Sales Summary')->assertDontSee('Back to Dashboard')
@@ -97,13 +103,7 @@ class StaffSalesVisibilityTest extends TestCase
         $history->assertSee($staffOneSale->sale_number);
         $history->assertSee($staffTwoSale->sale_number);
 
-        $summary = $this->actingAs($owner)->get(route('summary'));
-        $summary->assertOk();
-        $summary->assertDontSee('Showing your sales only.');
-        $summary->assertSee($staffOneSale->sale_number);
-        $summary->assertSee($staffTwoSale->sale_number);
-        $summary->assertViewHas('todaySalesTotal', fn ($total) => (float) $total === 200.0);
-        $summary->assertViewHas('todayOrders', 2);
+        $this->actingAs($owner)->get('/summary')->assertNotFound();
 
         $this->actingAs($owner)
             ->get(route('sale.receipt', $staffTwoSale))

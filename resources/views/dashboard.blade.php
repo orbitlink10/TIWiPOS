@@ -83,9 +83,6 @@
             <div class="quick-actions" style="margin-top:10px;">
                 <a class="btn" href="{{ route('sale') }}">Open POS</a>
                 <a class="btn" href="{{ route('stock') }}">Stock</a>
-                @if($canViewFinancials ?? false)
-                    <a class="btn" href="{{ route('summary') }}">Today's Summary</a>
-                @endif
             </div>
         </div>
         <div style="justify-self:end; text-align:right;">

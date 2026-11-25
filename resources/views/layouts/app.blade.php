@@ -566,7 +566,6 @@
                 <section class="nav-section" aria-labelledby="nav-overview">
                     <p class="nav-heading" id="nav-overview">Overview</p>
                     <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}"><span class="nav-icon">HM</span><span>Dashboard</span></a>
-                    <a href="{{ route('summary') }}" class="{{ request()->routeIs('summary') ? 'active' : '' }}"><span class="nav-icon">RP</span><span>Sales Summary</span></a>
                     <a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}"><span class="nav-icon">RT</span><span>Reports</span></a>
                 </section>
 
