@@ -71,9 +71,9 @@ class PurchaseReceiptController extends Controller
                     $productId = $item->product_id ?: ($line['product_id'] ?? null);
                     $product = Product::where('business_id', $invoice->business_id)->whereKey($productId)->lockForUpdate()->first();
                     if (!$product) throw ValidationException::withMessages(["lines.{$id}.product_id" => 'Choose a catalogue product for '.$item->product_name.' before receiving stock.']);
-                    $serialized = $product->tracks_serials || !empty($line['serialized']) || !empty($product->serial_number) || count($serials) > 0;
-                    if ($serialized && count($serials) !== $quantity) {
-                        throw ValidationException::withMessages(["lines.{$id}.serial_numbers" => 'Enter exactly '.$quantity.' serial numbers for '.$item->product_name.' (one per received unit).']);
+                    $serialized = count($serials) > 0;
+                    if (count($serials) > $quantity) {
+                        throw ValidationException::withMessages(["lines.{$id}.serial_numbers" => 'The number of serials cannot exceed the received quantity for '.$item->product_name.'.']);
                     }
                     foreach ($serials as $serial) {
                         $normalized = mb_strtolower($serial);

@@ -16,7 +16,7 @@
     @foreach($invoice->items as $item)
         @php($remaining = max(0, $item->quantity - $item->received_quantity))
         @if($remaining > 0)
-        @php($requiresSerials = $item->product?->tracks_serials || filled($item->product?->serial_number))
+        @php($showSerials = old('lines.'.$item->id.'.serialized', $item->product?->tracks_serials || filled($item->product?->serial_number)) || filled(old('lines.'.$item->id.'.serial_numbers')))
         <section class="receiving-line">
             <div class="receiving-row">
                 <div><strong>{{ $item->product_name }}</strong><p class="receive-help">{{ $item->product?->sku }}</p>@if(!$item->product_id)<label class="supplier-field">Link catalogue product<select name="lines[{{ $item->id }}][product_id]" required><option value="">Select product…</option>@foreach($products as $product)<option value="{{ $product->id }}" @selected((string)old('lines.'.$item->id.'.product_id')===(string)$product->id)>{{ $product->name }}</option>@endforeach</select></label>@endif</div>
@@ -24,10 +24,10 @@
                 <label class="supplier-field">Receive now<input name="lines[{{ $item->id }}][quantity]" class="receive-quantity" type="number" min="0" max="{{ $remaining }}" step="1" value="{{ old('lines.'.$item->id.'.quantity',$remaining) }}" required></label>
             </div>
             <div class="receiving-serials">
-                <label class="receive-check">@if($requiresSerials)<input name="lines[{{ $item->id }}][serialized]" type="hidden" value="1"><span>Serial numbers required for this product</span>@else<input name="lines[{{ $item->id }}][serialized]" class="receive-serialized" type="checkbox" value="1" @checked(old('lines.'.$item->id.'.serialized'))><span>This product has serial numbers</span>@endif</label>
-                <div class="serial-input" @if(!$requiresSerials && !old('lines.'.$item->id.'.serialized') && !old('lines.'.$item->id.'.serial_numbers')) hidden @endif>
-                    <label class="supplier-field">Serial numbers<textarea name="lines[{{ $item->id }}][serial_numbers]" rows="4" maxlength="100000" placeholder="Scan or enter one serial per line">{{ old('lines.'.$item->id.'.serial_numbers') }}</textarea></label>
-                    <p class="receive-help">Enter one serial per received unit, on separate lines or separated by commas. Each serial must be new and unique.</p><span class="receive-count" role="status"></span>
+                <label class="receive-check"><input name="lines[{{ $item->id }}][serialized]" class="receive-serialized" type="checkbox" value="1" @checked($showSerials)><span>Add serial numbers (optional)</span></label>
+                <div class="serial-input" @if(!$showSerials) hidden @endif>
+                    <label class="supplier-field">Serial numbers (optional)<textarea name="lines[{{ $item->id }}][serial_numbers]" rows="4" maxlength="100000" placeholder="Scan or enter available serials, or leave blank">{{ old('lines.'.$item->id.'.serial_numbers') }}</textarea></label>
+                    <p class="receive-help">Record any available serials, or leave blank. Enter each serial on a separate line or separated by commas. Provided serials must be new and unique.</p><span class="receive-count" role="status"></span>
                 </div>
             </div>
         </section>
@@ -49,7 +49,7 @@ document.querySelectorAll('.receiving-line').forEach(line => {
     const update = () => {
         if (toggle) { area.hidden = !toggle.checked; text.disabled = !toggle.checked; }
         const serials = text.value.split(/[\r\n,]+/).map(serial => serial.trim()).filter(Boolean);
-        line.querySelector('.receive-count').textContent = serials.length+' serials entered / '+quantity.value+' units to receive';
+        line.querySelector('.receive-count').textContent = serials.length+' optional serials entered · '+quantity.value+' units to receive';
     };
     toggle?.addEventListener('change', update); text.addEventListener('input', update); quantity.addEventListener('input', update);
     update();
