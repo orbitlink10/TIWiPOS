@@ -75,9 +75,15 @@ class ProductController extends Controller
         return view('pages.products', compact('products', 'selectedSubCategory'));
     }
 
-    public function show(Product $product)
+    public function show(Request $request, Product $product)
     {
         abort_unless((int) $product->business_id === (int) Tenant::businessId(), 404);
+        $movementTypes = ['sale' => 'Sales', 'purchase' => 'Purchase receipts', 'adjustment' => 'Adjustments', 'return' => 'Returns'];
+        $movementFilters = $request->validate([
+            'movement_from' => ['nullable', 'date_format:Y-m-d'],
+            'movement_to' => array_merge(['nullable', 'date_format:Y-m-d'], $request->filled('movement_from') ? ['after_or_equal:movement_from'] : []),
+            'movement_type' => ['nullable', Rule::in(array_keys($movementTypes))],
+        ]);
         $branchId = Tenant::branchId();
         $product->load(['category.parent', 'supplier']);
         $stocks = $product->stocks()->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->orderBy('location')->get();
@@ -89,10 +95,13 @@ class ProductController extends Controller
             ->orderByDesc('serials.id')->paginate(20, ['serials.serial_number', 'receipts.received_at'], 'serial_page')->withQueryString();
         $movements = StockMovement::where('business_id', Tenant::businessId())->where('product_id', $product->id)
             ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->with('user:id,name')
+            ->when($movementFilters['movement_from'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($movementFilters['movement_to'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
+            ->when($movementFilters['movement_type'] ?? null, fn ($query, $type) => $query->where('type', $type))
             ->orderByDesc('created_at')->orderByDesc('id')->paginate(20, ['*'], 'movement_page')->withQueryString()->fragment('stock-movements');
         $canViewFinancials = auth()->user()->canViewFinancials();
 
-        return view('pages.product_show', compact('product', 'stocks', 'serials', 'movements', 'canViewFinancials'));
+        return view('pages.product_show', compact('product', 'stocks', 'serials', 'movements', 'canViewFinancials', 'movementFilters', 'movementTypes'));
     }
 
     public function create()
