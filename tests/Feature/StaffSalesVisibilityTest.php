@@ -17,7 +17,7 @@ class StaffSalesVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_staff_only_see_their_own_sales_history_summary_and_sale_pages(): void
+    public function test_staff_can_only_use_pos_and_their_own_receipts(): void
     {
         [$owner, $staffOne, $staffTwo] = $this->createTenantUsers();
         $product = $this->createProductWithStock($owner->business_id, $owner->branch_id);
@@ -26,21 +26,15 @@ class StaffSalesVisibilityTest extends TestCase
         $staffTwoSale = $this->createSaleForUser($staffTwo, $product->id, 'Second Customer');
 
         $history = $this->actingAs($staffOne)->get(route('sales.index'));
-        $history->assertOk();
-        $history->assertSee('Showing your sales only.');
-        $history->assertSee($staffOneSale->sale_number);
-        $history->assertDontSee($staffTwoSale->sale_number);
+        $history->assertForbidden();
 
         $summary = $this->actingAs($staffOne)->get(route('summary'));
-        $summary->assertOk();
-        $summary->assertSee('Showing your sales only.');
-        $summary->assertSee($staffOneSale->sale_number);
-        $summary->assertDontSee($staffTwoSale->sale_number);
-        $summary->assertViewHas('todaySalesTotal', fn ($total) => (float) $total === 100.0);
-        $summary->assertViewHas('todayOrders', 1);
-        $summary->assertViewHas('recentSales', function ($sales) use ($staffOneSale) {
-            return $sales->count() === 1 && (int) $sales->first()->id === (int) $staffOneSale->id;
-        });
+        $summary->assertForbidden();
+
+        $this->get(route('sale'))->assertOk()->assertSee('Sign Out')
+            ->assertDontSee('View Sales Summary')->assertDontSee('Back to Dashboard')
+            ->assertDontSee('Open stock list')->assertDontSee('Sales history');
+        $this->get(route('sale.receipt', $staffOneSale))->assertOk();
 
         $this->actingAs($staffOne)
             ->get(route('sale.receipt', $staffTwoSale))
@@ -66,7 +60,8 @@ class StaffSalesVisibilityTest extends TestCase
         foreach ([User::ROLE_STAFF, User::ROLE_MANAGER] as $role) {
             $staff->update(['role' => $role]);
             $this->actingAs($staff)->get(route('sales.index'))
-                ->assertOk()->assertDontSee(route('sales.edit', $sale));
+                ->assertStatus($role === User::ROLE_STAFF ? 403 : 200)
+                ->assertDontSee(route('sales.edit', $sale));
             $this->get(route('sales.edit', $sale))->assertForbidden();
             $this->put(route('sales.update', $sale), $payload)->assertForbidden();
             $this->assertSame('Original Customer', $sale->fresh()->customer_name);

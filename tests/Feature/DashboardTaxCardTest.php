@@ -50,9 +50,7 @@ class DashboardTaxCardTest extends TestCase
         $this->createProductWithStock($user->business_id, $user->branch_id);
 
         $this->actingAs($user)->get(route('home'))
-            ->assertOk()
-            ->assertDontSee('Stock Value')
-            ->assertViewHas('stats', fn (array $stats) => $stats['stock_value'] === null);
+            ->assertRedirect(route('sale'));
     }
 
     public function test_dashboard_shows_today_tax_total_for_taxed_sales(): void
@@ -61,6 +59,7 @@ class DashboardTaxCardTest extends TestCase
         $product = $this->createProductWithStock($user->business_id, $user->branch_id);
 
         $this->createSale($user, $product->id, 1);
+        $this->travel(1)->seconds();
         $this->createSale($user, $product->id, 0);
 
         $response = $this->actingAs($user)->get(route('home'));

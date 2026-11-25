@@ -536,8 +536,15 @@
     <div class="header-row">
         <div><h1>Point of Sale</h1><p class="sale-lead">{{ $currentBranch->name ?? 'Your store' }} · {{ now()->format('D, d M Y') }}</p></div>
         <div class="sale-header-actions">
+            @if(auth()->user()->isPosOnly())
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="sale-dashboard-btn" type="submit">Sign Out</button>
+                </form>
+            @else
             <a class="sale-dashboard-btn" href="{{ route('home') }}">&larr; Back to Dashboard</a>
             <a class="btn sale-summary-btn" href="{{ route('summary') }}">View Sales Summary</a>
+            @endif
         </div>
     </div>
 @endsection
@@ -566,8 +573,10 @@
                 <button type="button" data-panel="customer_details"><span aria-hidden="true">CU</span>Customer</button>
                 <button type="button" data-panel="installation_details"><span aria-hidden="true">SV</span>Installation</button>
                 <button type="button" data-panel="manual_entry"><span aria-hidden="true">QT</span>Quantity / price</button>
-                <a href="{{ route('stock') }}"><span aria-hidden="true">ST</span>Stock list</a>
-                <a href="{{ route('sales.index') }}"><span aria-hidden="true">SH</span>Sales history</a>
+                @unless(auth()->user()->isPosOnly())
+                    <a href="{{ route('stock') }}"><span aria-hidden="true">ST</span>Stock list</a>
+                    <a href="{{ route('sales.index') }}"><span aria-hidden="true">SH</span>Sales history</a>
+                @endunless
             </nav>
 
             <div class="sale-main">
@@ -575,7 +584,9 @@
                 <div class="catalogue-heading"><h2>Product catalogue</h2><span class="terminal-caption">{{ $products->count() }} products</span></div>
                 <p class="sale-lead">
                     Choose a quantity and tap Add, or scan a barcode and press Enter.
-                    <a href="{{ route('stock') }}">Open stock list</a>
+                    @unless(auth()->user()->isPosOnly())
+                        <a href="{{ route('stock') }}">Open stock list</a>
+                    @endunless
                 </p>
 
                 <div class="category-pills" id="category_pills">

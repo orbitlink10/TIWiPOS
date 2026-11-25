@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SetTenantContext::class,
+            \App\Http\Middleware\RestrictStaffToPos::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

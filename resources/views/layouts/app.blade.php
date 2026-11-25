@@ -521,6 +521,7 @@
 </head>
 <body>
     <div class="layout">
+        @unless(auth()->user()->isPosOnly())
         <aside class="sidebar" id="app-sidebar">
             <div class="brand-row">
                 <a href="{{ route('home') }}" class="brand">
@@ -614,6 +615,7 @@
                 </form>
             </div>
         </aside>
+        @endunless
         <main>
             @yield('header')
             @yield('content')

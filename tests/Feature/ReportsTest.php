@@ -73,18 +73,14 @@ class ReportsTest extends TestCase
         $this->get(route('reports.index', ['from'=>today()->toDateString(), 'to'=>today()->toDateString()]))->assertOk()->assertViewHas('totals', fn ($totals) => $totals->row_count == 1);
     }
 
-    public function test_staff_only_report_their_sales_and_cannot_export_cost_or_purchase_reports(): void
+    public function test_staff_cannot_access_reports_or_exports(): void
     {
-        [$business, $branch, $owner] = $this->tenant();
-        $ownerSale = $this->sell($owner);
+        [$business, $branch] = $this->tenant();
         $staff = User::factory()->create(['business_id'=>$business->id, 'branch_id'=>$branch->id, 'role'=>'staff']);
-        $staffSale = $this->sell($staff);
-        $this->get(route('reports.index'))->assertOk()->assertSee($staffSale->sale_number)->assertDontSee($ownerSale->sale_number)->assertSee('Your sales only');
-        $response = $this->get(route('reports.index', ['report'=>'product-sales']))->assertOk();
-        $response->assertDontSee('Gross product profit')->assertDontSee('Unit cost');
-        $csv = $this->get(route('reports.index', ['report'=>'product-sales', 'format'=>'csv']))->streamedContent();
-        $this->assertStringNotContainsString('profit', $csv);
-        foreach (['stock-valuation','purchases'] as $report) $this->get(route('reports.index', ['report'=>$report, 'format'=>'csv']))->assertSessionHasErrors('report');
+        $this->actingAs($staff)->get(route('reports.index'))->assertForbidden();
+        foreach (['sales', 'product-sales', 'stock-valuation', 'purchases'] as $report) {
+            $this->get(route('reports.index', ['report'=>$report, 'format'=>'csv']))->assertForbidden();
+        }
     }
 
     public function test_totals_and_csv_include_all_pages_and_csv_neutralizes_formulas(): void

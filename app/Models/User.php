@@ -140,6 +140,11 @@ class User extends Authenticatable
         return $this->isManager() || $this->isStaff();
     }
 
+    public function isPosOnly(): bool
+    {
+        return $this->isStaff() && !$this->is_super_admin;
+    }
+
     public function canViewFinancials(): bool
     {
         return $this->is_super_admin || $this->isOwner() || $this->isManager();
@@ -166,7 +171,7 @@ class User extends Authenticatable
             return true;
         }
 
-        $canManageInventory = $this->isOwner() || $this->isManagerLevel();
+        $canManageInventory = $this->isOwner() || $this->isManager();
 
         return match ($ability) {
             'manage_staff', 'manage_settings', 'manage_branches' => $this->isOwner(),

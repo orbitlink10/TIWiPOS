@@ -31,7 +31,7 @@
             <h2>Team members</h2>
             <button class="btn" type="button" id="add_staff" aria-haspopup="dialog" aria-controls="staff_create_dialog">Add Staff</button>
         </div>
-        <p style="color: var(--muted); margin-top:6px;">Create logins for cashiers and managers. Staff cannot access admin-only actions.</p>
+        <p style="color: var(--muted); margin-top:6px;">Create logins for cashiers and managers. Staff can only access the point of sale.</p>
 
         @if (session('status'))
             <div style="margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); color:#065f46;">
@@ -175,7 +175,7 @@
                     </div>
                 </form>
                 <div style="color:var(--muted); font-size:12px; margin-top:8px;">
-                    Role permissions: Manager and Staff share operational access, but only Manager can view profit. Only Owner can manage staff, settings, and branches.
+                    Role permissions: Staff can only access the point of sale. Managers have operational access and can view profit. Only Owner can manage staff and branches.
                 </div>
             </dialog>
         </div>

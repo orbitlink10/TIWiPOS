@@ -108,7 +108,9 @@
         <div class="actions">
             <button type="button" class="btn" onclick="window.print()">Print Receipt</button>
             <a href="{{ route('sale') }}" class="btn">New Sale</a>
-            <a href="{{ route('sales.index') }}" class="btn">Sales History</a>
+            @unless(auth()->user()->isPosOnly())
+                <a href="{{ route('sales.index') }}" class="btn">Sales History</a>
+            @endunless
         </div>
 
         <div class="receipt">

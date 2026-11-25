@@ -311,8 +311,8 @@
             </form>
             <div style="margin-top:10px; color:var(--muted); font-size:13px;">
                 Role permissions:
-                <strong>Manager</strong> and <strong>Staff</strong> have the same access for catalog management, stock adjustments, sales edits, and sales history.
-                Only <strong>Manager</strong> can view profit figures.
+                <strong>Staff</strong> can only access the point of sale and their own sale receipts.
+                <strong>Manager</strong> can manage the catalog and stock, view sales history, and view profit figures.
                 Only <strong>Owner</strong> can manage staff, branch settings, and business controls.
             </div>
         </section>

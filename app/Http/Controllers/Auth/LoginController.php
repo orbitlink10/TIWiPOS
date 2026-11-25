@@ -42,6 +42,12 @@ class LoginController extends Controller
                 $request->session()->forget('branch_id');
             }
 
+            if (auth()->user()->isPosOnly()) {
+                $request->session()->forget('url.intended');
+
+                return redirect()->route('sale');
+            }
+
             return redirect()->intended('/');
         }
 

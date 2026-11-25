@@ -47,9 +47,9 @@ class ProductCostVisibilityTest extends TestCase
 
         $response = $this->actingAs($staff)->get(route('products'));
 
-        $response->assertOk();
-        $response->assertSee('Hidden Laptop');
-        $response->assertSee('KES 7,890.12');
+        $response->assertForbidden();
+        $response->assertDontSee('Hidden Laptop');
+        $response->assertDontSee('KES 7,890.12');
         $response->assertDontSee('>Cost<', false);
         $response->assertDontSee('KES 1,234.56');
     }
