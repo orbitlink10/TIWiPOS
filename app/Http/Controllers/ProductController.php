@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\StockMovement;
 use App\Support\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
@@ -85,10 +86,13 @@ class ProductController extends Controller
             ->join('purchase_receipts as receipts', 'receipts.id', '=', 'lines.purchase_receipt_id')
             ->where('lines.product_id', $product->id)->where('receipts.business_id', Tenant::businessId())
             ->when($branchId, fn ($query) => $query->where('receipts.branch_id', $branchId))
-            ->orderByDesc('serials.id')->paginate(20, ['serials.serial_number', 'receipts.received_at'], 'serial_page');
+            ->orderByDesc('serials.id')->paginate(20, ['serials.serial_number', 'receipts.received_at'], 'serial_page')->withQueryString();
+        $movements = StockMovement::where('business_id', Tenant::businessId())->where('product_id', $product->id)
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->with('user:id,name')
+            ->orderByDesc('created_at')->orderByDesc('id')->paginate(20, ['*'], 'movement_page')->withQueryString()->fragment('stock-movements');
         $canViewFinancials = auth()->user()->canViewFinancials();
 
-        return view('pages.product_show', compact('product', 'stocks', 'serials', 'canViewFinancials'));
+        return view('pages.product_show', compact('product', 'stocks', 'serials', 'movements', 'canViewFinancials'));
     }
 
     public function create()
