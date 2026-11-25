@@ -5,6 +5,11 @@
 main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{display:flex;gap:8px;flex-wrap:wrap}.pv-button{display:inline-block;padding:10px 15px;border:1px solid #ccd8e5;border-radius:7px;background:#fff;color:#334155;font:inherit;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer}.pv-button.primary{background:#1769d1;border-color:#1769d1;color:#fff}.pv-button.danger{border-color:#f1ccc6;background:#fff5f3;color:#b42318}.pv-intro{font-size:12px;color:#718087;margin:6px 0 0;overflow-wrap:anywhere}.pv-card{padding:20px;background:#fff;border:1px solid #e2e8ee;border-radius:10px;min-width:0}.pv-card h2{margin:0 0 16px;font-size:16px}.pv-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.pv-kpi small{display:block;font-size:10px;color:#718087;text-transform:uppercase;letter-spacing:.05em;font-weight:700}.pv-kpi strong{display:block;margin-top:7px;font-size:23px;color:#16242b;font-variant-numeric:tabular-nums}.pv-badge{display:inline-block;font-size:11px;font-weight:700;background:#edf8ef;color:#166534;padding:5px 9px;border-radius:5px}.pv-badge.inactive{background:#f0f3f6;color:#667885}.pv-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin:0}.pv-details dt{font-size:11px;color:#718087;margin-bottom:7px}.pv-details dd{font-size:13px;color:#334155;margin:0;overflow-wrap:anywhere}.pv-details a{color:#1057b0}.pv-description{font-size:13px;color:#526473;white-space:pre-wrap;line-height:1.7;margin:0}.pv-scroll{overflow-x:auto}.pv-table{width:100%;border-collapse:collapse;min-width:350px;font-size:12px}.pv-table th{background:#f7f9fb;text-align:left;color:#718087;text-transform:uppercase;font-size:10px;padding:11px}.pv-table td{padding:12px 11px;border-bottom:1px solid #edf0f4;overflow-wrap:anywhere}.pv-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}.pv-message{padding:12px 16px;background:#edf8ef;color:#166534;border:1px solid #c7e7ce;border-radius:8px;font-size:13px}.pv-note{font-size:11px;color:#718087;line-height:1.6}.product-view :is(a,button):focus-visible{outline:2px solid #a7c9f4;outline-offset:2px}@media(max-width:1100px){.pv-columns{grid-template-columns:minmax(0,1fr)}.header-row{flex-wrap:wrap;gap:14px}}@media(max-width:600px){.pv-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.pv-card{padding:16px}.pv-kpi strong{font-size:20px}}
 </style>
 @endpush
+@push('styles')
+<style>
+.pv-movement-filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:16px 0}.pv-movement-filters label{display:grid;gap:6px;min-width:140px;font-size:11px;font-weight:700;color:#667885}.pv-movement-filters input,.pv-movement-filters select{min-width:0;width:100%;padding:10px 11px;border:1px solid #cdd8e3;border-radius:7px;color:#334155;background:#fff;font:inherit;font-size:12px;font-weight:500}.pv-movement-filters :is(input,select):focus-visible{outline:2px solid #a7c9f4;outline-offset:2px}.pv-movement-count{font-size:11px;color:#718087;margin:0 0 12px}.pv-filter-error{padding:10px 12px;background:#fff0ee;color:#b42318;border-radius:7px;font-size:12px}@media(max-width:600px){.pv-movement-filters label{flex:1 1 130px}.pv-movement-filters input,.pv-movement-filters select{font-size:16px}}
+</style>
+@endpush
 @section('header')
 <div class="header-row"><div><h1>{{ $product->name }}</h1><p class="pv-intro">Product details &middot; {{ $product->sku }}</p></div><div class="pv-actions">
     <a class="pv-button" href="{{ route('products') }}">&larr; Products</a>
@@ -37,6 +42,16 @@ main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{dis
     </div>
     <section class="pv-card" id="stock-movements">
         <h2>Stock movements</h2><p class="pv-note">Recorded stock changes for {{ $currentBranch->name ?? 'the current business' }}, most recent first.</p>
+        @if($errors->hasAny(['movement_from','movement_to','movement_type']))<div class="pv-filter-error" role="alert">{{ $errors->first('movement_from') ?: ($errors->first('movement_to') ?: $errors->first('movement_type')) }}</div>@endif
+        <form method="GET" action="{{ route('products.show',$product) }}#stock-movements" class="pv-movement-filters">
+            @if($serials->currentPage() > 1)<input type="hidden" name="serial_page" value="{{ $serials->currentPage() }}">@endif
+            <label>From date<input type="date" name="movement_from" value="{{ $movementFilters['movement_from'] ?? '' }}"></label>
+            <label>To date<input type="date" name="movement_to" value="{{ $movementFilters['movement_to'] ?? '' }}" @if(!empty($movementFilters['movement_from'])) min="{{ $movementFilters['movement_from'] }}" @endif></label>
+            <label>Movement type<select name="movement_type"><option value="">All types</option>@foreach($movementTypes as $type=>$label)<option value="{{ $type }}" @selected(($movementFilters['movement_type'] ?? '') === $type)>{{ $label }}</option>@endforeach</select></label>
+            <button type="submit" class="pv-button primary">Apply filters</button>
+            <a class="pv-button" href="{{ route('products.show', ['product'=>$product, 'serial_page'=>$serials->currentPage() > 1 ? $serials->currentPage() : null]) }}#stock-movements">Reset</a>
+        </form>
+        <p class="pv-movement-count">{{ number_format($movements->total()) }} matching {{ $movements->total() === 1 ? 'movement' : 'movements' }}</p>
         <div class="pv-scroll"><table class="pv-table" style="min-width:900px">
             <thead><tr><th>Date / time</th><th>Type</th><th>Location</th><th style="text-align:right">Change</th><th style="text-align:right">Before</th><th style="text-align:right">After</th><th>Reference / notes</th><th>Recorded by</th></tr></thead>
             <tbody>@forelse($movements as $movement)
@@ -50,7 +65,7 @@ main{min-width:0}.product-view{display:grid;gap:16px;min-width:0}.pv-actions{dis
                     <td>@if($movement->reference_type)<span>{{ str($movement->reference_type)->replace('_',' ')->title() }}@if($movement->reference_id) #{{ $movement->reference_id }}@endif</span>@endif @if($movement->note)<div class="pv-note" style="white-space:pre-wrap">{{ $movement->note }}</div>@endif</td>
                     <td>{{ $movement->user->name ?? '—' }}</td>
                 </tr>
-            @empty<tr><td colspan="8">No recorded stock movements for this product in this branch.</td></tr>@endforelse</tbody>
+            @empty<tr><td colspan="8">No stock movements match these filters for this product and branch.</td></tr>@endforelse</tbody>
         </table></div>
         {{ $movements->links('pagination.app') }}
     </section>
