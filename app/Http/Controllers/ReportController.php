@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
+use App\Services\OperationalReports;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductStock;
@@ -19,6 +21,8 @@ use Illuminate\Validation\Rule;
 
 class ReportController extends Controller
 {
+    private ?int $reportBranchId = null;
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -39,13 +43,20 @@ class ReportController extends Controller
             $reports['purchases'] = ['Supplier purchases', 'Purchasing', 'Invoices supplied during the selected period, with balances as of now.'];
         }
 
+        $reports += OperationalReports::catalog($user);
+        $branches = Branch::where('business_id', Tenant::businessId())->orderBy('name')->get(['id', 'name']);
+
         $data = $request->validate([
+            'branch_id' => ['sometimes', 'required', Rule::in($branches->pluck('id')->map(fn ($id) => (string) $id)->push('all')->all())],
             'report' => ['sometimes', 'string', Rule::in(array_keys($reports))],
             'from' => ['sometimes', 'required', 'date_format:Y-m-d'],
             'to' => ['sometimes', 'required', 'date_format:Y-m-d', 'after_or_equal:'.($request->input('from') ?: now()->startOfMonth()->toDateString())],
             'q' => ['nullable', 'string', 'max:100'],
             'format' => ['sometimes', Rule::in(['csv'])],
         ]);
+        $branchFilter = $data['branch_id'] ?? (Tenant::branchId() ? (string) Tenant::branchId() : 'all');
+        $this->reportBranchId = $branchFilter === 'all' ? null : (int) $branchFilter;
+        $reportBranchName = $this->reportBranchId ? $branches->firstWhere('id', $this->reportBranchId)->name : 'All branches';
         $report = $data['report'] ?? 'sales';
         $from = $data['from'] ?? now()->startOfMonth()->toDateString();
         $to = $data['to'] ?? now()->toDateString();
@@ -73,7 +84,7 @@ class ReportController extends Controller
             case 'product-sales':
                 $sales = $this->sales()->select('sales.id');
                 $this->period($sales, 'sales.created_at', $from, $to);
-                $query = SaleItem::query()->join('products', 'products.id', '=', 'sale_items.product_id')
+                $query = SaleItem::withoutGlobalScope('branch')->join('products', 'products.id', '=', 'sale_items.product_id')
                     ->whereIn('sale_items.sale_id', $sales)
                     ->selectRaw('products.id, products.name, products.sku, SUM(sale_items.quantity) as quantity, SUM(sale_items.subtotal) as revenue')
                     ->groupBy('products.id', 'products.name', 'products.sku')->orderByDesc('revenue')->orderBy('products.id');
@@ -88,7 +99,7 @@ class ReportController extends Controller
                 }
                 break;
             case 'payments':
-                $query = Payment::query()->whereIn('sale_id', $this->sales()->select('sales.id'))
+                $query = $this->branchScope(Payment::query(), 'payments')->whereIn('sale_id', $this->sales()->select('sales.id'))
                     ->selectRaw('method, COUNT(*) as payments_count, SUM(amount) as amount')->groupBy('method')->orderBy('method');
                 $this->period($query, 'payments.paid_at', $from, $to);
                 $columns = ['method'=>['Method','text'], 'payments_count'=>['Payments','integer'], 'amount'=>['Amount','money']];
@@ -96,7 +107,7 @@ class ReportController extends Controller
                 break;
             case 'stock-valuation':
             case 'low-stock':
-                $stock = ProductStock::query()->selectRaw('product_id, SUM(quantity) as on_hand')->groupBy('product_id');
+                $stock = $this->branchScope(ProductStock::query(), 'product_stocks')->selectRaw('product_id, SUM(quantity) as on_hand')->groupBy('product_id');
                 $query = Product::query()->leftJoinSub($stock, 'stock_totals', 'stock_totals.product_id', '=', 'products.id')
                     ->where('is_active', true)->select('products.id', 'name', 'sku', 'stock_alert')
                     ->selectRaw('COALESCE(stock_totals.on_hand, 0) as quantity')->orderBy('name')->orderBy('products.id');
@@ -113,7 +124,7 @@ class ReportController extends Controller
                 }
                 break;
             case 'stock-movements':
-                $query = StockMovement::query()->join('products', 'products.id', '=', 'stock_movements.product_id')
+                $query = $this->branchScope(StockMovement::query(), 'stock_movements')->join('products', 'products.id', '=', 'stock_movements.product_id')
                     ->select('stock_movements.id', 'stock_movements.created_at', 'products.name', 'products.sku', 'stock_movements.type', 'location', 'quantity_change', 'quantity_before', 'quantity_after', 'note')
                     ->orderByDesc('stock_movements.created_at')->orderByDesc('stock_movements.id');
                 $this->period($query, 'stock_movements.created_at', $from, $to);
@@ -124,7 +135,7 @@ class ReportController extends Controller
             case 'purchases':
                 $payments = SupplierPayment::query()->selectRaw('supplier_invoice_id, SUM(amount_cents) as paid')->groupBy('supplier_invoice_id');
                 $query = SupplierInvoice::query()->where('supplier_invoices.business_id', Tenant::businessId())
-                    ->where('supplier_invoices.branch_id', Tenant::branchId())
+                    ->when($this->reportBranchId, fn ($query) => $query->where('supplier_invoices.branch_id', $this->reportBranchId))
                     ->join('suppliers', 'suppliers.id', '=', 'supplier_invoices.supplier_id')
                     ->leftJoinSub($payments, 'invoice_payments', 'invoice_payments.supplier_invoice_id', '=', 'supplier_invoices.id')
                     ->select('supplier_invoices.id', 'reference', 'supplied_at', 'due_at', 'suppliers.name')
@@ -135,6 +146,8 @@ class ReportController extends Controller
                 $columns = ['reference'=>['Invoice','text'], 'name'=>['Supplier','text'], 'supplied_at'=>['Supplied','date'], 'due_at'=>['Due','date'], 'total'=>['Invoice total','money'], 'paid'=>['Paid to date','money'], 'balance'=>['Outstanding','money']];
                 $metrics = ['total'=>'Purchases', 'paid'=>'Paid to date', 'balance'=>'Outstanding'];
                 break;
+            default:
+                [$query, $columns, $metrics, $currentStock] = (new OperationalReports($this->reportBranchId, $from, $to, $search))->build($report, $user->canViewProfit());
         }
 
         if (($data['format'] ?? '') === 'csv') {
@@ -155,7 +168,7 @@ class ReportController extends Controller
             }, "tiwipos-{$report}-{$from}-{$to}.csv", ['Content-Type'=>'text/csv; charset=UTF-8']);
         }
 
-        $totalsQuery = DB::query()->fromSub((clone $query)->reorder()->toBase(), 'report_rows')->selectRaw('COUNT(*) as row_count');
+        $totalsQuery = DB::query()->fromSub((clone $query)->reorder(), 'report_rows')->selectRaw('COUNT(*) as row_count');
         foreach ($metrics as $key => $label) {
             $totalsQuery->selectRaw("COALESCE(SUM({$key}), 0) as {$key}");
         }
@@ -163,19 +176,25 @@ class ReportController extends Controller
         $rows = $query->paginate(25)->withQueryString();
         $formatValue = fn ($value, $type) => $this->format($value, $type);
 
-        return view('pages.reports', compact('reports', 'report', 'from', 'to', 'search', 'currentStock', 'columns', 'metrics', 'totals', 'rows', 'formatValue'));
+        return view('pages.reports', compact('branches', 'branchFilter', 'reportBranchName', 'reports', 'report', 'from', 'to', 'search', 'currentStock', 'columns', 'metrics', 'totals', 'rows', 'formatValue'));
+    }
+
+    private function branchScope($query, string $table)
+    {
+        return $query->withoutGlobalScope('branch')->where($table.'.business_id', Tenant::businessId())
+            ->when($this->reportBranchId, fn ($query) => $query->where($table.'.branch_id', $this->reportBranchId));
     }
 
     private function sales()
     {
-        return Sale::query()->where('sales.status', 'completed')
+        return $this->branchScope(Sale::query(), 'sales')->where('sales.status', 'completed')
             ->when(!auth()->user()->canViewAllSales(), fn ($query) => $query->where('sales.user_id', auth()->id()));
     }
 
     private function period($query, string $column, string $from, string $to): void
     {
         if ($column === 'supplied_at') {
-            $query->where($column, '>=', $from)->where($column, '<=', $to);
+            $query->where($column, '>=', $from)->where($column, '<', Carbon::parse($to)->addDay()->toDateString());
             return;
         }
         $query->where($column, '>=', Carbon::parse($from)->startOfDay())
