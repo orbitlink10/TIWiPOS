@@ -55,9 +55,9 @@ main{min-width:0}
                 @error('sku')<small class="field-error">{{ $message }}</small>@enderror
             </label>
             <label class="product-field">
-                <span>Serial number <span class="product-required">*</span></span>
-                <input name="serial_number" value="{{ old('serial_number') }}" maxlength="255" placeholder="Unique item serial" required aria-invalid="{{ $errors->has('serial_number') ? 'true' : 'false' }}">
-                <small>Use the item's unique serial number.</small>
+                <span>Serial number (optional)</span>
+                <input name="serial_number" value="{{ old('serial_number') }}" maxlength="255" placeholder="Unique item serial, if available" aria-invalid="{{ $errors->has('serial_number') ? 'true' : 'false' }}">
+                <small>Leave blank for products without a serial number.</small>
                 @error('serial_number')<small class="field-error">{{ $message }}</small>@enderror
             </label>
             <label class="product-field wide">

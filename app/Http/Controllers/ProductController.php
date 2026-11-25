@@ -105,7 +105,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|max:255',
-            'serial_number' => 'required|string|max:255|unique:products,serial_number',
+            'serial_number' => 'nullable|string|max:255|unique:products,serial_number',
             'barcode' => 'nullable|string|max:255',
             'category_id' => [
                 'required',
@@ -135,7 +135,7 @@ class ProductController extends Controller
         $product = Product::create([
             'name' => $data['name'],
             'sku' => $data['sku'],
-            'serial_number' => $data['serial_number'],
+            'serial_number' => $data['serial_number'] ?? null,
             'barcode' => $data['barcode'] ?? null,
             'category_id' => $data['category_id'] ?? null,
             'supplier_id' => $data['supplier_id'] ?? null,
@@ -172,7 +172,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|max:255',
-            'serial_number' => ['required', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
+            'serial_number' => ['nullable', 'string', 'max:255', Rule::unique('products', 'serial_number')->ignore($product->id)],
             'barcode' => 'nullable|string|max:255',
             'category_id' => [
                 'required',
@@ -202,7 +202,7 @@ class ProductController extends Controller
         $product->update([
             'name' => $data['name'],
             'sku' => $data['sku'],
-            'serial_number' => $data['serial_number'],
+            'serial_number' => $data['serial_number'] ?? null,
             'barcode' => $data['barcode'] ?? null,
             'category_id' => $data['category_id'] ?? null,
             'supplier_id' => $data['supplier_id'] ?? null,
