@@ -47,6 +47,63 @@ class StaffController extends Controller
         return view('pages.staff_show', ['member' => $user]);
     }
 
+    public function edit(User $user)
+    {
+        $this->ensureOwner();
+
+        if ((int) $user->business_id !== (int) Tenant::businessId() || $user->role === User::ROLE_OWNER) {
+            abort(404);
+        }
+
+        $branches = Branch::where('business_id', Tenant::businessId())->orderBy('name')->get();
+
+        return view('pages.staff_edit', ['member' => $user, 'branches' => $branches]);
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $this->ensureOwner();
+        $businessId = Tenant::businessId();
+
+        if ((int) $user->business_id !== (int) $businessId || $user->role === User::ROLE_OWNER) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],
+            'phone' => 'nullable|string|max:30',
+            'branch_id' => [
+                'nullable',
+                Rule::exists('branches', 'id')->where(fn ($query) => $query->where('business_id', $businessId)),
+            ],
+            'role' => ['required', Rule::in(array_keys(User::assignableRoles()))],
+            'is_active' => 'required|boolean',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        if ((int) $user->id === (int) auth()->id() && !$data['is_active']) {
+            return back()->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors(['is_active' => 'You cannot deactivate your own account.']);
+        }
+
+        $attributes = User::mergePhoneAttribute([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'branch_id' => $data['branch_id'] ?? null,
+            'role' => $data['role'],
+            'is_active' => (bool) $data['is_active'],
+        ], $data['phone'] ?? null);
+
+        if (!empty($data['password'])) {
+            $attributes['password'] = Hash::make($data['password']);
+        }
+
+        $user->update($attributes);
+
+        return redirect()->route('staff.show', $user)->with('status', 'Staff profile updated.');
+    }
+
     public function store(Request $request)
     {
         $this->ensureOwner();

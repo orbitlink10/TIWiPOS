@@ -15,6 +15,107 @@ class StaffRoleManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_owner_can_edit_staff_details_without_changing_password(): void
+    {
+        [$business, $branch, $owner] = $this->createActiveTenant();
+        $staff = User::factory()->create([
+            'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => User::ROLE_STAFF,
+        ]);
+        $password = $staff->password;
+        $newBranch = Branch::create([
+            'business_id' => $business->id, 'name' => 'Second Branch', 'code' => 'SECOND',
+        ]);
+
+        $this->actingAs($owner)->get(route('staff.show', $staff))
+            ->assertOk()->assertSee(route('staff.edit', $staff), false);
+        $this->get(route('staff.edit', $staff))->assertOk()->assertSee($staff->email);
+        $this->patch(route('staff.update', $staff), [
+            'name' => 'Updated Staff', 'email' => $staff->email, 'phone' => '+254711222333',
+            'branch_id' => $newBranch->id, 'role' => User::ROLE_MANAGER, 'is_active' => 0,
+            'password' => '', 'password_confirmation' => '', 'is_super_admin' => true,
+        ])->assertRedirect(route('staff.show', $staff))->assertSessionHas('status', 'Staff profile updated.');
+
+        $staff->refresh();
+        $this->assertSame('Updated Staff', $staff->name);
+        $this->assertSame('+254711222333', $staff->phone);
+        $this->assertSame($newBranch->id, $staff->branch_id);
+        $this->assertSame(User::ROLE_MANAGER, $staff->role);
+        $this->assertFalse($staff->is_active);
+        $this->assertFalse($staff->is_super_admin);
+        $this->assertSame($password, $staff->password);
+        $this->assertSame($business->id, $staff->business_id);
+    }
+
+    public function test_owner_can_change_staff_email_and_reset_password(): void
+    {
+        [$business, $branch, $owner] = $this->createActiveTenant();
+        $staff = User::factory()->create([
+            'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => User::ROLE_STAFF,
+        ]);
+
+        $this->actingAs($owner)->patch(route('staff.update', $staff), [
+            'name' => $staff->name, 'email' => 'updated-staff@example.com', 'phone' => '',
+            'branch_id' => $branch->id, 'role' => User::ROLE_STAFF, 'is_active' => 1,
+            'password' => 'new-staff-password', 'password_confirmation' => 'new-staff-password',
+        ])->assertRedirect(route('staff.show', $staff));
+
+        $staff->refresh();
+        $this->assertSame('updated-staff@example.com', $staff->email);
+        $this->assertNull($staff->phone);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-staff-password', $staff->password));
+    }
+
+    public function test_staff_update_validates_email_branch_role_and_password(): void
+    {
+        [$business, $branch, $owner] = $this->createActiveTenant();
+        [, $foreignBranch] = $this->createActiveTenant();
+        $staff = User::factory()->create([
+            'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => User::ROLE_STAFF,
+        ]);
+        $original = $staff->refresh()->getAttributes();
+        $data = [
+            'name' => $staff->name, 'email' => $staff->email, 'branch_id' => $branch->id,
+            'role' => User::ROLE_STAFF, 'is_active' => 1,
+        ];
+        foreach ([
+            ['email' => $owner->email],
+            ['branch_id' => $foreignBranch->id],
+            ['role' => User::ROLE_OWNER],
+            ['password' => 'long-enough-password', 'password_confirmation' => 'different-password'],
+        ] as $invalid) {
+            $this->actingAs($owner)->from(route('staff.edit', $staff))
+                ->patch(route('staff.update', $staff), array_merge($data, $invalid))
+                ->assertRedirect(route('staff.edit', $staff))
+                ->assertSessionHasErrors(array_key_first($invalid));
+            $this->assertSame($original, $staff->fresh()->getAttributes());
+        }
+    }
+
+    public function test_staff_edit_and_update_reject_foreign_and_owner_records(): void
+    {
+        [, , $owner] = $this->createActiveTenant();
+        [$business, $branch] = $this->createActiveTenant();
+        $staff = User::factory()->create([
+            'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => User::ROLE_STAFF,
+        ]);
+        foreach ([$staff, $owner] as $target) {
+            $this->actingAs($owner)->get(route('staff.edit', $target))->assertNotFound();
+            $this->patch(route('staff.update', $target), ['name' => 'Changed'])->assertNotFound();
+        }
+    }
+
+    public function test_staff_and_managers_cannot_edit_staff_details(): void
+    {
+        [$business, $branch] = $this->createActiveTenant();
+        foreach ([User::ROLE_STAFF, User::ROLE_MANAGER] as $role) {
+            $user = User::factory()->create([
+                'business_id' => $business->id, 'branch_id' => $branch->id, 'role' => $role,
+            ]);
+            $this->actingAs($user)->get(route('staff.edit', $user))->assertForbidden();
+            $this->patch(route('staff.update', $user), ['name' => 'Changed'])->assertForbidden();
+        }
+    }
+
     public function test_owner_can_view_staff_profile_from_team_list(): void
     {
         [$business, $branch, $owner] = $this->createActiveTenant();

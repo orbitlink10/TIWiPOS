@@ -22,12 +22,18 @@
 @section('header')
     <div class="header-row">
         <h1>Staff Profile</h1>
-        <a class="btn" href="{{ route('staff.index') }}">Back to Staff</a>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+            <a class="btn" href="{{ route('staff.edit', $member) }}">Edit Profile</a>
+            <a class="btn" href="{{ route('staff.index') }}">Back to Staff</a>
+        </div>
     </div>
 @endsection
 
 @section('content')
     <section class="panel staff-profile" aria-label="Staff profile details">
+        @if(session('status'))
+            <p role="status" style="padding:12px; margin:0 0 20px; border-radius:8px; background:#d1fae5; color:#065f46;">{{ session('status') }}</p>
+        @endif
         <div class="staff-profile-head">
             <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($member->name, 0, 1)) }}</span>
             <div>
