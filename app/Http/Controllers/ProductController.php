@@ -9,6 +9,7 @@ use App\Models\ProductStock;
 use App\Support\Tenant;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -104,7 +105,6 @@ class ProductController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255',
             'serial_number' => 'nullable|string|max:255|unique:products,serial_number',
             'barcode' => 'nullable|string|max:255',
             'category_id' => [
@@ -134,7 +134,7 @@ class ProductController extends Controller
 
         $product = Product::create([
             'name' => $data['name'],
-            'sku' => $data['sku'],
+            'sku' => 'SKU-'.Str::ulid(),
             'serial_number' => $data['serial_number'] ?? null,
             'barcode' => $data['barcode'] ?? null,
             'category_id' => $data['category_id'] ?? null,

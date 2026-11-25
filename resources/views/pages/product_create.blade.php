@@ -37,7 +37,7 @@ main{min-width:0}
 <form class="product-editor" method="POST" action="{{ route('products.store') }}">
     @csrf
     <header class="product-editor-head">
-        <div><p class="product-eyebrow">Product catalogue</p><h2>Create a product</h2><p class="product-help">Start with the details needed to sell. Add extra information under More options.</p></div>
+        <div><p class="product-eyebrow">Product catalogue</p><h2>Create a product</h2><p class="product-help">Your product code (SKU) is generated automatically when saved. Extra details are under More options.</p></div>
         <span class="product-chip">Quick add</span>
     </header>
     <section class="product-section" aria-labelledby="product-details-title">
@@ -50,17 +50,12 @@ main{min-width:0}
                 @error('name')<small class="field-error">{{ $message }}</small>@enderror
             </label>
             <label class="product-field">
-                <span>SKU / product code <span class="product-required">*</span></span>
-                <input name="sku" value="{{ old('sku') }}" maxlength="255" placeholder="e.g. RTR-001" required aria-invalid="{{ $errors->has('sku') ? 'true' : 'false' }}">
-                @error('sku')<small class="field-error">{{ $message }}</small>@enderror
-            </label>
-            <label class="product-field">
                 <span>Serial number (optional)</span>
                 <input name="serial_number" value="{{ old('serial_number') }}" maxlength="255" placeholder="Unique item serial, if available" aria-invalid="{{ $errors->has('serial_number') ? 'true' : 'false' }}">
                 <small>Leave blank for products without a serial number.</small>
                 @error('serial_number')<small class="field-error">{{ $message }}</small>@enderror
             </label>
-            <label class="product-field wide">
+            <label class="product-field">
                 <span>Category <span class="product-required">*</span></span>
                 <select name="category_id" required aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>@endforeach</select>
                 @if($categories->isEmpty())<small>No categories yet. <a href="{{ route('categories.create', ['redirect_to'=>'products.create']) }}">Add a category</a> before saving.</small>@endif
