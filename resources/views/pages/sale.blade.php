@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Make a Sale')
+@section('title', 'Point of Sale')
 
 @push('styles')
 <style>
@@ -529,11 +529,12 @@
         }
     }
 </style>
+<style>@include('partials.pos-terminal-styles')</style>
 @endpush
 
 @section('header')
     <div class="header-row">
-        <h1>Make a Sale</h1>
+        <div><h1>Point of Sale</h1><p class="sale-lead">{{ $currentBranch->name ?? 'Your store' }} · {{ now()->format('D, d M Y') }}</p></div>
         <a class="btn sale-summary-btn" href="{{ route('summary') }}">View Sales Summary</a>
     </div>
 @endsection
@@ -542,6 +543,7 @@
     @php($oldMethod = old('method', 'mobile'))
 
     <div class="sale-shell">
+        <div id="sale_feedback" class="sale-alert error" role="alert" hidden></div>
         @if ($errors->any())
             <div class="sale-alert error">
                 @foreach ($errors->all() as $error)
@@ -559,30 +561,43 @@
 
             <div class="sale-main">
             <section class="sale-card quick-register">
-                <h2>Quick Register</h2>
+                <h2>Product catalogue</h2>
                 <p class="sale-lead">
-                    Select a product, enter quantity, and add to cart. Need to correct stock?
+                    Tap a product to add it, or scan a barcode and press Enter.
                     <a href="{{ route('stock') }}">Open stock list</a>
                 </p>
 
                 <div class="category-pills" id="category_pills">
-                    <button type="button" class="category-pill is-active" data-category="all">All Products</button>
+                    <button type="button" class="category-pill is-active" data-category="all" aria-pressed="true">All Products</button>
                     @foreach(($categories ?? collect()) as $category)
-                        <button type="button" class="category-pill" data-category="{{ $category->id }}">{{ $category->name }}</button>
+                        <button type="button" class="category-pill" data-category="{{ $category->id }}" aria-pressed="false">{{ $category->name }}</button>
                     @endforeach
                 </div>
 
                 <div class="field-grid two-col">
                     <label class="field">
                         Search Product
-                        <input id="search_product" class="control" type="text" placeholder="Search product name...">
+                        <input id="search_product" class="control" type="search" placeholder="Search name, SKU or barcode..." autocomplete="off">
                     </label>
                     <label class="field">
                         Scan Barcode
-                        <input id="barcode_search" class="control" type="text" placeholder="Scan barcode...">
+                        <input id="barcode_search" class="control" type="text" placeholder="Scan and press Enter..." autocomplete="off">
                     </label>
                 </div>
 
+                <div class="product-grid" id="product_grid" aria-label="Available products">
+                    @foreach ($products as $product)
+                        <button type="button" class="product-tile" data-product-id="{{ $product->id }}">
+                            <span class="product-tile-code">{{ $product->sku ?: 'Product' }}</span>
+                            <strong>{{ $product->name }}</strong>
+                            <span class="product-tile-price">KES {{ number_format((float) $product->price, 2) }}</span>
+                            <span class="product-tile-stock">{{ (int) ($product->stock_on_hand ?? 0) }} available</span>
+                        </button>
+                    @endforeach
+                </div>
+                <p id="catalogue_empty" class="catalogue-empty" @if($products->isNotEmpty()) hidden @endif>No products available. Check your search or add stock to this branch.</p>
+
+                <details class="manual-entry"><summary>Enter quantity or adjust unit price</summary>
                 <label class="field" style="margin-top:12px;">
                     Select Product
                     <select id="product_id" class="control">
@@ -591,6 +606,7 @@
                             <option
                                 value="{{ $product->id }}"
                                 data-name="{{ $product->name }}"
+                                data-sku="{{ $product->sku }}"
                                 data-price="{{ number_format((float) $product->price, 2, '.', '') }}"
                                 data-stock="{{ (int) ($product->stock_on_hand ?? 0) }}"
                                 data-barcode="{{ $product->barcode }}"
@@ -616,10 +632,11 @@
 
                 <button type="button" id="add_to_cart" class="add-btn">+ Add to Cart</button>
                 <div id="stock_info" class="stock-info">Select a product to see availability.</div>
+                </details>
             </section>
 
-            <section class="sale-card installation">
-                <h2>Installation</h2>
+            <details class="sale-card installation" @if(old('installation_amount') || old('technician_name')) open @endif>
+                <summary>Installation / service details <span>Optional</span></summary>
 
                 <div class="field-grid">
                     <label class="field">
@@ -641,14 +658,17 @@
                 </div>
 
                 <button id="add_installation" class="complete-btn" type="button">Add Installation</button>
-            </section>
+            </details>
             </div>
 
             <section class="sale-card checkout">
                 <div class="checkout-head">
                     <h3>Checkout</h3>
                     <span id="cart_count" class="cart-count">0 items</span>
+                    <button type="button" id="clear_cart" class="clear-cart" disabled>Clear</button>
                 </div>
+
+                <p id="cart_empty" class="catalogue-empty">Your cart is empty. Add a product to start a sale.</p>
 
                 <div class="cart-table-wrap">
                     <table class="cart-table">
@@ -675,7 +695,7 @@
                         <span class="vat-toggle">
                             <input type="hidden" name="apply_tax" value="0">
                             <label class="switch" for="apply_tax">
-                                <input id="apply_tax" name="apply_tax" type="checkbox" value="1" @checked(old('apply_tax') == '1')>
+                                <input id="apply_tax" name="apply_tax" type="checkbox" value="1" aria-label="Apply 16% VAT" @checked(old('apply_tax') == '1')>
                                 <span class="switch-slider"></span>
                             </label>
                             <span>Apply 16% VAT</span>
@@ -762,6 +782,17 @@
     const barcodeInput = document.getElementById('barcode_search');
     const categoryButtons = Array.from(document.querySelectorAll('.category-pill'));
     const cartCount = document.getElementById('cart_count');
+    const productTiles = Array.from(document.querySelectorAll('.product-tile'));
+    const feedback = document.getElementById('sale_feedback');
+    const clearCart = document.getElementById('clear_cart');
+    const completeButton = form.querySelector('button[type="submit"]');
+    const previousItems = @json(old('items', []));
+    let submitting = false;
+
+    function showFeedback(message) {
+        feedback.textContent = message;
+        feedback.hidden = !message;
+    }
 
     let idx = 0;
     let activeCategory = 'all';
@@ -824,7 +855,17 @@
         taxText.textContent = formatKes(tax);
         installationText.textContent = formatKes(installationAmount);
         totalText.textContent = formatKes(total);
-        cartCount.textContent = rows.length + (rows.length === 1 ? ' item' : ' items');
+        const quantity = rows.reduce((sum, row) => sum + Number(row.dataset.qty), 0);
+        cartCount.textContent = quantity + (quantity === 1 ? ' item' : ' items');
+        document.getElementById('cart_empty').hidden = rows.length > 0;
+        clearCart.disabled = rows.length === 0;
+        completeButton.disabled = rows.length === 0 || submitting;
+        productTiles.forEach((tile) => {
+            const option = Array.from(productSelect.options).find((item) => item.value === tile.dataset.productId);
+            const available = Math.max(0, Number(option.dataset.stock) - quantityAlreadyInCart(option.value));
+            tile.querySelector('.product-tile-stock').textContent = available + ' available';
+            tile.disabled = available === 0;
+        });
     }
 
     function quantityAlreadyInCart(productId, excludeRow = null) {
@@ -854,14 +895,15 @@
         if (!Number.isInteger(nextQty) || nextQty < 1) {
             nextQty = currentQty;
         }
-        if (!Number.isFinite(nextPrice) || nextPrice < 0) {
+        if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+            showFeedback('Enter a unit price greater than zero.');
             nextPrice = currentPrice;
         }
 
         const rowStock = parseInt(tr.dataset.stock || '0', 10);
         const inCartQtyWithoutThisRow = quantityAlreadyInCart(tr.dataset.productId, tr);
         if (rowStock >= 0 && (nextQty + inCartQtyWithoutThisRow) > rowStock) {
-            alert('Quantity exceeds stock on hand.');
+            showFeedback('Quantity exceeds stock on hand.');
             nextQty = currentQty;
         }
 
@@ -895,8 +937,8 @@
         const productId = option?.value;
 
         if (!productId) {
-            alert('Select a product first.');
-            return;
+            showFeedback('Select a product first.');
+            return false;
         }
 
         const name = option.dataset.name || option.textContent || 'Product';
@@ -909,18 +951,27 @@
         const inCartQty = quantityAlreadyInCart(productId);
 
         if (!Number.isInteger(qty) || qty < 1) {
-            alert('Enter a valid quantity.');
-            return;
+            showFeedback('Enter a valid quantity.');
+            return false;
         }
 
         if (!Number.isFinite(price) || price <= 0) {
-            alert('Enter a valid unit price.');
-            return;
+            showFeedback('Enter a valid unit price.');
+            return false;
         }
 
         if (stock >= 0 && (qty + inCartQty) > stock) {
-            alert('Quantity exceeds stock on hand.');
-            return;
+            showFeedback('Not enough stock for ' + name + '. ' + Math.max(0, stock - inCartQty) + ' available.');
+            return false;
+        }
+
+        showFeedback('');
+        const existingRow = Array.from(cartBody.querySelectorAll('tr')).find((row) =>
+            row.dataset.productId === String(productId) && Number(row.dataset.unitPrice) === price);
+        if (existingRow) {
+            existingRow.querySelector('.line-qty-input').value = Number(existingRow.dataset.qty) + qty;
+            updateCartRow(existingRow);
+            return true;
         }
 
         const lineSubtotal = price * qty;
@@ -937,10 +988,10 @@
                 <div class="line-item-meta">Serial: ${escapeHtml(serial)}</div>
             </td>
             <td class="align-right">
-                <input type="number" min="1" class="line-edit line-qty-input" value="${qty}">
+                <input type="number" min="1" aria-label="Quantity for ${escapeHtml(name)}" class="line-edit line-qty-input" value="${qty}">
             </td>
             <td class="align-right">
-                <input type="number" min="0" step="0.01" class="line-edit line-price-input" value="${price.toFixed(2)}">
+                <input type="number" min="0.01" step="0.01" aria-label="Unit price for ${escapeHtml(name)}" class="line-edit line-price-input" value="${price.toFixed(2)}">
             </td>
             <td class="align-right line-subtotal">${lineSubtotal.toFixed(2)}</td>
             <td class="action-col">
@@ -963,6 +1014,7 @@
 
         cartBody.appendChild(tr);
         refreshCartTotals();
+        return true;
     }
 
     function applyProductFilters(syncPrice) {
@@ -975,7 +1027,7 @@
                 continue;
             }
 
-            const text = ((option.dataset.name || '') + ' ' + (option.textContent || '')).toLowerCase();
+            const text = [option.dataset.name, option.dataset.sku, option.dataset.barcode, option.dataset.serial].join(' ').toLowerCase();
             const categoryId = option.dataset.categoryId || '';
             const stock = parseInt(option.dataset.stock || '0', 10);
             const price = parseMoney(option.dataset.price);
@@ -984,6 +1036,8 @@
             const visible = matchesCategory && matchesTerm && stock > 0 && price > 0;
 
             option.hidden = !visible;
+            const tile = productTiles.find((item) => item.dataset.productId === option.value);
+            if (tile) tile.hidden = !visible;
             if (visible && !firstVisibleValue) {
                 firstVisibleValue = option.value;
             }
@@ -997,12 +1051,14 @@
         }
 
         updateTotalsPreview(syncPrice);
+        document.getElementById('catalogue_empty').hidden = Boolean(firstVisibleValue);
     }
 
     function setActiveCategory(categoryId) {
         activeCategory = categoryId;
         categoryButtons.forEach((button) => {
             button.classList.toggle('is-active', button.dataset.category === categoryId);
+            button.setAttribute('aria-pressed', String(button.dataset.category === categoryId));
         });
         applyProductFilters(true);
     }
@@ -1014,10 +1070,12 @@
     });
 
     searchInput.addEventListener('input', () => {
-        applyProductFilters(false);
+        applyProductFilters(true);
     });
 
-    barcodeInput.addEventListener('input', (event) => {
+    barcodeInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
         const code = event.target.value.trim();
         if (!code) {
             return;
@@ -1025,6 +1083,8 @@
 
         const match = Array.from(productSelect.options).find((option) => option.value && option.dataset.barcode === code);
         if (!match) {
+            showFeedback('No product found for barcode ' + code + '.');
+            barcodeInput.select();
             return;
         }
 
@@ -1035,6 +1095,8 @@
         setActiveCategory(hasCategoryButton ? categoryId : 'all');
         productSelect.value = match.value;
         updateTotalsPreview(true);
+        qtyInput.value = '1';
+        if (addToCart()) barcodeInput.value = '';
     });
 
     productSelect.addEventListener('change', () => updateTotalsPreview(true));
@@ -1052,12 +1114,56 @@
     addBtn.addEventListener('click', addToCart);
     addInstallationBtn.addEventListener('click', refreshCartTotals);
 
-    form.addEventListener('submit', (event) => {
-        if (cartBody.querySelectorAll('tr').length === 0) {
+    productTiles.forEach((tile) => tile.addEventListener('click', () => {
+        productSelect.value = tile.dataset.productId;
+        qtyInput.value = '1';
+        updateTotalsPreview(true);
+        addToCart();
+    }));
+
+    clearCart.addEventListener('click', () => {
+        if (!window.confirm('Remove all items from this cart?')) return;
+        cartBody.replaceChildren();
+        showFeedback('');
+        refreshCartTotals();
+    });
+
+    form.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
             event.preventDefault();
-            alert('Add at least one item to the cart.');
+            if ([qtyInput, unitInput].includes(event.target)) addToCart();
         }
     });
+
+    form.addEventListener('submit', (event) => {
+        if (submitting || cartBody.querySelectorAll('tr').length === 0) {
+            event.preventDefault();
+            if (!submitting) showFeedback('Add at least one item to the cart.');
+            return;
+        }
+        submitting = true;
+        completeButton.disabled = true;
+        completeButton.textContent = 'Completing sale…';
+    });
+
+    window.addEventListener('pageshow', () => {
+        submitting = false;
+        completeButton.textContent = 'Complete Sale';
+        refreshCartTotals();
+    });
+
+    Object.values(previousItems).forEach((item) => {
+        productSelect.value = String(item.product_id);
+        if (!productSelect.value) {
+            showFeedback('An item from your previous cart is no longer available. Check stock before completing the sale.');
+            return;
+        }
+        updateTotalsPreview(true);
+        qtyInput.value = item.quantity;
+        if (item.unit_price !== null && item.unit_price !== undefined) unitInput.value = item.unit_price;
+        addToCart();
+    });
+    qtyInput.value = '1';
 
     applyProductFilters(true);
     refreshCartTotals();
