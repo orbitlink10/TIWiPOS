@@ -179,6 +179,7 @@ class User extends Authenticatable
             'delete_products' => $this->isOwner() || $this->isManager(),
             'manage_catalog', 'view_stock', 'add_stock', 'adjust_stock' => $canManageInventory,
             'edit_sales' => $this->isOwner(),
+            'verify_shifts' => $this->isOwner() || $this->isManager(),
             'view_profit' => $this->canViewProfit(),
             default => false,
         };

@@ -8,11 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 class CashierShift extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['opened_at' => 'datetime', 'closed_at' => 'datetime', 'stock_locked_at' => 'datetime', 'payment_totals' => 'array'];
+    protected $casts = ['opened_at' => 'datetime', 'closed_at' => 'datetime', 'stock_locked_at' => 'datetime', 'payment_totals' => 'array', 'verified_at' => 'datetime', 'verified_payment_totals' => 'array'];
 
     public function getStatusLabelAttribute(): string
     {
-        return $this->status === 'open' ? 'Open' : ($this->stock_locked_at ? 'Locked' : 'Pending stock count');
+        return $this->status === 'open' ? 'Open' : ($this->verified_at ? 'Verified' : ($this->stock_locked_at ? 'Pending verification' : 'Pending stock count'));
+    }
+
+    public function verifier() { return $this->belongsTo(User::class, 'verified_by'); }
+
+    public function canBeVerifiedBy(User $user): bool
+    {
+        return $user->canAccessAbility('verify_shifts') && (int) $user->business_id === (int) $this->business_id
+            && $this->status === 'closed' && $this->stock_locked_at && !$this->verified_at
+            && !in_array((int) $user->id, [(int) $this->user_id, (int) $this->closed_by], true);
     }
 
     public function stockPeriod()
