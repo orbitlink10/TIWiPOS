@@ -568,9 +568,6 @@
 
                 <section class="nav-section" aria-labelledby="nav-management">
                     <p class="nav-heading" id="nav-management">Management</p>
-                    @if(auth()->user()->canAccessAbility('manage_branches'))
-                        <a href="{{ route('branches.index') }}" class="{{ request()->routeIs('branches.*') ? 'active' : '' }}"><span class="nav-icon">BR</span><span>Branches</span></a>
-                    @endif
                     @if(auth()->user()->canAccessAbility('manage_staff'))
                         <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.*') ? 'active' : '' }}"><span class="nav-icon">TM</span><span>Staff & Roles</span></a>
                     @endif
