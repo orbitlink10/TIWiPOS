@@ -48,31 +48,40 @@ class ProductController extends Controller
         });
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $branchId = Tenant::branchId();
         $businessId = Tenant::businessId();
-        $selectedSubCategory = null;
-        if (request()->filled('category_id')) {
-            $selectedSubCategory = Category::query()
-                ->where('business_id', $businessId)
-                ->whereNotNull('parent_id')
-                ->findOrFail(request()->query('category_id'));
+        $categories = Category::where('business_id', $businessId)->whereNull('parent_id')->orderBy('name')->get();
+        $suppliers = \App\Models\Supplier::where('business_id', $businessId)->orderBy('name')->get(['id', 'name']);
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('business_id', $businessId)],
+            'supplier_id' => ['nullable', 'string', Rule::in($suppliers->pluck('id')->map(fn ($id) => (string) $id)->push('unassigned')->all())],
+        ]);
+        $search = trim($filters['q'] ?? '');
+        if (!empty($filters['category_id']) && !$categories->contains('id', $filters['category_id'])) {
+            $categories->push(Category::where('business_id', $businessId)->findOrFail($filters['category_id']));
         }
+        $products = Product::where('business_id', $businessId)->with(['category.parent', 'supplier'])
+            ->when($filters['category_id'] ?? null, fn ($query, $categoryId) => $query->where(function ($query) use ($categoryId, $businessId) {
+                $query->where('category_id', $categoryId)->orWhereIn('category_id', Category::where('business_id', $businessId)->where('parent_id', $categoryId)->select('id'));
+            }))
+            ->when($filters['supplier_id'] ?? null, fn ($query, $supplierId) => $supplierId === 'unassigned' ? $query->whereNull('supplier_id') : $query->where('supplier_id', $supplierId))
+            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search, $businessId, $branchId) {
+                foreach (['name', 'sku', 'barcode', 'serial_number'] as $column) $query->orWhere($column, 'like', '%'.$search.'%');
+                $query->orWhereExists(function ($serials) use ($search, $businessId, $branchId) {
+                    $serials->selectRaw('1')->from('purchase_receipt_serials as receipt_serials')
+                        ->join('purchase_receipt_lines as receipt_lines', 'receipt_lines.id', '=', 'receipt_serials.purchase_receipt_line_id')
+                        ->join('purchase_receipts as receipts', 'receipts.id', '=', 'receipt_lines.purchase_receipt_id')
+                        ->whereColumn('receipt_lines.product_id', 'products.id')->where('receipts.business_id', $businessId)
+                        ->when($branchId, fn ($query) => $query->where('receipts.branch_id', $branchId))->where('receipt_serials.serial_number', 'like', '%'.$search.'%');
+                });
+            }))
+            ->withSum(['stocks as stock_on_hand' => fn ($query) => $query->when($branchId, fn ($query) => $query->where('branch_id', $branchId))], 'quantity')
+            ->latest()->orderByDesc('id')->paginate(25)->withQueryString();
 
-        $products = Product::where('business_id', $businessId)
-            ->when($selectedSubCategory, fn ($query) => $query->where('category_id', $selectedSubCategory->id))
-            ->withSum(['stocks as stock_on_hand' => function ($q) use ($branchId) {
-            if ($branchId) {
-                $q->where('branch_id', $branchId);
-            }
-        }], 'quantity')->latest()->get();
-
-        if ($selectedSubCategory) {
-            $products = $products->filter(fn (Product $product) => (int) $product->stock_on_hand > 0)->values();
-        }
-
-        return view('pages.products', compact('products', 'selectedSubCategory'));
+        return view('pages.products', compact('products', 'categories', 'suppliers', 'filters', 'search'));
     }
 
     public function show(Request $request, Product $product)
