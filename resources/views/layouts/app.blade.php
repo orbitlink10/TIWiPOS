@@ -284,9 +284,23 @@
         }
 
         main {
+            min-width: 0;
             padding: 30px;
             animation: fade-in-up 280ms ease-out;
         }
+
+        .account-bar { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:18px; }
+        .account-branch { display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:9px 14px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+        .account-branch-label { display:block; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+        .account-branch-name { display:block; margin-top:2px; color:var(--text); font-size:13px; font-weight:800; overflow-wrap:anywhere; }
+        .account-switch { display:flex; align-items:center; gap:6px; margin:0; }
+        .account-switch select { min-width:0; max-width:200px; min-height:36px; padding:6px 9px; border:1px solid var(--border); border-radius:6px; background:#f8fbff; color:var(--text); font:inherit; font-size:12px; }
+        .account-switch button { min-height:36px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#eef5fc; color:#1057b0; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+        .account-signout { margin:0; }
+        .account-signout button { min-height:44px; padding:10px 16px; border:1px solid #fecdd3; border-radius:10px; background:#fff1f2; color:#b42318; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+        .account-signout button:hover { background:#ffe4e6; }
+        .account-bar :is(button,select):focus-visible { outline:3px solid #8cbaf2; outline-offset:2px; }
+        @media(max-width:600px) { .account-bar { gap:8px; } .account-branch { flex:1; gap:8px; } .account-switch { width:100%; } .account-switch select { flex:1; width:100%; max-width:none; font-size:16px; } }
 
         .header-row {
             display: flex;
@@ -484,7 +498,7 @@
         }
 
         @media (max-width: 980px) {
-            .layout { grid-template-columns: 1fr; }
+            .layout { grid-template-columns: 1fr; align-content: start; }
 
             .sidebar {
                 position: static;
@@ -589,35 +603,12 @@
                 @endif
             </nav>
             <div class="spacer"></div>
-            <div class="sidebar-footer">
-                @if((isset($availableBranches) && $availableBranches->isNotEmpty()) || isset($currentBranch))
-                    <div class="branch-chip">
-                        <div class="branch-chip-label">Active Branch</div>
-                        <div class="branch-chip-name">{{ $currentBranch->name ?? ($availableBranches->first()->name ?? 'Unknown') }}</div>
-                        @if(isset($availableBranches) && $availableBranches->count() > 1)
-                            <form method="POST" action="{{ route('branches.switch') }}" class="branch-switch-form">
-                                @csrf
-                                <select name="branch_id" class="branch-switch-select" aria-label="Switch branch">
-                                    @php($selectedBranchId = (int) (session('branch_id') ?? auth()->user()->branch_id ?? 0))
-                                    @foreach($availableBranches as $branchOption)
-                                        <option value="{{ $branchOption->id }}" @selected($selectedBranchId === (int) $branchOption->id)>
-                                            {{ $branchOption->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="branch-switch-btn">Switch Branch</button>
-                            </form>
-                        @endif
-                    </div>
-                @endif
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="logout">Sign Out</button>
-                </form>
-            </div>
         </aside>
         @endunless
         <main>
+            @unless(auth()->user()->isPosOnly())
+                @include('partials.account-bar')
+            @endunless
             @yield('header')
             @yield('content')
         </main>
