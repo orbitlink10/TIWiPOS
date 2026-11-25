@@ -2,7 +2,7 @@
 @section('title', 'Stock Variance Report')
 @push('styles')@include('pages.stock_control.style')@include('pages.stock_control.period_style')@endpush
 @section('header')
-<div class="header-row"><div><h1>Stock variance report</h1><p class="sc-intro">{{ $currentBranch->name ?? 'Current branch' }} · Posted physical counts</p></div><a class="sc-button" href="{{ route('stock-control.periods.index') }}">← Stock Control</a></div>
+<div class="header-row"><div><h1>Stock variance report</h1><p class="sc-intro">{{ $currentBranch->name ?? 'Current branch' }} · Posted physical counts</p></div><div class="sc-actions"><a class="sc-button primary" href="{{ route('stock-control.variance', array_merge(request()->only(['from','to','q','direction','period']), ['export'=>'csv'])) }}">Download CSV</a><a class="sc-button" href="{{ route('stock-control.periods.index') }}">← Stock Control</a></div></div>
 @endsection
 @section('content')
 <div class="sc-page">
