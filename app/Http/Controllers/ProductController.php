@@ -83,7 +83,10 @@ class ProductController extends Controller
             'movement_from' => ['nullable', 'date_format:Y-m-d'],
             'movement_to' => array_merge(['nullable', 'date_format:Y-m-d'], $request->filled('movement_from') ? ['after_or_equal:movement_from'] : []),
             'movement_type' => ['nullable', Rule::in(array_keys($movementTypes))],
+            'movement_format' => ['nullable', Rule::in(['csv', 'print'])],
         ]);
+        $movementFormat = $movementFilters['movement_format'] ?? null;
+        unset($movementFilters['movement_format']);
         $branchId = Tenant::branchId();
         $product->load(['category.parent', 'supplier']);
         $stocks = $product->stocks()->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->orderBy('location')->get();
@@ -93,12 +96,37 @@ class ProductController extends Controller
             ->where('lines.product_id', $product->id)->where('receipts.business_id', Tenant::businessId())
             ->when($branchId, fn ($query) => $query->where('receipts.branch_id', $branchId))
             ->orderByDesc('serials.id')->paginate(20, ['serials.serial_number', 'receipts.received_at'], 'serial_page')->withQueryString();
-        $movements = StockMovement::where('business_id', Tenant::businessId())->where('product_id', $product->id)
+        $movementQuery = StockMovement::where('business_id', Tenant::businessId())->where('product_id', $product->id)
             ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))->with('user:id,name')
             ->when($movementFilters['movement_from'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
             ->when($movementFilters['movement_to'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
             ->when($movementFilters['movement_type'] ?? null, fn ($query, $type) => $query->where('type', $type))
-            ->orderByDesc('created_at')->orderByDesc('id')->paginate(20, ['*'], 'movement_page')->withQueryString()->fragment('stock-movements');
+            ->orderByDesc('created_at')->orderByDesc('id');
+        if ($movementFormat === 'csv') {
+            $branchName = view()->shared('currentBranch')?->name ?? 'Current business';
+            return response()->streamDownload(function () use ($movementQuery, $product, $branchName) {
+                $file = fopen('php://output', 'w');
+                fwrite($file, "\xEF\xBB\xBF");
+                fputcsv($file, ['Product', 'SKU', 'Branch', 'Date / time', 'Type', 'Location', 'Change', 'Before', 'After', 'Reference', 'Notes', 'Recorded by']);
+                $safeText = fn ($value) => preg_match('/^[\s]*[=+@-]/u', (string) $value) ? "'".$value : (string) $value;
+                foreach ($movementQuery->lazy(500) as $movement) {
+                    $reference = $movement->reference_type ? str($movement->reference_type)->replace('_', ' ')->title().' #'.$movement->reference_id : '';
+                    fputcsv($file, [
+                        $safeText($product->name), $safeText($product->sku), $safeText($branchName), $movement->created_at->format('Y-m-d H:i:s'),
+                        $movement->type === 'purchase' ? 'Purchase receipt' : ucfirst($movement->type), $safeText($movement->location),
+                        (int) $movement->quantity_change, $movement->quantity_before === null ? '' : (int) $movement->quantity_before,
+                        $movement->quantity_after === null ? '' : (int) $movement->quantity_after, $safeText($reference), $safeText($movement->note), $safeText($movement->user?->name),
+                    ]);
+                }
+                fclose($file);
+            }, 'product-'.$product->id.'-stock-movements-'.now()->format('Ymd').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }
+        if ($movementFormat === 'print') {
+            $movementCount = (clone $movementQuery)->count();
+            $movements = $movementQuery->lazy(500);
+            return view('pages.product_movements_print', compact('product', 'movements', 'movementCount', 'movementFilters', 'movementTypes'));
+        }
+        $movements = $movementQuery->paginate(20, ['*'], 'movement_page')->withQueryString()->fragment('stock-movements');
         $canViewFinancials = auth()->user()->canViewFinancials();
 
         return view('pages.product_show', compact('product', 'stocks', 'serials', 'movements', 'canViewFinancials', 'movementFilters', 'movementTypes'));
