@@ -74,8 +74,12 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::post('/payments/record', [PaymentController::class, 'store'])->name('payments.store');
 
     Route::get('/stock', [PageController::class, 'stock'])->middleware('role.ability:view_stock')->name('stock');
-    Route::get('/sale', [PageController::class, 'sale'])->name('sale');
-    Route::post('/sale', [SaleController::class, 'store'])->name('sale.store');
+    Route::get('/sale', [PageController::class, 'sale'])->middleware('shift.open')->name('sale');
+    Route::post('/sale', [SaleController::class, 'store'])->middleware('shift.open')->name('sale.store');
+    Route::get('/shifts', [\App\Http\Controllers\CashierShiftController::class, 'index'])->name('shifts.index');
+    Route::post('/shifts/open', [\App\Http\Controllers\CashierShiftController::class, 'open'])->name('shifts.open');
+    Route::get('/shifts/{shift}', [\App\Http\Controllers\CashierShiftController::class, 'show'])->whereNumber('shift')->name('shifts.show');
+    Route::post('/shifts/{shift}/close', [\App\Http\Controllers\CashierShiftController::class, 'close'])->whereNumber('shift')->name('shifts.close');
     Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
     Route::get('/sales/{sale}/edit', [SaleController::class, 'edit'])->middleware('role.ability:edit_sales')->name('sales.edit');
     Route::put('/sales/{sale}', [SaleController::class, 'update'])->middleware('role.ability:edit_sales')->name('sales.update');
@@ -138,7 +142,6 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/stock/{product}/edit', [StockController::class, 'edit'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.edit');
     Route::put('/stock/{product}', [StockController::class, 'update'])->whereNumber('product')->middleware('role.ability:add_stock')->name('stock.update');
 
-    Route::get('/summary', [PageController::class, 'summary'])->name('summary');
     Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
 
     Route::get('/staff', [StaffController::class, 'index'])->middleware('role.ability:manage_staff')->name('staff.index');
