@@ -20,7 +20,7 @@
         <section class="shift-card shift-close">
             @if($shift->stock_period_id && auth()->user()->canAccessAbility('view_stock'))<p><a class="shift-button" href="{{ route('stock-control.periods.show',$shift->stock_period_id) }}">View completed stock period</a></p>@endif
             @if($shift->status==='open')
-            <h2>Close shift</h2><p class="shift-muted">Count the cash in your till. Closing saves cash totals and sends this shift to Pending stock count. Completing its stock period locks the shift.</p>
+            <h2>Close shift</h2><p class="shift-muted">Count the cash in your till. Closing saves cash totals and sends this shift for manager or admin verification.</p>
             <form method="POST" action="{{ route('shifts.close',$shift->id) }}" id="close-shift-form">@csrf
                 <input type="hidden" name="expected_sales_count" value="{{ $summary['sales_count'] }}"><input type="hidden" name="expected_cash_cents" value="{{ $summary['expected_cash_cents'] }}">
                 <label class="shift-field">Counted cash (KES)<input name="counted_cash" id="counted-cash" type="number" min="0" max="9999999999.99" step="0.01" value="{{ old('counted_cash') }}" required></label>
@@ -30,7 +30,7 @@
                 <button class="shift-button danger" type="submit">Close shift</button>
             </form>
             @else
-            <h2>{{ $shift->status_label }}</h2><p class="shift-muted">Counted cash</p><div class="shift-difference">KES {{ number_format($shift->counted_cash_cents/100,2) }}</div><p class="shift-muted">{{ $shift->cash_variance_cents < 0 ? 'Cash shortage' : ($shift->cash_variance_cents > 0 ? 'Cash overage' : 'Cash balanced') }}</p><div class="shift-difference {{ $shift->cash_variance_cents<0 ? 'short' : ($shift->cash_variance_cents>0 ? 'over' : '') }}">KES {{ number_format($shift->cash_variance_cents/100,2) }}</div><p class="shift-muted">@if($shift->stock_locked_at)Stock count completed. Locked {{ $shift->stock_locked_at->format('d M Y H:i') }}.@else Cash closing is complete. Awaiting stock count before the shift is locked.@endif</p>
+            <h2>{{ $shift->status_label }}</h2><p class="shift-muted">Counted cash</p><div class="shift-difference">KES {{ number_format($shift->counted_cash_cents/100,2) }}</div><p class="shift-muted">{{ $shift->cash_variance_cents < 0 ? 'Cash shortage' : ($shift->cash_variance_cents > 0 ? 'Cash overage' : 'Cash balanced') }}</p><div class="shift-difference {{ $shift->cash_variance_cents<0 ? 'short' : ($shift->cash_variance_cents>0 ? 'over' : '') }}">KES {{ number_format($shift->cash_variance_cents/100,2) }}</div><p class="shift-muted">@if($shift->stock_locked_at)Stock count completed. Locked {{ $shift->stock_locked_at->format('d M Y H:i') }}.@else Cash closing is complete. Awaiting manager or admin verification.@endif</p>
             @endif
         </section>
     </div>
@@ -39,10 +39,8 @@
         <h2>{{ $shift->verified_at ? 'Verification record' : 'Manager / admin verification' }}</h2>
         @if($shift->verified_at)
             <p class="shift-muted">Verified by {{ $shift->verifier->name ?? 'Former reviewer' }} on {{ $shift->verified_at->format('d M Y H:i') }}. Confirmed amounts are saved separately from the cashier’s cash count and sales totals.</p>
-        @elseif(!$shift->stock_locked_at)
-            <p class="shift-muted">Pending stock count. Complete and post the stock period before a manager or admin verifies the takings.</p>
         @elseif($shift->canBeVerifiedBy(auth()->user()))
-            <p class="shift-muted">Stock count posted and shift locked. Review the receipts, confirm the money received for each payment method, and explain any differences. Expected cash includes opening cash.</p>
+            <p class="shift-muted">Review the receipts, confirm the money received for each payment method, and explain any differences. Expected cash includes opening cash.</p>
         @else
             <p class="shift-muted">Pending verification by another manager or admin. The cashier and the person who closed the shift cannot verify it.</p>
         @endif
@@ -63,7 +61,7 @@
                 @if($shift->verification_notes)<h3 style="font-size:13px">Reviewer notes</h3><p class="shift-note">{{ $shift->verification_notes }}</p>@endif
             @else
                 <div class="shift-verification-form"><label class="shift-field">Review notes<textarea name="verification_notes" rows="3" maxlength="1000" placeholder="Explain shortages, overages or differences between received and expected amounts">{{ old('verification_notes') }}</textarea><small>Required when any confirmed amount differs from expected.</small></label>
-                <label class="shift-check"><input type="checkbox" name="confirmation" value="1" required><span>I reviewed the stock count, receipts and payment totals and confirm these received amounts.</span></label>
+                <label class="shift-check"><input type="checkbox" name="confirmation" value="1" required><span>I reviewed the receipts and payment totals and confirm these received amounts.</span></label>
                 <div><button class="shift-button primary" type="submit">Verify shift</button></div></div>
                 </form>
             @endif

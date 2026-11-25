@@ -137,6 +137,7 @@ Route::middleware(['auth', 'subscription.gate'])->group(function () {
     Route::get('/stock/adjust', [StockController::class, 'adjustForm'])->middleware('role.ability:add_stock')->name('stock.adjust');
     Route::redirect('/stock-control', '/stock-control/periods')->middleware('role.ability:view_stock')->name('stock-control.index');
     Route::get('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'index'])->middleware('role.ability:view_stock')->name('stock-control.periods.index');
+    Route::get('/stock-control/variance', [\App\Http\Controllers\StockPeriodController::class, 'variance'])->middleware('role.ability:view_stock')->name('stock-control.variance');
     Route::post('/stock-control/periods', [\App\Http\Controllers\StockPeriodController::class, 'store'])->middleware('role.ability:adjust_stock')->name('stock-control.periods.store');
     Route::get('/stock-control/periods/{period}', [\App\Http\Controllers\StockPeriodController::class, 'show'])->whereNumber('period')->middleware('role.ability:view_stock')->name('stock-control.periods.show');
     Route::post('/stock-control/periods/{period}/count', [\App\Http\Controllers\StockPeriodController::class, 'save'])->whereNumber('period')->middleware('role.ability:adjust_stock')->name('stock-control.periods.save');

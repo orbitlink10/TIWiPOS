@@ -12,7 +12,7 @@ class CashierShift extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return $this->status === 'open' ? 'Open' : ($this->verified_at ? 'Verified' : ($this->stock_locked_at ? 'Pending verification' : 'Pending stock count'));
+        return $this->status === 'open' ? 'Open' : ($this->verified_at ? 'Verified' : 'Pending verification');
     }
 
     public function verifier() { return $this->belongsTo(User::class, 'verified_by'); }
@@ -20,7 +20,7 @@ class CashierShift extends Model
     public function canBeVerifiedBy(User $user): bool
     {
         return $user->canAccessAbility('verify_shifts') && (int) $user->business_id === (int) $this->business_id
-            && $this->status === 'closed' && $this->stock_locked_at && !$this->verified_at
+            && $this->status === 'closed' && !$this->verified_at
             && !in_array((int) $user->id, [(int) $this->user_id, (int) $this->closed_by], true);
     }
 
