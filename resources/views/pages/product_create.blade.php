@@ -75,10 +75,9 @@ main{min-width:0}
         </div>
     </section>
     <section class="product-section product-stock" aria-labelledby="product-stock-title">
-        <div class="product-section-head"><div><p class="product-eyebrow">Opening inventory</p><h3 id="product-stock-title">Stock & location</h3></div><p class="product-help">For {{ $currentBranch->name ?? 'the current branch' }}. Enter 0 if stock will be received later.</p></div>
+        <div class="product-section-head"><div><p class="product-eyebrow">Opening inventory</p><h3 id="product-stock-title">Opening stock</h3></div><p class="product-help">For {{ $currentBranch->name ?? 'the current branch' }}. Enter 0 if stock will be received later.</p></div>
         <div class="product-grid">
             <label class="product-field"><span>Opening quantity</span><input name="stock" type="number" min="0" step="1" value="{{ old('stock', 1) }}" aria-invalid="{{ $errors->has('stock') ? 'true' : 'false' }}">@error('stock')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="product-field"><span>Stock location</span><input name="stock_location" maxlength="100" value="{{ old('stock_location', 'main') }}" placeholder="e.g. main" aria-invalid="{{ $errors->has('stock_location') ? 'true' : 'false' }}">@error('stock_location')<small class="field-error">{{ $message }}</small>@enderror</label>
             <label class="product-field"><span>Date recorded</span><input name="recorded_at" type="date" value="{{ old('recorded_at', now()->toDateString()) }}" aria-invalid="{{ $errors->has('recorded_at') ? 'true' : 'false' }}">@error('recorded_at')<small class="field-error">{{ $message }}</small>@enderror</label>
         </div>
     </section>
