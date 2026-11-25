@@ -25,17 +25,17 @@ class ProductController extends Controller
         return $normalized !== '' ? $normalized : 'main';
     }
 
-    private function subCategoriesForSelection()
+    private function categoriesForSelection()
     {
-        return Category::with('parent')
-            ->whereNotNull('parent_id')
+        return Category::query()
+            ->whereNull('parent_id')
             ->orderBy('name');
     }
 
-    private function subCategoryExistsRule(?int $businessId)
+    private function categoryExistsRule(?int $businessId)
     {
         return Rule::exists('categories', 'id')->where(function ($query) use ($businessId) {
-            $query->whereNotNull('parent_id');
+            $query->whereNull('parent_id');
 
             if ($businessId) {
                 $query->where('business_id', $businessId);
@@ -74,7 +74,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = $this->subCategoriesForSelection()->get();
+        $categories = $this->categoriesForSelection()->get();
         $suppliers = \App\Models\Supplier::orderBy('name')->get();
         $productNames = \App\Models\Product::orderBy('name')->pluck('name');
         return view('pages.product_create', compact('categories', 'suppliers', 'productNames'));
@@ -83,7 +83,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $branchId = Tenant::branchId();
-        $categories = $this->subCategoriesForSelection()->get();
+        $categories = $this->categoriesForSelection()->get();
         $suppliers = \App\Models\Supplier::orderBy('name')->get();
 
         $stockRow = $product->stocks()
@@ -110,7 +110,7 @@ class ProductController extends Controller
             'category_id' => [
                 'required',
                 'integer',
-                $this->subCategoryExistsRule($businessId),
+                $this->categoryExistsRule($businessId),
             ],
             'supplier_id' => [
                 'nullable',
@@ -177,7 +177,7 @@ class ProductController extends Controller
             'category_id' => [
                 'required',
                 'integer',
-                $this->subCategoryExistsRule($businessId),
+                $this->categoryExistsRule($businessId),
             ],
             'supplier_id' => [
                 'nullable',

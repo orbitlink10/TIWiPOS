@@ -61,9 +61,9 @@ main{min-width:0}
                 @error('serial_number')<small class="field-error">{{ $message }}</small>@enderror
             </label>
             <label class="product-field wide">
-                <span>Sub-category <span class="product-required">*</span></span>
-                <select name="category_id" required aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}"><option value="">Select sub-category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->parent ? $category->parent->name.' / ' : '' }}{{ $category->name }}</option>@endforeach</select>
-                @if($categories->isEmpty())<small>No sub-categories yet. <a href="{{ route('sub-categories.create', ['redirect_to'=>'products.create']) }}">Add a sub-category</a> before saving.</small>@endif
+                <span>Category <span class="product-required">*</span></span>
+                <select name="category_id" required aria-invalid="{{ $errors->has('category_id') ? 'true' : 'false' }}"><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected((string) old('category_id') === (string) $category->id)>{{ $category->name }}</option>@endforeach</select>
+                @if($categories->isEmpty())<small>No categories yet. <a href="{{ route('categories.create', ['redirect_to'=>'products.create']) }}">Add a category</a> before saving.</small>@endif
                 @error('category_id')<small class="field-error">{{ $message }}</small>@enderror
             </label>
             <label class="product-field">

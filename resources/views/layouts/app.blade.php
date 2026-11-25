@@ -553,7 +553,6 @@
                     @if(auth()->user()->canAccessAbility('manage_catalog'))
                         <div class="nav-group">
                             <a href="{{ route('categories.create') }}" class="{{ request()->routeIs('categories.*') ? 'active' : '' }}"><span class="nav-icon">CT</span><span>Categories</span></a>
-                            <a href="{{ route('sub-categories.create') }}" class="nav-sub-link {{ request()->routeIs('sub-categories.*') ? 'active' : '' }}"><span>Sub-categories</span></a>
                         </div>
                         @if(auth()->user()->canViewFinancials())
                             <a href="{{ route('suppliers.index') }}" class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}"><span class="nav-icon">SP</span><span>Suppliers & Purchases</span></a>
