@@ -555,7 +555,7 @@
         @unless(auth()->user()->isPosOnly())
         <aside class="sidebar" id="app-sidebar">
             <div class="brand-row">
-                <a href="{{ route('home') }}" class="brand">
+                <a href="{{ auth()->user()->is_super_admin ? route('admin.tenants.index') : route('home') }}" class="brand">
                     <span class="brand-mark">TP</span>
                     <span>
                         <span class="brand-title">Tiwi POS</span>
@@ -565,6 +565,7 @@
                 <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation" aria-controls="app-navigation" aria-expanded="false">Menu</button>
             </div>
             <nav class="nav" id="app-navigation" aria-label="Main navigation">
+                @unless(auth()->user()->is_super_admin)
                 <section class="nav-section" aria-labelledby="nav-overview">
                     <p class="nav-heading" id="nav-overview">Overview</p>
                     <a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}"><span class="nav-icon">HM</span><span>Dashboard</span></a>
@@ -611,6 +612,7 @@
                     @endif
                 </section>
 
+                @endunless
                 @if(auth()->user()->is_super_admin)
                     <section class="nav-section" aria-labelledby="nav-platform">
                         <p class="nav-heading" id="nav-platform">Platform Admin</p>
