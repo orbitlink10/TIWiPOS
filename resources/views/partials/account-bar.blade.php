@@ -1,5 +1,5 @@
 <div class="account-bar" role="group" aria-label="Branch and account">
-    @if((isset($availableBranches) && $availableBranches->isNotEmpty()) || isset($currentBranch))
+    @if(!auth()->user()->is_super_admin && ((isset($availableBranches) && $availableBranches->isNotEmpty()) || isset($currentBranch)))
         <div class="account-branch">
             <div>
                 <span class="account-branch-label">Active Branch</span>
